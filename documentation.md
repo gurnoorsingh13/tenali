@@ -458,22 +458,15 @@ Testing performed: Self-review only (no automated tests exist). User instructed 
 
 ---
 
-### v1.4 (Phase 3 follow-up 2 — "Word Explorer" split-panel design, in-progress)
+### v1.4 (Phase 3 follow-up 2 — "Word Explorer" split-panel repositioning)
 
 Date: 2026-07-09
 
-Summary: Replace the previous "Learn These Words" disclosure (button → dropdown-feel panel → floating tooltips on each word) with a calmer mini learning workspace called "Word Explorer". Clicking the toggle expands a split panel: LEFT = vertical word list (navigation); RIGHT = reading area that is itself the definition viewer (NO floating tooltip, NO nested popover, NO dropdown menu styling). Auto-selects the first word on open. In-question glossary behavior is preserved unchanged.
+Summary: Replace the previous "Learn These Words" disclosure (button → dropdown-feel panel → floating tooltips on each word) with a calmer mini learning workspace called "Word Explorer". Clicking the toggle expands a split panel: LEFT = vertical word list (navigation); RIGHT = reading area that is itself the definition viewer (NO floating tooltip, NO nested popover, NO dropdown menu styling). The "Word Explorer" button is positioned at the top-right corner of the App container (`.card`), and the split-panel drops down absolutely below it. In-question glossary behavior is preserved unchanged.
 
-This entry documents the design — implementation pending.
-
-Files Changed So Far (design + docs only):
-- `AI_HANDOVER.md` — appended new dated session entry
-- `context.md` — rewritten to reflect the Word Explorer design in progress
-- `documentation.md` — this `v1.4` entry
-
-Files To Be Changed (implementation pending):
+Files Changed:
 - `client/src/components/KeyTerms.jsx` — full rewrite (~150-180 lines). Internal component name unchanged. Default export and `{ topicKey }` prop interface unchanged. New internal state: `isOpen` (panel) + `selectedKey` (canonical term name of the selected word). Auto-sets `selectedKey` to the first entry's term when the panel opens via `useEffect` watching `isOpen`. Renders the panel as a 2-column CSS Grid layout. Renders the right pane as plain `<h4>{term}</h4>` + `<p>{definition}</p>` (no tooltip, no popover). Fail-safe try/catch around the `validEntries` resolution is preserved.
-- `client/src/App.css` — replace `.learn-these-words-*` block. New selectors: `.word-explorer`, `.word-explorer-toggle`, `.word-explorer-panel`, `.word-explorer-list`, `.word-explorer-item`, `.word-explorer-item.is-selected`, `.word-explorer-reader`, `.word-explorer-reader-term`, `.word-explorer-reader-def`. CSS Grid for layout; media query for mobile stacking.
+- `client/src/App.css` — made `.card` `position: relative` and styled `.word-explorer` (anchored absolutely at `top: 48px; right: 40px;` of the card) and `.word-explorer-panel` (drops down absolutely below the button, aligns left-edge on wide screens, aligns right-edge on standard viewports to stay inside the card, and stacks vertically on mobile).
 
 Files NOT Modified (intentional, per user spec):
 - `client/src/components/GlossaryText.jsx` — UNCHANGED. The in-question floating tooltip remains.
