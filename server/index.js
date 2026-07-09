@@ -897,6 +897,89 @@ function generateExplanation(req, data) {
     return s;
   }
 
+  // ── HCF & LCM ─────────────────────────────────────────────────
+  if (p.includes('hcflcm-api')) {
+    const promptStr = b.prompt || '';
+    const diff = b.difficulty || 'easy';
+    let s = `Problem: ${promptStr}\n\n`;
+    s += `Let's solve this step-by-step:\n\n`;
+
+    const matches = promptStr.match(/\d+/g) || [];
+    
+    if (diff === 'easy') {
+      const n1 = parseInt(matches[0]);
+      const n2 = parseInt(matches[1]);
+      if (!isNaN(n1) && !isNaN(n2)) {
+        const getFactors = (n) => {
+          const f = [];
+          for (let i = 1; i <= n; i++) {
+            if (n % i === 0) f.push(i);
+          }
+          return f;
+        };
+        const f1 = getFactors(n1);
+        const f2 = getFactors(n2);
+        const common = f1.filter(x => f2.includes(x));
+        s += `Step 1: List all factors for each number:\n`;
+        s += `  • Factors of ${n1}: ${f1.join(', ')}\n`;
+        s += `  • Factors of ${n2}: ${f2.join(', ')}\n\n`;
+        s += `Step 2: Identify the common factors shared by both:\n`;
+        s += `  • Common factors: ${common.join(', ')}\n\n`;
+        s += `Step 3: Choose the Highest Common Factor (HCF):\n`;
+        s += `  • The largest number in the common factors list is ${ans}.\n\n`;
+      } else {
+        s += `• Find the Highest Common Factor (HCF) of the two numbers.\n`;
+        s += `• HCF is the largest number that divides both numbers perfectly.\n\n`;
+      }
+    } else if (diff === 'medium') {
+      const n1 = parseInt(matches[0]);
+      const n2 = parseInt(matches[1]);
+      if (!isNaN(n1) && !isNaN(n2)) {
+        s += `Step 1: List the first few multiples for each number:\n`;
+        s += `  • Multiples of ${n1}: ${[n1, n1 * 2, n1 * 3, n1 * 4, n1 * 5].join(', ')}...\n`;
+        s += `  • Multiples of ${n2}: ${[n2, n2 * 2, n2 * 3, n2 * 4, n2 * 5].join(', ')}...\n\n`;
+        s += `Step 2: Find the first (smallest) multiple they both share:\n`;
+        s += `  • The Lowest Common Multiple (LCM) is ${ans}.\n\n`;
+      } else {
+        s += `• Find the Lowest Common Multiple (LCM) of the two numbers.\n`;
+        s += `• LCM is the smallest number that is a multiple of both.\n\n`;
+      }
+    } else if (diff === 'hard') {
+      const n1 = parseInt(matches[0]);
+      const n2 = parseInt(matches[1]);
+      const n3 = parseInt(matches[2]);
+      if (!isNaN(n1) && !isNaN(n2) && !isNaN(n3)) {
+        const gcdVal = (a, b) => b === 0 ? a : gcdVal(b, a % b);
+        const lcmVal = (a, b) => Math.abs(a * b) / gcdVal(a, b);
+        const lcm12 = lcmVal(n1, n2);
+        s += `Step 1: Find the LCM of the first two numbers, ${n1} and ${n2}:\n`;
+        s += `  • LCM(${n1}, ${n2}) = ${lcm12}\n\n`;
+        s += `Step 2: Now, find the LCM of that result (${lcm12}) and the third number (${n3}):\n`;
+        s += `  • LCM(${lcm12}, ${n3}) = ${ans}\n\n`;
+        s += `The final LCM is ${ans}.\n\n`;
+      } else {
+        s += `• Find the LCM of the three numbers by finding the LCM of the first two, and then finding the LCM of the result and the third number.\n\n`;
+      }
+    } else {
+      const timeMatches = matches.filter(x => x !== '9' && x !== '00' && x !== '12');
+      const n1 = parseInt(timeMatches[0]);
+      const n2 = parseInt(timeMatches[1]);
+      if (!isNaN(n1) && !isNaN(n2)) {
+        s += `This word problem asks when two repeating events line up next, which means finding their Lowest Common Multiple (LCM).\n\n`;
+        s += `Step 1: List the multiples of the time intervals:\n`;
+        s += `  • Intervals for A (${n1} mins): ${[n1, n1 * 2, n1 * 3, n1 * 4, n1 * 5].join(', ')}...\n`;
+        s += `  • Intervals for B (${n2} mins): ${[n2, n2 * 2, n2 * 3, n2 * 4, n2 * 5].join(', ')}...\n\n`;
+        s += `Step 2: Find the LCM of ${n1} and ${n2}:\n`;
+        s += `  • LCM(${n1}, ${n2}) = ${ans.replace(/[^\d]/g, '')}\n\n`;
+        s += `The events align at the LCM. So they next happen together after ${ans}.\n\n`;
+      } else {
+        s += `• Analyze the recurring intervals to find their Lowest Common Multiple (LCM).\n\n`;
+      }
+    }
+    s += `Answer: ${ans}`;
+    return s;
+  }
+
   // ── Binomial Theorem ──────────────────────────────────────────
   if (p.includes('binomial-api')) {
     const promptStr = b.prompt || '';

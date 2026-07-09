@@ -72,6 +72,11 @@ export default function InteractiveLcmHcfApp({ onBack }) {
   const [currentStep, setCurrentStep] = useState(0); // 0 to 11
   const [currentSlide, setCurrentSlide] = useState(0); // 0: Flashcard, 1: Animation, 2: Activity, 3: Explanation/Why
 
+  // --- Progression Locking ---
+  const [maxStepReached, setMaxStepReached] = useState(1);
+  const [revealedExamples, setRevealedExamples] = useState({}); // { [stepIndex]: boolean }
+  const [activityPopup, setActivityPopup] = useState(null); // { title: string, text: string, type: 'success' | 'error' }
+
   // --- Left Drawer (Why Panel) State ---
   const [whyOpen, setWhyOpen] = useState(false);
   const [whyAnswer, setWhyAnswer] = useState('');
@@ -91,6 +96,7 @@ export default function InteractiveLcmHcfApp({ onBack }) {
   const [quizScore, setQuizScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
   const [quizHistory, setQuizHistory] = useState([]);
+  const [quizLoading, setQuizLoading] = useState(false);
 
   // --- Activity State Helpers ---
   const [activityState, setActivityState] = useState({});
@@ -101,30 +107,23 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     setWhyOpen(false);
     setWhyAnswer('');
     setWhyFeedback(null);
+    setActivityPopup(null);
     setActivityState({});
   }, [currentStep]);
 
-  // Save/Load progress to localStorage
+  // Reset progression when level changes
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('tenali-lcmhcf-progress');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.unlockedCollectibles) setUnlockedCollectibles(parsed.unlockedCollectibles);
-      }
-    } catch (e) {
-      console.error('Failed to load HCF/LCM progress:', e);
+    if (level === null) {
+      setMaxStepReached(1);
+      setRevealedExamples({});
+      setActivityPopup(null);
+      setActivityState({});
+      setUnlockedCollectibles({}); // RESET COLLECTIBLES!
     }
-  }, []);
+  }, [level]);
 
-  const saveProgress = (updatedCollectibles) => {
-    try {
-      localStorage.setItem('tenali-lcmhcf-progress', JSON.stringify({
-        unlockedCollectibles: updatedCollectibles
-      }));
-    } catch (e) {
-      console.error('Failed to save HCF/LCM progress:', e);
-    }
+  const saveProgress = () => {
+    // Keep it as a no-op to avoid breaking downstream references if any
   };
 
   // Check if current concept's collectible is unlocked
@@ -155,95 +154,307 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     return null;
   };
 
+  const isActivityCompleted = (stepIndex) => {
+    switch (stepIndex) {
+      case 1: {
+        const clicked = activityState.clickedPrimes || [];
+        const primes = [2, 5, 11, 13, 17, 19, 23, 29, 31];
+        return clicked.length === primes.length;
+      }
+      case 2: {
+        const selected = activityState.selectedFactors || [];
+        const correctFactors = [1, 2, 3, 4, 6, 12];
+        return correctFactors.every(f => selected.includes(f)) && selected.every(f => correctFactors.includes(f));
+      }
+      case 3: {
+        const step = activityState.treeStep || 0;
+        return step === 3;
+      }
+      case 4: {
+        const jumps3 = activityState.jumps3 || 0;
+        const jumps4 = activityState.jumps4 || 0;
+        const pos3 = jumps3 * 3;
+        const pos4 = jumps4 * 4;
+        return pos3 > 0 && pos3 === pos4 && pos3 === 12;
+      }
+      case 5: {
+        const currentPlacements = activityState.placements || {};
+        const allNums = [1, 2, 3, 4, 6, 9, 12, 18];
+        if (Object.keys(currentPlacements).length === 0) return false;
+        const leftOnly = [4, 12];
+        const rightOnly = [9, 18];
+        const both = [1, 2, 3, 6];
+        return allNums.every(n => {
+          const p = currentPlacements[n];
+          if (leftOnly.includes(n)) return p === 'left';
+          if (rightOnly.includes(n)) return p === 'right';
+          if (both.includes(n)) return p === 'both';
+          return false;
+        });
+      }
+      case 6: {
+        const selected = activityState.selectedLcmMults || [];
+        const common = [12, 24];
+        return common.every(c => selected.includes(c)) && selected.length === common.length;
+      }
+      case 7: {
+        const selected = activityState.selectedHcfFacts || [];
+        const common = [1, 2, 4];
+        return common.every(c => selected.includes(c)) && selected.length === common.length;
+      }
+      case 8: {
+        if (level === 1) return true;
+        if (level === 2) {
+          const currentSelection = activityState.primePairs || [];
+          return currentSelection.includes('2') && currentSelection.includes('3');
+        }
+        if (level === 3) {
+          const divisionStep = activityState.divStep || 0;
+          return divisionStep >= 1;
+        }
+        return false;
+      }
+      default:
+        return true;
+    }
+  };
+
+  useEffect(() => {
+    if (isActivityCompleted(currentStep)) {
+      setMaxStepReached(prev => Math.max(prev, currentStep + 1));
+    }
+  }, [activityState, currentStep]);
+
   // ==========================================================================
   // EXPLANATION & TRY-IT-OUT QUESTIONS DATA
   // ==========================================================================
   const getWhyData = (stepIndex) => {
     switch (stepIndex) {
       case 1:
-        return {
-          title: 'Why Prime Numbers?',
-          explanation: 'Prime numbers are like the "atoms" of mathematics. Just like every molecule is made of atoms, every whole number greater than 1 is either a prime itself or can be built by multiplying prime numbers together. This is called the Fundamental Theorem of Arithmetic!',
-          example: 'Take 30. It is not prime, but we can write it as 2 × 3 × 5. These are all prime numbers! You cannot break 2, 3, or 5 down any further. They are the building blocks.',
-          question: 'Which of the following is a prime number?',
-          options: ['9', '15', '29', '33'],
-          answer: '29',
-          hint: 'A prime number can only be divided by 1 and itself. 9 is 3×3, 15 is 3×5, and 33 is 3×11.'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why Prime Numbers?',
+            explanation: 'Prime numbers are the building blocks of math. Every number greater than 1 is either prime or can be made by multiplying prime numbers!',
+            question: 'Which of the following is a prime number?',
+            options: ['4', '6', '7', '9'],
+            answer: '7',
+            hint: '7 can only be divided by 1 and itself.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why Prime Numbers?',
+            explanation: 'Prime numbers are mathematical atoms. Just like molecules are built from atoms, every composite number has a unique prime structure.',
+            question: 'Which of the following is a prime number?',
+            options: ['9', '15', '23', '27'],
+            answer: '23',
+            hint: '23 has no factors other than 1 and itself.'
+          };
+        } else {
+          return {
+            title: 'Why Prime Numbers?',
+            explanation: 'Prime numbers act as the fundamental atoms of arithmetic. Under the Fundamental Theorem of Arithmetic, every integer > 1 is uniquely factored into primes.',
+            question: 'Which of the following is a prime number?',
+            options: ['39', '49', '51', '59'],
+            answer: '59',
+            hint: '59 cannot be divided by 2, 3, 5, or any other number except 1 and 59.'
+          };
+        }
       case 2:
-        return {
-          title: 'Why Factors?',
-          explanation: 'Factors tell us how we can split things up into equal, whole groups without any leftovers. If a number divides another number perfectly, it is a factor. Knowing factors helps you share things equally or arrange things in perfect rows.',
-          example: 'If you have 12 cookies, the factors of 12 (1, 2, 3, 4, 6, 12) tell you all the ways you can share them. You can give 3 cookies to 4 friends, or 6 cookies to 2 friends, without breaking any cookies!',
-          question: 'What is the sum of all factors of 6?',
-          inputPlaceholder: 'e.g. 12',
-          answer: '12',
-          hint: 'The factors of 6 are 1, 2, 3, and 6. Add them together: 1 + 2 + 3 + 6.'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why Factors?',
+            explanation: 'Factors show us how to split a number into equal groups. For example, if you have 12 cookies, factors tell you all the ways you can share them evenly!',
+            question: 'What are the factors of 4?',
+            options: ['1, 2', '1, 2, 4', '1, 4', '2, 4'],
+            answer: '1, 2, 4',
+            hint: '1 × 4 = 4 and 2 × 2 = 4, so 1, 2, and 4 divide 4 perfectly.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why Factors?',
+            explanation: 'Factors represent exact divisors. They let us partition quantities into symmetric arrangements without any remaining leftovers.',
+            question: 'What is the largest factor of 15 other than 15 itself?',
+            options: ['1', '3', '5', '10'],
+            answer: '5',
+            hint: 'Factors of 15 are 1, 3, 5, 15. The largest one smaller than 15 is 5.'
+          };
+        } else {
+          return {
+            title: 'Why Factors?',
+            explanation: 'Factors define algebraic divisibility within integers. They are the divisors that partition a number into equal modular components.',
+            question: 'How many factors does the number 16 have?',
+            options: ['3', '4', '5', '6'],
+            answer: '5',
+            hint: 'Factors of 16 are 1, 2, 4, 8, and 16. Total of 5 factors.'
+          };
+        }
       case 3:
-        return {
-          title: 'Why Prime Factors?',
-          explanation: 'Every composite number has exactly ONE unique set of prime factors. It is like the number\'s unique biological DNA or barcode. No two numbers have the same prime factors. This makes analyzing large numbers much easier!',
-          example: 'The prime factorization of 12 is 2 × 2 × 3 (or 2² × 3). No other number in the universe has this exact combination of prime numbers!',
-          question: 'What is the largest prime factor of 20?',
-          options: ['2', '4', '5', '10'],
-          answer: '5',
-          hint: 'Break 20 down: 20 = 2 × 10 = 2 × 2 × 5. The prime factors are 2 and 5. Which is larger?'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why Prime Factors?',
+            explanation: 'Prime factors are like a number\'s unique barcode or DNA. No two numbers share the exact same prime building blocks!',
+            question: 'What are the prime factors of 6?',
+            options: ['1, 6', '2, 3', '2, 4', '3, 6'],
+            answer: '2, 3',
+            hint: '6 = 2 × 3. Both 2 and 3 are prime numbers.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why Prime Factors?',
+            explanation: 'Prime factors provide the unique factorization signature of a number. This DNA makes breaking down large numbers extremely simple.',
+            question: 'What is the largest prime factor of 20?',
+            options: ['2', '4', '5', '10'],
+            answer: '5',
+            hint: '20 = 2 × 2 × 5. The prime factors are 2 and 5.'
+          };
+        } else {
+          return {
+            title: 'Why Prime Factors?',
+            explanation: 'By the Fundamental Theorem of Arithmetic, prime factor decomposition provides a unique signature index for every composite integer.',
+            question: 'What is the prime factorization of 36?',
+            options: ['4 × 9', '2 × 2 × 9', '2 × 2 × 3 × 3', '2 × 3 × 6'],
+            answer: '2 × 2 × 3 × 3',
+            hint: 'Prime factorization must only contain prime numbers. 36 = 2 × 2 × 3 × 3.'
+          };
+        }
       case 4:
-        return {
-          title: 'Why LCM?',
-          explanation: 'LCM stands for Lowest Common Multiple. It helps us find when two repeating events will happen at the same time. If something happens every 3 days and another every 4 days, they line up at their multiples. The first place they align is the LCM!',
-          example: 'If Bus A leaves every 6 minutes and Bus B every 8 minutes, they will leave together at the LCM of 6 and 8, which is 24 minutes.',
-          question: 'Find the LCM of 4 and 10.',
-          inputPlaceholder: 'e.g. 20',
-          answer: '20',
-          hint: 'List multiples of 4: 4, 8, 12, 16, 20, 24... List multiples of 10: 10, 20, 30... What is the first number they share?'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why LCM?',
+            explanation: 'LCM stands for Lowest Common Multiple. It helps us find when two repeating events will happen at the same time, like alarms or bus schedules!',
+            question: 'Find the LCM of 2 and 3.',
+            inputPlaceholder: 'e.g. 6',
+            answer: '6',
+            hint: 'Multiples of 2: 2, 4, 6... Multiples of 3: 3, 6... They meet first at 6.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why LCM?',
+            explanation: 'LCM is the smallest positive integer divisible by both numbers. It determines the synchronization frequency of periodic cycles.',
+            question: 'Find the LCM of 4 and 6.',
+            inputPlaceholder: 'e.g. 12',
+            answer: '12',
+            hint: 'Multiples of 4: 4, 8, 12... Multiples of 6: 6, 12... They meet first at 12.'
+          };
+        } else {
+          return {
+            title: 'Why LCM?',
+            explanation: 'LCM represents the intersection of multiple ideals in ring theory. It identifies the first common period where multiple waveforms align.',
+            question: 'Find the LCM of 6 and 10.',
+            inputPlaceholder: 'e.g. 30',
+            answer: '30',
+            hint: 'Multiples of 6: 6, 12, 18, 24, 30... Multiples of 10: 10, 20, 30... They meet first at 30.'
+          };
+        }
       case 5:
-        return {
-          title: 'Why HCF?',
-          explanation: 'HCF (Highest Common Factor) is the largest size you can divide different groups of items into so that every group has the same amount and there are no leftovers. It represents the greatest shared division.',
-          example: 'If you have 12 red pens and 18 blue pens, and you want to pack them into identical sets, the HCF of 12 and 18 is 6. You can make 6 sets, each containing 2 red pens and 3 blue pens.',
-          question: 'Find the HCF of 15 and 25.',
-          inputPlaceholder: 'e.g. 5',
-          answer: '5',
-          hint: 'Factors of 15 are 1, 3, 5, 15. Factors of 25 are 1, 5, 25. The common factors are 1 and 5. Which is the highest?'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why HCF?',
+            explanation: 'HCF is the largest factor shared by numbers. It is the biggest size you can use to divide items into equal groups with nothing left over!',
+            question: 'Find the HCF of 4 and 6.',
+            inputPlaceholder: 'e.g. 2',
+            answer: '2',
+            hint: 'Factors of 4: 1, 2, 4. Factors of 6: 1, 2, 3, 6. The largest shared factor is 2.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why HCF?',
+            explanation: 'HCF is the largest integer dividing both numbers. It defines the maximum capacity of symmetric grouping across diverse quantities.',
+            question: 'Find the HCF of 12 and 18.',
+            inputPlaceholder: 'e.g. 6',
+            answer: '6',
+            hint: 'Factors of 12: 1, 2, 3, 4, 6, 12. Factors of 18: 1, 2, 3, 6, 9, 18. The highest shared factor is 6.'
+          };
+        } else {
+          return {
+            title: 'Why HCF?',
+            explanation: 'HCF is the greatest common divisor. It is algebraically computed as the generator of the ideal generated by both integers.',
+            question: 'Find the HCF of 24 and 36.',
+            inputPlaceholder: 'e.g. 12',
+            answer: '12',
+            hint: 'Factors of 24: 1..24 (highest is 12). Factors of 36: 1..36 (highest is 12). The highest shared factor is 12.'
+          };
+        }
       case 6:
-        return {
-          title: 'Why listing multiples is not enough?',
-          explanation: 'Listing multiples works well for small numbers, but as numbers get larger, listing multiples becomes very tedious and you might miss the match. That is why we learn structured methods like Prime Factorization to calculate it directly.',
-          example: 'To find the LCM of 48 and 72, listing multiples (48, 96, 144... and 72, 144) is okay, but for 120 and 150, listing is very slow.',
-          question: 'What is the LCM of 9 and 12?',
-          inputPlaceholder: 'e.g. 36',
-          answer: '36',
-          hint: 'Multiples of 12: 12, 24, 36, 48. Multiples of 9: 9, 18, 27, 36. 36 is the first common multiple.'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why listing multiples is not enough?',
+            explanation: 'Listing multiples works well for small numbers, but for larger numbers it is too slow and easy to make mistakes. We need a faster system!',
+            question: 'What is the LCM of 3 and 5?',
+            inputPlaceholder: 'e.g. 15',
+            answer: '15',
+            hint: 'Since both are prime, just multiply them: 3 × 5 = 15.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why listing multiples is not enough?',
+            explanation: 'As integers scale, listing multiples grows computationally expensive. Structured prime division yields exact LCMs instantly.',
+            question: 'What is the LCM of 8 and 12?',
+            inputPlaceholder: 'e.g. 24',
+            answer: '24',
+            hint: 'Multiples of 8: 8, 16, 24... Multiples of 12: 12, 24... First match is 24.'
+          };
+        } else {
+          return {
+            title: 'Why listing multiples is not enough?',
+            explanation: 'Listing multiples lacks algebraic scaling. Systematic prime decomposition computes LCM directly without infinite listing.',
+            question: 'What is the LCM of 12 and 15?',
+            inputPlaceholder: 'e.g. 60',
+            answer: '60',
+            hint: '12 = 2² × 3, 15 = 3 × 5. LCM = 2² × 3 × 5 = 60.'
+          };
+        }
       case 7:
-        return {
-          title: 'Why listing factors is not enough?',
-          explanation: 'Similar to LCM, finding factors of very large numbers by listing is extremely slow and easy to mess up. Structured division and prime factorization are guaranteed to give you the highest common factor without having to list dozens of numbers.',
-          example: 'Finding the factors of 144 and 240 by hand takes a long time. Using prime factors, we can extract the HCF (48) in seconds.',
-          question: 'What is the HCF of 24 and 40?',
-          inputPlaceholder: 'e.g. 8',
-          answer: '8',
-          hint: 'Factors of 24: 1, 2, 3, 4, 6, 8, 12, 24. Factors of 40: 1, 2, 4, 5, 8, 10, 20, 40. The largest common factor is 8.'
-        };
+        if (level === 1) {
+          return {
+            title: 'Why listing factors is not enough?',
+            explanation: 'Listing factors for large numbers takes too long and you might miss a factor. Structured methods find the HCF directly!',
+            question: 'What is the HCF of 8 and 12?',
+            inputPlaceholder: 'e.g. 4',
+            answer: '4',
+            hint: 'Factors of 8: 1, 2, 4, 8. Factors of 12: 1, 2, 3, 4, 6, 12. Largest shared is 4.'
+          };
+        } else if (level === 2) {
+          return {
+            title: 'Why listing factors is not enough?',
+            explanation: 'High composite numbers contain dozens of factors. Using prime factors lets you isolate common factors instantly without missing any.',
+            question: 'What is the HCF of 15 and 25?',
+            inputPlaceholder: 'e.g. 5',
+            answer: '5',
+            hint: 'Factors of 15: 1, 3, 5, 15. Factors of 25: 1, 5, 25. Largest shared is 5.'
+          };
+        } else {
+          return {
+            title: 'Why listing factors is not enough?',
+            explanation: 'Exhaustive listing of divisors is inefficient. Euclidean algorithm or prime analysis computes HCF systematically in log-time.',
+            question: 'What is the HCF of 36 and 48?',
+            inputPlaceholder: 'e.g. 12',
+            answer: '12',
+            hint: '36 = 2² × 3², 48 = 2⁴ × 3. HCF = 2² × 3 = 12.'
+          };
+        }
       case 8:
-        return {
-          title: level === 3 ? 'Why use Long Division for HCF?' : 'Why use Prime Factorization?',
-          explanation: level === 3 
-            ? 'Long division (also known as the Euclidean Algorithm) is the fastest way in the world to find the HCF of extremely large numbers. Instead of breaking them down into primes, you divide the larger by the smaller. The remainder is guaranteed to share the same HCF. You repeat until the remainder is 0!'
-            : 'Prime factorization breaks numbers down into their base mathematical elements. Once you have the prime factors, finding HCF is just taking the lowest powers of shared primes, and LCM is taking the highest powers of all primes. It is clean and systematic!',
-          example: level === 3
-            ? 'For 45 and 60: 60 ÷ 45 = 1 remainder 15. Then divide the old divisor by the remainder: 45 ÷ 15 = 3 remainder 0. The last divisor, 15, is the HCF!'
-            : 'For 12 = 2² × 3 and 18 = 2 × 3². Common prime factors: 2 and 3. HCF = 2¹ × 3¹ = 6. LCM = 2² × 3² = 36.',
-          question: 'Find the HCF of 36 and 90 using your level method.',
-          inputPlaceholder: 'e.g. 18',
-          answer: '18',
-          hint: 'For HCF, find the largest number that divides both 36 and 90. 18 × 2 = 36, 18 × 5 = 90.'
-        };
+        if (level === 1) {
+          return null; // Level 1 skips step 8
+        } else if (level === 2) {
+          return {
+            title: 'Why use Prime Factorization?',
+            explanation: 'Prime Factorization divides any number into its prime atoms. Comparing these atoms lets you find both HCF and LCM easily!',
+            question: 'Find the HCF of 18 and 30 using prime factorization.',
+            inputPlaceholder: 'e.g. 6',
+            answer: '6',
+            hint: '18 = 2 × 3 × 3. 30 = 2 × 3 × 5. Shared primes are 2 and 3. HCF = 2 × 3 = 6.'
+          };
+        } else {
+          return {
+            title: 'Why use Long Division for HCF?',
+            explanation: 'Long division (Euclidean Algorithm) is the fastest way to find HCF for massive numbers. You divide recursively until remainder is 0.',
+            question: 'Find the HCF of 45 and 105 using division.',
+            inputPlaceholder: 'e.g. 15',
+            answer: '15',
+            hint: '105 = 45 × 2 + 15. Then divide 45 by 15: 45 = 15 × 3 + 0. The last divisor 15 is HCF.'
+          };
+        }
       default:
         return null;
     }
@@ -266,7 +477,14 @@ export default function InteractiveLcmHcfApp({ onBack }) {
       setUnlockedCollectibles(newCollectibles);
       saveProgress(newCollectibles);
     } else {
-      setWhyFeedback({ correct: false, text: `Not quite! Hint: ${data.hint}` });
+      setActivityPopup({
+        title: 'Incorrect Answer',
+        text: `Not quite! Hint: ${data.hint}`,
+        type: 'error'
+      });
+      setWhyOpen(false);
+      setWhyFeedback(null);
+      setWhyAnswer('');
     }
   };
 
@@ -279,6 +497,21 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     const wrong = activityState.wrongPrimes || [];
     const done = clicked.length === primes.length;
 
+    const explainWhyNotPrime = (n) => {
+      if (n === 4) return "4 is an even number (2 × 2), so it is not a prime number.";
+      if (n === 8) return "8 is an even number (2 × 4), so it is not a prime number.";
+      if (n === 9) return "9 is divisible by 3 (3 × 3), so it is not a prime number.";
+      if (n === 12) return "12 is even and has factors 1, 2, 3, 4, 6, and 12, so it is not a prime number.";
+      if (n === 15) return "15 is divisible by 3 and 5 (3 × 5), so it is not a prime number.";
+      if (n === 18) return "18 is even (2 × 9), so it is not a prime number.";
+      if (n === 21) return "21 is divisible by 3 and 7 (3 × 7), so it is not a prime number.";
+      if (n === 25) return "25 is divisible by 5 (5 × 5), so it is not a prime number.";
+      if (n === 27) return "27 is divisible by 3 and 9 (3 × 9), so it is not a prime number.";
+      if (n === 30) return "30 is even (2 × 15) and has many factors, so it is not a prime number.";
+      if (n === 33) return "33 is divisible by 3 and 11 (3 × 11), so it is not a prime number.";
+      return `${n} is not a prime number because it has divisors other than 1 and itself.`;
+    };
+
     const handleSelect = (n) => {
       if (done) return;
       if (primes.includes(n)) {
@@ -290,6 +523,13 @@ export default function InteractiveLcmHcfApp({ onBack }) {
         if (!wrong.includes(n)) {
           const next = [...wrong, n];
           setActivityState({ ...activityState, wrongPrimes: next });
+          
+          setActivityPopup({
+            title: 'Not a Prime Number',
+            text: explainWhyNotPrime(n),
+            type: 'error'
+          });
+
           setTimeout(() => {
             setActivityState(prev => ({
               ...prev,
@@ -333,13 +573,21 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     const done = correctFactors.every(f => selected.includes(f)) && selected.every(f => correctFactors.includes(f));
 
     const toggleFactor = (n) => {
-      let next;
       if (selected.includes(n)) {
-        next = selected.filter(x => x !== n);
+        const next = selected.filter(x => x !== n);
+        setActivityState({ ...activityState, selectedFactors: next });
       } else {
-        next = [...selected, n];
+        if (correctFactors.includes(n)) {
+          const next = [...selected, n];
+          setActivityState({ ...activityState, selectedFactors: next });
+        } else {
+          setActivityPopup({
+            title: 'Not a Factor',
+            text: `${n} is not a factor of 12. 12 is not perfectly divisible by ${n} (12 ÷ ${n} leaves a remainder of ${12 % n}).`,
+            type: 'error'
+          });
+        }
       }
-      setActivityState({ ...activityState, selectedFactors: next });
     };
 
     return (
@@ -476,8 +724,24 @@ export default function InteractiveLcmHcfApp({ onBack }) {
 
     const jump = (val) => {
       if (val === 3 && pos3 < maxVal) {
+        const nextPos = pos3 + 3;
+        if (nextPos > 12) {
+          setActivityPopup({
+            title: 'Crossing the Range',
+            text: `Whoops! Jump to ${nextPos} crosses the Lowest Common Multiple (12). The LCM is 12, where they first meet!`,
+            type: 'error'
+          });
+        }
         setActivityState({ ...activityState, jumps3: jumps3 + 1 });
       } else if (val === 4 && pos4 < maxVal) {
+        const nextPos = pos4 + 4;
+        if (nextPos > 12) {
+          setActivityPopup({
+            title: 'Crossing the Range',
+            text: `Whoops! Jump to ${nextPos} crosses the Lowest Common Multiple (12). The LCM is 12, where they first meet!`,
+            type: 'error'
+          });
+        }
         setActivityState({ ...activityState, jumps4: jumps4 + 1 });
       }
     };
@@ -588,6 +852,42 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     }
 
     const setPlacement = (num, place) => {
+      let correctPlace;
+      if (leftOnly.includes(num)) correctPlace = 'left';
+      else if (rightOnly.includes(num)) correctPlace = 'right';
+      else if (both.includes(num)) correctPlace = 'both';
+
+      if (place === 'pool') {
+        const next = { ...currentPlacements, [num]: 'pool' };
+        setActivityState({ ...activityState, placements: next });
+        return;
+      }
+
+      if (place !== correctPlace) {
+        let text = '';
+        if (correctPlace === 'left') {
+          text = `${num} is only a factor of 12, not 18, so it belongs only in the Factors of 12 circle.`;
+        } else if (correctPlace === 'right') {
+          text = `${num} is only a factor of 18, not 12, so it belongs only in the Factors of 18 circle.`;
+        } else if (correctPlace === 'both') {
+          text = `${num} is a factor of both 12 and 18, so it must go in the shared 'Both' section.`;
+        }
+        setActivityPopup({
+          title: 'Incorrect Placement',
+          text: text,
+          type: 'error'
+        });
+        return;
+      }
+
+      if (place === 'both') {
+        setActivityPopup({
+          title: 'Common Factor Found!',
+          text: `${num} is a factor of both 12 and 18. All numbers in this middle section are common factors, and the highest of them (6) is the HCF!`,
+          type: 'success'
+        });
+      }
+
       const next = { ...currentPlacements, [num]: place };
       setActivityState({ ...activityState, placements: next });
     };
@@ -676,8 +976,19 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           setActivityState({ ...activityState, selectedLcmMults: [...selected, val] });
         }
       } else {
-        // wrong selection
-        alert(`Oops! ${val} is not a multiple of BOTH 3 and 4.`);
+        let text = '';
+        if (val % 3 === 0 && val % 4 !== 0) {
+          text = `${val} is a multiple of 3, but not of 4 (multiples of 4 are 4, 8, 12, 16, 20, 24...).`;
+        } else if (val % 4 === 0 && val % 3 !== 0) {
+          text = `${val} is a multiple of 4, but not of 3 (multiples of 3 are 3, 6, 9, 12, 15, 18, 21, 24...).`;
+        } else {
+          text = `${val} is not a multiple of 3 or 4.`;
+        }
+        setActivityPopup({
+          title: 'Incorrect Selection',
+          text: text,
+          type: 'error'
+        });
       }
     };
 
@@ -753,7 +1064,21 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           setActivityState({ ...activityState, selectedHcfFacts: [...selected, val] });
         }
       } else {
-        alert(`Oops! ${val} is not a factor of BOTH 8 and 20.`);
+        const isFact8 = 8 % val === 0;
+        const isFact20 = 20 % val === 0;
+        let text = '';
+        if (isFact8 && !isFact20) {
+          text = `${val} is a factor of 8, but it does not divide 20 perfectly (20 ÷ ${val} leaves a remainder of ${20 % val}).`;
+        } else if (isFact20 && !isFact8) {
+          text = `${val} is a factor of 20, but it does not divide 8 perfectly (8 ÷ ${val} leaves a remainder of ${8 % val}).`;
+        } else {
+          text = `${val} is not a factor of 8 or 20.`;
+        }
+        setActivityPopup({
+          title: 'Incorrect Selection',
+          text: text,
+          type: 'error'
+        });
       }
     };
 
@@ -952,69 +1277,116 @@ export default function InteractiveLcmHcfApp({ onBack }) {
   // ADAPTIVE QUIZ GENERATION & HANDLERS
   // ==========================================================================
 
-  const startQuiz = () => {
-    // Generate 5 questions based on selected level
-    let questions = [];
-    if (level === 1) {
-      questions = [
-        { q: 'Find the HCF of 4 and 6.', a: '2', explanation: 'Factors of 4: 1, 2, 4. Factors of 6: 1, 2, 3, 6. Common: 1, 2. Highest is 2.' },
-        { q: 'Find the LCM of 3 and 5.', a: '15', explanation: 'Multiples of 3: 3, 6, 9, 12, 15... Multiples of 5: 5, 10, 15... Smallest they share is 15.' },
-        { q: 'Which is a prime number: 9, 11, 15, 21?', a: '11', explanation: '11 has only two factors (1 and 11), making it a prime number.' },
-        { q: 'How many factors does the number 10 have?', a: '4', explanation: 'The factors of 10 are 1, 2, 5, and 10. Total of 4 factors.' },
-        { q: 'Find the HCF of 8 and 12.', a: '4', explanation: 'Factors of 8: 1, 2, 4, 8. Factors of 12: 1, 2, 3, 4, 6, 12. Largest shared divisor is 4.' }
-      ];
-    } else if (level === 2) {
-      questions = [
-        { q: 'Find the prime factors of 30 (comma separated).', a: '2,3,5', explanation: '30 = 2 × 3 × 5. These are all prime numbers.' },
-        { q: 'Find the LCM of 12 and 18.', a: '36', explanation: '12 = 2² × 3, 18 = 2 × 3². LCM = 2² × 3² = 4 × 9 = 36.' },
-        { q: 'Find the HCF of 24 and 36.', a: '12', explanation: '24 = 2³ × 3, 36 = 2² × 3². HCF = 2² × 3¹ = 12.' },
-        { q: 'Find the LCM of 6 and 9.', a: '18', explanation: 'Multiples of 6: 6, 12, 18, 24... Multiples of 9: 9, 18, 27... LCM is 18.' },
-        { q: 'Bus A departs every 8 minutes and Bus B every 12 minutes. They both leave at 9:00. After how many minutes will they next depart together?', a: '24', explanation: 'The buses depart together at multiples of their intervals. LCM of 8 and 12 is 24.' }
-      ];
-    } else {
-      questions = [
-        { q: 'Find the HCF of 48 and 72 using prime factorization.', a: '24', explanation: '48 = 2⁴ × 3, 72 = 2³ × 3². HCF = 2³ × 3 = 24.' },
-        { q: 'Find the HCF of 180 and 240.', a: '60', explanation: '180 = 2² × 3² × 5, 240 = 2⁴ × 3 × 5. HCF = 2² × 3 × 5 = 60.' },
-        { q: 'Find the LCM of 15, 20, and 30.', a: '60', explanation: 'LCM of 15 and 30 is 30. LCM of 30 and 20 is 60.' },
-        { q: 'Find the HCF of 84 and 126.', a: '42', explanation: '84 = 2² × 3 × 7, 126 = 2 × 3² × 7. HCF = 2 × 3 × 7 = 42.' },
-        { q: 'A bell rings every 12 minutes, another every 18 minutes, and a third every 30 minutes. They ring together at 12:00 PM. How many minutes before they ring together again?', a: '180', explanation: 'Find LCM(12, 18, 30). LCM(12, 18) = 36. LCM(36, 30) = 180.' }
-      ];
-    }
-
-    setQuizQuestions(questions);
+  const startQuiz = async () => {
+    setQuizLoading(true);
+    setCurrentStep(10);
+    setQuizQuestions([]);
+    setQuizFinished(false);
+    setQuizHistory([]);
+    setQuizScore(0);
     setQuizIndex(0);
     setQuizAnswer('');
     setQuizFeedback(null);
-    setQuizScore(0);
-    setQuizFinished(false);
-    setQuizHistory([]);
-    setCurrentStep(10);
+    try {
+      let diffs = [];
+      if (level === 1) {
+        diffs = ['easy', 'easy', 'medium', 'easy', 'medium'];
+      } else if (level === 2) {
+        diffs = ['easy', 'medium', 'medium', 'hard', 'medium'];
+      } else {
+        diffs = ['medium', 'hard', 'hard', 'extrahard', 'extrahard'];
+      }
+      
+      const fetchedQs = await Promise.all(diffs.map(async (diff) => {
+        const res = await fetch(`/hcflcm-api/question?difficulty=${diff}`);
+        if (!res.ok) throw new Error('Failed to fetch question');
+        const qdata = await res.json();
+        return {
+          q: qdata.prompt,
+          a: String(qdata.answer),
+          display: qdata.display,
+          difficulty: qdata.difficulty,
+          originalAnswer: qdata.answer
+        };
+      }));
+
+      setQuizQuestions(fetchedQs);
+    } catch (e) {
+      console.error("Failed to load quiz from backend: ", e);
+      // Fallback
+      setQuizQuestions([
+        { q: 'Find the HCF of 4 and 6.', a: '2', display: '2', difficulty: 'easy', originalAnswer: 2 },
+        { q: 'Find the LCM of 3 and 5.', a: '15', display: '15', difficulty: 'medium', originalAnswer: 15 },
+        { q: 'Find the LCM of 4 and 6.', a: '12', display: '12', difficulty: 'medium', originalAnswer: 12 },
+        { q: 'Find the HCF of 8 and 12.', a: '4', display: '4', difficulty: 'easy', originalAnswer: 4 },
+        { q: 'Find the LCM of 6 and 9.', a: '18', display: '18', difficulty: 'medium', originalAnswer: 18 }
+      ]);
+    } finally {
+      setQuizLoading(false);
+    }
   };
 
-  const handleQuizSubmit = (e) => {
+  const handleQuizSubmit = async (e) => {
     if (e) e.preventDefault();
     if (quizFeedback) return;
 
     const currentQ = quizQuestions[quizIndex];
-    // Clean and normalize answers (remove spaces, normalize case)
-    const cleanUser = quizAnswer.trim().replace(/\s+/g, '').toLowerCase();
-    const cleanCorrect = currentQ.a.replace(/\s+/g, '').toLowerCase();
-    
-    const correct = cleanUser === cleanCorrect;
+    if (!currentQ) return;
 
-    if (correct) {
-      setQuizScore(s => s + 1);
-      setQuizFeedback({ correct: true, display: `Correct! ${currentQ.explanation}` });
-    } else {
-      setQuizFeedback({ correct: false, display: `Incorrect. The correct answer is: ${currentQ.a}. ${currentQ.explanation}` });
+    try {
+      const res = await fetch('/hcflcm-api/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAnswer: quizAnswer,
+          answer: currentQ.originalAnswer,
+          display: currentQ.display,
+          prompt: currentQ.q,
+          difficulty: currentQ.difficulty,
+          solve: true
+        })
+      });
+      if (!res.ok) throw new Error('Check request failed');
+      const data = await res.json();
+      
+      const isCorrect = data.correct;
+      const explanation = data.explanation || `The correct answer is: ${data.display || currentQ.display}.`;
+
+      if (isCorrect) {
+        setQuizScore(s => s + 1);
+        setQuizFeedback({ correct: true, display: `Correct! ${explanation}` });
+      } else {
+        setQuizFeedback({ correct: false, display: `Incorrect. ${explanation}` });
+      }
+
+      setQuizHistory(prev => [...prev, {
+        question: currentQ.q,
+        userAnswer: quizAnswer,
+        correctAnswer: data.display || currentQ.display,
+        correct: isCorrect,
+        difficulty: currentQ.difficulty
+      }]);
+    } catch (err) {
+      console.error(err);
+      const cleanUser = quizAnswer.trim().replace(/[^\d]/g, '');
+      const cleanCorrect = currentQ.a.trim().replace(/[^\d]/g, '');
+      const isCorrect = cleanUser === cleanCorrect;
+      
+      if (isCorrect) {
+        setQuizScore(s => s + 1);
+        setQuizFeedback({ correct: true, display: `Correct!` });
+      } else {
+        setQuizFeedback({ correct: false, display: `Incorrect. The correct answer is: ${currentQ.display}` });
+      }
+
+      setQuizHistory(prev => [...prev, {
+        question: currentQ.q,
+        userAnswer: quizAnswer,
+        correctAnswer: currentQ.display,
+        correct: isCorrect,
+        difficulty: currentQ.difficulty
+      }]);
     }
-
-    setQuizHistory(prev => [...prev, {
-      question: currentQ.q,
-      userAnswer: quizAnswer,
-      correctAnswer: currentQ.a,
-      correct
-    }]);
   };
 
   const nextQuizQuestion = () => {
@@ -1127,127 +1499,107 @@ export default function InteractiveLcmHcfApp({ onBack }) {
 
     const title = conceptTitles[currentStep];
 
+    const renderFlashcard = (title, descContent, examplesContent) => {
+      const isRevealed = !!revealedExamples[currentStep];
+      return (
+        <div className="flashcard">
+          <div className="flashcard-main-word">{title}</div>
+          <p className="flashcard-desc">
+            {descContent}
+          </p>
+          
+          <div className="collapsible-example-container">
+            <button 
+              className="collapsible-example-header" 
+              onClick={() => setRevealedExamples(prev => ({ ...prev, [currentStep]: !prev[currentStep] }))}
+              aria-expanded={isRevealed}
+            >
+              <span>Explanation & Examples</span>
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                className={`dropdown-arrow-icon ${isRevealed ? 'open' : ''}`}
+                style={{ display: 'block' }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {isRevealed && (
+              <div className="collapsible-example-content slide-down">
+                {examplesContent}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
     // Helper slides definitions
     const getSlideContent = () => {
       if (currentSlide === 0) {
         // Slide 0: Flashcard
         switch (currentStep) {
           case 1:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">Prime Numbers</div>
-                <p className="flashcard-desc">
-                  A **Prime Number** is a special number greater than 1 that can **only** be divided by 1 and itself!
-                </p>
-                <div className="flashcard-example-box">
-                  Examples: 2, 3, 5, 7, 11, 13, 17...
-                </div>
-              </div>
+            return renderFlashcard(
+              'Prime Numbers',
+              <span>A <strong>Prime Number</strong> is a special number greater than 1 that can <strong>only</strong> be divided by 1 and itself!</span>,
+              <>Examples: 2, 3, 5, 7, 11, 13, 17...</>
             );
           case 2:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">Factors</div>
-                <p className="flashcard-desc">
-                  A **Factor** is a number that divides another number completely, leaving **zero remainder**!
-                </p>
-                <div className="flashcard-example-box">
-                  Factors of 6: 1, 2, 3, and 6 (since 1×6 = 6, 2×3 = 6)
-                </div>
-              </div>
+            return renderFlashcard(
+              'Factors',
+              <span>A <strong>Factor</strong> is a number that divides another number completely, leaving <strong>zero remainder</strong>!</span>,
+              <>Factors of 6: 1, 2, 3, and 6 (since 1×6 = 6, 2×3 = 6)</>
             );
           case 3:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">Prime Factors</div>
-                <p className="flashcard-desc">
-                  **Prime Factors** are the factors of a number that are also **prime numbers**. They are the building block DNA of that number!
-                </p>
-                <div className="flashcard-example-box">
-                  Factors of 12: 1, 2, 3, 4, 6, 12.<br/>
-                  Prime Factors of 12: 2 and 3!
-                </div>
-              </div>
+            return renderFlashcard(
+              'Prime Factors',
+              <span><strong>Prime Factors</strong> are the factors of a number that are also <strong>prime numbers</strong>. They are the building block DNA of that number!</span>,
+              <>Factors of 12: 1, 2, 3, 4, 6, 12.<br/>Prime Factors of 12: 2 and 3!</>
             );
           case 4:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">LCM</div>
-                <p className="flashcard-desc">
-                  **Lowest Common Multiple (LCM)** is the smallest multiple shared by two or more numbers. It's their first common landing point!
-                </p>
-                <div className="flashcard-example-box">
-                  Multiples of 3: 3, 6, 9, 12, 15...<br/>
-                  Multiples of 4: 4, 8, 12, 16...<br/>
-                  LCM of 3 and 4 = 12!
-                </div>
-              </div>
+            return renderFlashcard(
+              'LCM',
+              <span><strong>Lowest Common Multiple (LCM)</strong> is the smallest multiple shared by two or more numbers. It's their first common landing point!</span>,
+              <>Multiples of 3: 3, 6, 9, 12, 15...<br/>Multiples of 4: 4, 8, 12, 16...<br/>LCM of 3 and 4 = 12!</>
             );
           case 5:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">HCF</div>
-                <p className="flashcard-desc">
-                  **Highest Common Factor (HCF)** is the largest factor shared by two or more numbers. It is the biggest equal group size you can divide things into!
-                </p>
-                <div className="flashcard-example-box">
-                  Factors of 8: 1, 2, 4, 8.<br/>
-                  Factors of 12: 1, 2, 3, 4, 6, 12.<br/>
-                  HCF of 8 and 12 = 4!
-                </div>
-              </div>
+            return renderFlashcard(
+              'HCF',
+              <span><strong>Highest Common Factor (HCF)</strong> is the largest factor shared by two or more numbers. It is the biggest equal group size you can divide things into!</span>,
+              <>Factors of 8: 1, 2, 4, 8.<br/>Factors of 12: 1, 2, 3, 4, 6, 12.<br/>HCF of 8 and 12 = 4!</>
             );
           case 6:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">How to Find LCM</div>
-                <p className="flashcard-desc">
-                  To find the LCM, you list the multiples of each number until you find the first one they both share.
-                </p>
-                <div className="flashcard-example-box">
-                  LCM of 2 and 3:<br/>
-                  2: 2, 4, 6, 8, 10...<br/>
-                  3: 3, 6, 9, 12...<br/>
-                  They both share 6!
-                </div>
-              </div>
+            return renderFlashcard(
+              'How to Find LCM',
+              <span>To find the LCM, you list the multiples of each number until you find the first one they both share.</span>,
+              <>LCM of 2 and 3:<br/>2: 2, 4, 6, 8, 10...<br/>3: 3, 6, 9, 12...<br/>They both share 6!</>
             );
           case 7:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">How to Find HCF</div>
-                <p className="flashcard-desc">
-                  To find the HCF, you list all factors of both numbers, identify the ones they share, and select the highest one.
-                </p>
-                <div className="flashcard-example-box">
-                  HCF of 9 and 15:<br/>
-                  9: 1, 3, 9<br/>
-                  15: 1, 3, 5, 15<br/>
-                  Shared factors: 1 and 3. Highest is 3!
-                </div>
-              </div>
+            return renderFlashcard(
+              'How to Find HCF',
+              <span>To find the HCF, you list all factors of both numbers, identify the ones they share, and select the highest one.</span>,
+              <>HCF of 9 and 15:<br/>9: 1, 3, 9<br/>15: 1, 3, 5, 15<br/>Shared factors: 1 and 3. Highest is 3!</>
             );
           case 8:
-            return (
-              <div className="flashcard">
-                <div className="flashcard-main-word">
-                  {level === 1 ? 'Concept Summary' : level === 2 ? 'Prime Factorization' : 'Long Division & Primes'}
-                </div>
-                <p className="flashcard-desc">
-                  {level === 1 
-                    ? 'Great! You have mastered the fundamentals of HCF and LCM. Ready to test your confidence?'
-                    : level === 2 
-                      ? 'The **Prime Factorization Method** uses the prime DNA of numbers to find HCF (common powers) and LCM (highest powers) systematically!'
-                      : 'The **Long Division Method** divides the larger number by the smaller recursively. The final non-zero remainder is the HCF!'}
-                </p>
-                <div className="flashcard-example-box">
-                  {level === 1 
-                    ? 'Prime Numbers, Factors, Prime Factors, LCM, HCF.'
-                    : level === 2
-                      ? '12 = 2² × 3, 18 = 2 × 3² → HCF = 2 × 3 = 6.'
-                      : 'HCF of 45 and 60: 60 ÷ 45 = 1 rem 15. 45 ÷ 15 = 3 rem 0. HCF = 15.'}
-                </div>
-              </div>
+            return renderFlashcard(
+              level === 1 ? 'Concept Summary' : level === 2 ? 'Prime Factorization' : 'Long Division & Primes',
+              <span>
+                {level === 1 
+                  ? 'Great! You have mastered the fundamentals of HCF and LCM. Ready to test your confidence?'
+                  : level === 2 
+                    ? 'The Prime Factorization Method uses the prime DNA of numbers to find HCF (common powers) and LCM (highest powers) systematically!'
+                    : 'The Long Division Method divides the larger number by the smaller recursively. The final non-zero remainder is the HCF!'}
+              </span>,
+              level === 1 
+                ? <>Prime Numbers, Factors, Prime Factors, LCM, HCF.</>
+                : level === 2
+                  ? <>12 = 2² × 3, 18 = 2 × 3² → HCF = 2 × 3 = 6.</>
+                  : <>HCF of 45 and 60: 60 ÷ 45 = 1 rem 15. 45 ÷ 15 = 3 rem 0. HCF = 15.</>
             );
           default:
             return null;
@@ -1424,20 +1776,25 @@ export default function InteractiveLcmHcfApp({ onBack }) {
               Concept Checkpoint
             </p>
             <p style={{ color: 'var(--clr-text-soft)', lineHeight: '1.5', marginBottom: '24px' }}>
-              You've read the definition, watched the demonstration, and completed the activity! 
-              Before moving to the next concept, check your curiosity. Click the glowing bulb below to explore "Why?" this concept is structured the way it is and complete a small challenge to earn a collectible!
+              Awesome job! Ready for a challenge? Click the glowing bulb below to explore "Why?" this concept matters and solve a quick puzzle to earn a reward!
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
               <button className="why-bulb-btn" onClick={() => setWhyOpen(true)}>
-                <span className="why-bulb-icon">💡</span>
+                <span className="why-bulb-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                    <path d="M9 18h6" />
+                    <path d="M10 22h4" />
+                  </svg>
+                </span>
                 <span>Why?</span>
               </button>
             </div>
 
             {isCurrentCollectibleUnlocked() ? (
               <p style={{ color: 'var(--clr-correct)', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                ⭐ You have unlocked the collectible for this concept!
+                ★ You have unlocked the collectible for this concept!
               </p>
             ) : (
               <p style={{ color: 'var(--clr-accent)', fontWeight: '500', fontSize: '0.85rem' }}>
@@ -1464,6 +1821,12 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           </div>
         </div>
 
+        {currentSlide === 2 && !isActivityCompleted(currentStep) && (
+          <p style={{ color: 'var(--clr-accent)', fontSize: '0.85rem', marginTop: '12px', textAlign: 'center', fontWeight: 'bold' }}>
+            🔒 Complete the activity correctly to unlock the next section!
+          </p>
+        )}
+
         {/* Navigation buttons inside concepts */}
         <div className="nav-row">
           <button 
@@ -1481,6 +1844,7 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           
           <button 
             className="btn-next"
+            disabled={currentSlide === 2 && !isActivityCompleted(currentStep)}
             onClick={() => {
               if (currentSlide < 3) {
                 setCurrentSlide(currentSlide + 1);
@@ -1493,6 +1857,8 @@ export default function InteractiveLcmHcfApp({ onBack }) {
                 }
               }
             }}
+            style={currentSlide === 2 && !isActivityCompleted(currentStep) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            title={currentSlide === 2 && !isActivityCompleted(currentStep) ? "Complete the activity first!" : ""}
           >
             ➡ Next
           </button>
@@ -1576,8 +1942,41 @@ export default function InteractiveLcmHcfApp({ onBack }) {
   };
 
   // Step 10: Quiz Screen
+  const getTopicForQuestion = (q, difficulty) => {
+    const text = q.toLowerCase();
+    if (text.includes('prime factor')) {
+      return { name: 'Prime Factors (Step 3)', step: 3 };
+    }
+    if (text.includes('prime')) {
+      return { name: 'Prime Numbers (Step 1)', step: 1 };
+    }
+    if (text.includes('how many factors') || text.includes('list factors')) {
+      return { name: 'Factors (Step 2)', step: 2 };
+    }
+    if (text.includes('hcf') || text.includes('highest common factor') || text.includes('highest common divisor')) {
+      return { name: 'Highest Common Factor (Step 5)', step: 5 };
+    }
+    if (text.includes('lcm') || text.includes('lowest common multiple') || text.includes('bus') || text.includes('bell')) {
+      return { name: 'Lowest Common Multiple (Step 4)', step: 4 };
+    }
+    if (difficulty === 'easy') {
+      return { name: 'Factors & HCF (Step 2 & 5)', step: 5 };
+    } else {
+      return { name: 'Multiples & LCM (Step 4 & 6)', step: 4 };
+    }
+  };
+
+  // Step 10: Quiz Screen
   const renderQuiz = () => {
     if (quizFinished) {
+      const incorrectTopicsMap = {};
+      quizHistory.forEach((item) => {
+        if (!item.correct) {
+          const topic = getTopicForQuestion(item.question, item.difficulty);
+          incorrectTopicsMap[topic.step] = topic.name;
+        }
+      });
+
       return (
         <div className="quiz-results-summary">
           <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: '16px' }}>Quiz Completed!</h2>
@@ -1604,6 +2003,33 @@ export default function InteractiveLcmHcfApp({ onBack }) {
               </div>
             ))}
           </div>
+
+          {Object.keys(incorrectTopicsMap).length > 0 && (
+            <div className="revision-suggestion-box" style={{ width: '100%', marginTop: '20px', padding: '16px', background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '8px', textAlign: 'center' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: 'var(--clr-accent)', fontSize: '1.1rem' }}>Revise specific mistakes:</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', marginBottom: '12px' }}>
+                We noticed you made mistakes in the following areas. Click on a topic below to practice it again:
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {Object.entries(incorrectTopicsMap).map(([stepStr, name]) => {
+                  const stepNum = parseInt(stepStr);
+                  return (
+                    <button 
+                      key={stepStr}
+                      className="btn-revise-go" 
+                      onClick={() => {
+                        setCurrentStep(stepNum);
+                        setCurrentSlide(0);
+                      }}
+                      style={{ padding: '8px 16px', background: 'var(--clr-accent)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      Revise {name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
             <button className="btn-back" onClick={startQuiz}>Retry Quiz</button>
@@ -1667,11 +2093,6 @@ export default function InteractiveLcmHcfApp({ onBack }) {
     // Count unlocked in current level (steps 1 to 8)
     let unlockedCount = 0;
     const collectiblesList = theme.items.map((item, idx) => {
-      // Collectible 1 corresponds to step 1 (prime)
-      // Collectible 2 corresponds to step 2 (factors)
-      // Collectible 3 corresponds to step 3 (pfactors)
-      // Collectible 4 corresponds to step 4 (lcm)
-      // Collectible 5 corresponds to step 5 (hcf)
       const stepMapping = idx + 1; 
       const isUnlocked = !!unlockedCollectibles[`${level}_${stepMapping}`];
       if (isUnlocked) unlockedCount++;
@@ -1682,7 +2103,23 @@ export default function InteractiveLcmHcfApp({ onBack }) {
       };
     });
 
-    const completionPercent = Math.round((unlockedCount / 5) * 100);
+    let totalWhyCompleted = 0;
+    const maxWhyPossible = level === 1 ? 7 : 8;
+    for (let s = 1; s <= 8; s++) {
+      if (unlockedCollectibles[`${level}_${s}`]) {
+        totalWhyCompleted++;
+      }
+    }
+
+    const completionPercent = Math.round((totalWhyCompleted / maxWhyPossible) * 100);
+
+    const badges = [
+      { name: 'Lion Badge', icon: '🦁', threshold: 3, desc: 'Complete 3 Why challenges!' },
+      { name: 'Dolphin Badge', icon: '🐬', threshold: 5, desc: 'Complete 5 Why challenges!' },
+      { name: 'Koala Badge', icon: '🐨', threshold: 6, desc: 'Complete 6 Why challenges!' },
+      { name: 'Owl Badge', icon: '🦉', threshold: 7, desc: 'Complete 7 Why challenges!' },
+      { name: 'Cosmic Master', icon: '🏆', threshold: maxWhyPossible, desc: `Complete all ${maxWhyPossible} Why challenges!` }
+    ];
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -1690,7 +2127,7 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           <div className="bank-header">
             <h2 className="bank-title">{theme.name} Reward Bank</h2>
             <div className="bank-progress-info">
-              <span>Progress: {unlockedCount} / 5 unlocked</span>
+              <span>Why Challenges: {totalWhyCompleted} / {maxWhyPossible} completed</span>
               <span>{completionPercent}% Complete</span>
             </div>
             <div className="quiz-progress-bar" style={{ marginTop: '8px' }}>
@@ -1699,9 +2136,10 @@ export default function InteractiveLcmHcfApp({ onBack }) {
           </div>
 
           <p style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', marginBottom: '16px', textAlign: 'center' }}>
-            Unlock collectibles by clicking the glowing bulb "Why?" and completing the Try-It-Out questions during lessons!
+            Unlock level collectibles and unlock premium badges by completing the Try-It-Out questions inside the lesson "Why?" bulbs!
           </p>
 
+          <h3 style={{ margin: '16px 0 10px 0', fontSize: '1rem', color: 'var(--clr-accent)', fontFamily: 'var(--font-display)' }}>Collectibles Unlocked</h3>
           <div className="collectibles-grid">
             {collectiblesList.map(item => (
               <div key={item.id} className={`collectible-slot ${item.isUnlocked ? 'unlocked' : 'locked'}`} title={item.isUnlocked ? item.desc : 'Locked'}>
@@ -1712,13 +2150,24 @@ export default function InteractiveLcmHcfApp({ onBack }) {
             ))}
           </div>
 
-          {unlockedCount === 5 && (
-            <div style={{ background: 'var(--clr-correct-bg)', border: '1px solid var(--clr-correct)', borderRadius: '8px', padding: '12px', margin: '16px 0', textAlign: 'center' }}>
-              <p style={{ color: 'var(--clr-correct)', fontWeight: 'bold' }}>
-                🏆 Golden Badge Unlocked! You have collected all {theme.name}!
-              </p>
-            </div>
-          )}
+          <h3 style={{ margin: '24px 0 10px 0', fontSize: '1rem', color: 'var(--clr-accent)', fontFamily: 'var(--font-display)' }}>Badges Earned</h3>
+          <div className="badges-grid">
+            {badges.map((b, idx) => {
+              const isUnlocked = totalWhyCompleted >= b.threshold;
+              return (
+                <div key={idx} className={`badge-card ${isUnlocked ? 'unlocked' : 'locked'}`}>
+                  <span className="badge-icon">{b.icon}</span>
+                  <span className="badge-name">{b.name}</span>
+                  <span className="badge-desc">{b.desc}</span>
+                  {isUnlocked ? (
+                    <span className="badge-status-label unlocked">✓ Unlocked</span>
+                  ) : (
+                    <span className="badge-status-label locked">🔒 Locked</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
             <button className="btn-back" onClick={() => { setLevel(null); setCurrentStep(0); }}>
@@ -1735,7 +2184,7 @@ export default function InteractiveLcmHcfApp({ onBack }) {
 
   // Render navigation header
   const renderHeader = () => {
-    if (currentStep === 0) return null;
+    if (currentStep === 0 || currentStep === 10 || currentStep === 11) return null;
 
     return (
       <div>
@@ -1765,13 +2214,30 @@ export default function InteractiveLcmHcfApp({ onBack }) {
             if (currentStep === stepNum) className += ' active';
             else if (currentStep > stepNum) className += ' completed';
 
+            const isLocked = stepNum > maxStepReached;
+            if (isLocked) className += ' locked';
+
             return (
               <React.Fragment key={step.id}>
-                <div className={className} onClick={() => setCurrentStep(stepNum)} title={step.label}>
-                  {stepNum}
+                <div 
+                  className={className} 
+                  onClick={() => {
+                    if (!isLocked) {
+                      setCurrentStep(stepNum);
+                      setCurrentSlide(0);
+                    }
+                  }} 
+                  title={step.label}
+                >
+                  {isLocked ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  ) : stepNum}
                 </div>
                 {idx < 9 && !(level === 1 && stepNum === 7) && (
-                  <div className={`step-line ${currentStep > stepNum ? 'completed' : ''}`}></div>
+                  <div className={`step-line ${(currentStep > stepNum || maxStepReached > stepNum) ? 'completed' : ''}`}></div>
                 )}
               </React.Fragment>
             );
@@ -1794,7 +2260,12 @@ export default function InteractiveLcmHcfApp({ onBack }) {
         <div className={`why-drawer ${whyOpen ? 'open' : ''}`}>
           <div className="why-drawer-header">
             <h3 className="why-drawer-title">{data.title}</h3>
-            <button className="why-drawer-close" onClick={() => setWhyOpen(false)}>×</button>
+            <button className="why-drawer-close" onClick={() => setWhyOpen(false)} aria-label="Close why panel">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
 
           <div className="why-section">
@@ -1802,13 +2273,15 @@ export default function InteractiveLcmHcfApp({ onBack }) {
             <p className="why-section-content">{data.explanation}</p>
           </div>
 
-          <div className="why-section" style={{ background: 'var(--clr-input)', padding: '12px', borderRadius: '8px' }}>
-            <h4 className="why-section-title" style={{ fontSize: '0.9rem', color: 'var(--clr-accent)' }}>Real-World Example</h4>
-            <p className="why-section-content" style={{ color: 'var(--clr-text)' }}>{data.example}</p>
-          </div>
-
           <div className="why-section try-it-out-box">
-            <h4 className="why-section-title" style={{ color: 'var(--clr-accent)' }}>🎯 Try-It-Out Challenge</h4>
+            <h4 className="why-section-title" style={{ color: 'var(--clr-accent)', display: 'flex', alignItems: 'center' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+              <span>Try-It-Out Challenge</span>
+            </h4>
             <p className="try-question">{data.question}</p>
 
             {data.options ? (
@@ -1844,7 +2317,7 @@ export default function InteractiveLcmHcfApp({ onBack }) {
               </div>
             ) : (
               <div className="try-feedback correct">
-                ⭐ Solved! You collected the Reward for this lesson! Check it out in the Rewards tab at the end of the module.
+                ★ Solved! You collected the Reward for this lesson! Check it out in the Rewards tab at the end of the module.
               </div>
             )}
 
@@ -1872,6 +2345,50 @@ export default function InteractiveLcmHcfApp({ onBack }) {
       </div>
 
       {renderWhyPanel()}
+
+      {activityPopup && (
+        <div className="activity-popup-overlay" onClick={() => setActivityPopup(null)}>
+          <div 
+            className={`activity-popup-card ${activityPopup.type}`} 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="activity-popup-header">
+              <h3 className="activity-popup-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                {activityPopup.type === 'success' ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                )}
+                <span>{activityPopup.title}</span>
+              </h3>
+              <button onClick={() => setActivityPopup(null)} aria-label="Close message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="activity-popup-content">
+              {activityPopup.text}
+            </div>
+            <div className="activity-popup-footer">
+              <button 
+                className="btn-ok"
+                onClick={() => setActivityPopup(null)}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
