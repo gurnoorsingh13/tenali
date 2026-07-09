@@ -9096,6 +9096,67 @@ function generateGenericTransfer(topic, originalQuestion) {
   };
 }
 
+function buildSubCheckBody(topic, originalQuestion, userAnswer) {
+  const userStr = String(userAnswer || '').trim();
+  if (['addition', 'basicarith', 'quadratic', 'sqrt', 'multiply'].includes(topic)) {
+    return {
+      ...originalQuestion,
+      answer: userStr,
+      userAnswer: userStr
+    };
+  }
+  if (topic === 'vocab') {
+    return {
+      ...originalQuestion,
+      answerOption: userStr,
+      userAnswer: userStr
+    };
+  }
+  return {
+    ...originalQuestion,
+    userAnswer: userStr
+  };
+}
+
+// Transfer challenge API endpoints
+function generateGenericExplanation(topic, originalQuestion, expectedAnswer) {
+  const prompt = originalQuestion.prompt || '';
+  switch (topic) {
+    case 'addition': {
+      const a = originalQuestion.a !== undefined ? originalQuestion.a : '';
+      const b = originalQuestion.b !== undefined ? originalQuestion.b : '';
+      return `Step 1: Identify the numbers to add → ${a} and ${b}\n` +
+             `Step 2: Align and compute the sum → ${a} + ${b} = ${expectedAnswer}`;
+    }
+    case 'basicarith': {
+      return `Step 1: Parse the arithmetic expression → ${prompt}\n` +
+             `Step 2: Solve the calculation step-by-step → ${expectedAnswer}`;
+    }
+    case 'decimals': {
+      return `Step 1: Align the decimal numbers → ${prompt}\n` +
+             `Step 2: Perform the arithmetic operation → ${expectedAnswer}`;
+    }
+    case 'sqrt': {
+      const q = originalQuestion.q !== undefined ? originalQuestion.q : '';
+      return `Step 1: Find the square root approximation → √${q}\n` +
+             `Step 2: Round to the nearest integer → ${expectedAnswer}`;
+    }
+    case 'quadratic': {
+      const a = originalQuestion.a !== undefined ? originalQuestion.a : '';
+      const b = originalQuestion.b !== undefined ? originalQuestion.b : '';
+      const c = originalQuestion.c !== undefined ? originalQuestion.c : '';
+      const x = originalQuestion.x !== undefined ? originalQuestion.x : '';
+      return `Step 1: Identify the quadratic expression → y = ${a}x² + (${b})x + (${c})\n` +
+             `Step 2: Substitute x = ${x} → ${a}(${x})² + (${b})(${x}) + (${c})\n` +
+             `Step 3: Evaluate → ${expectedAnswer}`;
+    }
+    default: {
+      return `Step 1: Parse the problem statement → ${prompt}\n` +
+             `Step 2: Solve step-by-step using standard rules → ${expectedAnswer}`;
+    }
+  }
+}
+
 // Transfer challenge API endpoints
 app.get('/transfer-api/question', async (req, res) => {
   try {
@@ -9164,7 +9225,7 @@ app.post('/transfer-api/check', express.json(), async (req, res) => {
       }
 
       expectedAnswer = originalQuestion.answer !== undefined ? originalQuestion.answer : '';
-      explanation = 'The calculations are verified against standard procedural rules.';
+      explanation = generateGenericExplanation(varTopic, originalQuestion, expectedAnswer);
       transferMapping = `This real-world challenge tests the concept of ${varTopic.toUpperCase()} applied to a practical scenario.`;
       context = 'generic';
 
@@ -9177,24 +9238,24 @@ app.post('/transfer-api/check', express.json(), async (req, res) => {
         const checkResponse = await fetch(`http://localhost:${PORT}/${varTopic}-api/check`, {
           method: 'POST',
           headers: checkHeaders,
-          body: JSON.stringify({
-            ...originalQuestion,
-            userAnswer: String(userAnswer || '').trim(),
-            answer: String(userAnswer || '').trim()
-          })
+          body: JSON.stringify(buildSubCheckBody(varTopic, originalQuestion, userAnswer))
         });
 
         if (checkResponse.ok) {
           const checkResult = await checkResponse.json();
           correct = checkResult.correct;
           expectedAnswer = checkResult.display || checkResult.correctAnswer || checkResult.answer || expectedAnswer;
-          explanation = checkResult.explanation || checkResult.message || explanation;
+          
+          const hasRealExplanation = checkResult.explanation && checkResult.explanation.includes('Step');
+          explanation = hasRealExplanation ? checkResult.explanation : generateGenericExplanation(varTopic, originalQuestion, expectedAnswer);
         } else {
           correct = compareAnswers(userAnswer, expectedAnswer);
+          explanation = generateGenericExplanation(varTopic, originalQuestion, expectedAnswer);
         }
       } catch (checkErr) {
         console.error(`Generic check call failed for topic ${varTopic}, falling back to compareAnswers:`, checkErr);
         correct = compareAnswers(userAnswer, expectedAnswer);
+        explanation = generateGenericExplanation(varTopic, originalQuestion, expectedAnswer);
       }
     } else {
       const scenarios = transferScenarios[topic];
@@ -9237,23 +9298,7 @@ app.post('/transfer-api/check', express.json(), async (req, res) => {
         transferContext: context
       });
 
-      if (correct) {
-        // Query successful attempts for this topic
-        const correctCount = await auth.StudentAttemptLog.countDocuments({
-          studentId: user._id,
-          topicKey: topic,
-          challengeType: 'transfer',
-          correct: true
-        });
 
-        // 2+ correct answers triggers Gold Mastery
-        if (correctCount >= 2 && !user.goldMastery.includes(topic)) {
-          user.goldMastery.push(topic);
-          user.coins = (user.coins || 0) + 75;
-          await user.save();
-          goldMasteryEarned = true;
-        }
-      }
     }
 
     res.json({
