@@ -49793,6 +49793,78 @@ function VachanaApp({ onBack }) {
       examples: 'If "A and B have $10 and $20, respectively", it means A has $10 and B has $20.',
       misconception: 'Ignoring the mapping sequence. If respectively is omitted, the assignment of values is ambiguous.',
       related: ['each', 'equal']
+    },
+    divisor: {
+      term: 'Divisor',
+      everyday: 'A number by which another number is to be divided.',
+      math: 'The number by which another number (the dividend) is divided.',
+      examples: 'In the equation 15 ÷ 3 = 5, 3 is the divisor.',
+      misconception: 'Often confused with "dividend" (the number being divided) or "quotient" (the result).',
+      related: ['factor', 'quotient']
+    },
+    product: {
+      term: 'Product',
+      everyday: 'An article or substance that is manufactured or refined for sale.',
+      math: 'The result obtained by multiplying two or more quantities together.',
+      examples: 'The product of 3 and 4 is 12 (3 × 4 = 12).',
+      misconception: 'Often confused with "sum" (addition) or "quotient" (division).',
+      related: ['factor', 'multiple', 'sum']
+    },
+    variable: {
+      term: 'Variable',
+      everyday: 'Not consistent or having a fixed pattern; liable to change.',
+      math: 'A symbol (usually a letter like x, y, or z) representing a value that can change or is unknown.',
+      examples: 'In the expression 3x + 5, x is the variable.',
+      misconception: 'Believing a variable always has a single fixed value. It represents a placeholder that can take various values.',
+      related: ['constant', 'coefficient', 'term']
+    },
+    constant: {
+      term: 'Constant',
+      everyday: 'Occurring continuously over a period of time.',
+      math: 'A fixed value that does not change (a number on its own).',
+      examples: 'In the expression 3x + 5, 5 is the constant.',
+      misconception: 'Confusing constants with coefficients. In 3x + 5, 3 is a coefficient multiplying the variable, while 5 is a standalone constant.',
+      related: ['variable', 'coefficient', 'term']
+    },
+    term: {
+      term: 'Term',
+      everyday: 'A word or phrase used to describe a thing or express a concept.',
+      math: 'A single number, a variable, or numbers and variables multiplied together, separated by + or − signs in an expression.',
+      examples: 'The expression 3x + 5 has two terms: 3x and 5.',
+      misconception: 'Confusing terms with factors. Terms are added or subtracted, while factors are multiplied.',
+      related: ['variable', 'constant', 'coefficient']
+    },
+    sum: {
+      term: 'Sum',
+      everyday: 'A particular amount of money.',
+      math: 'The total amount resulting from the addition of two or more numbers.',
+      examples: 'The sum of 3 and 4 is 7 (3 + 4 = 7).',
+      misconception: 'Confusing "sum" with "product" (multiplication).',
+      related: ['difference', 'product', 'quotient']
+    },
+    quotient: {
+      term: 'Quotient',
+      everyday: 'A degree or amount of a specified quality or characteristic.',
+      math: 'The result obtained by dividing one quantity by another.',
+      examples: 'In 15 ÷ 3 = 5, the quotient is 5.',
+      misconception: 'Confusing the quotient (the result) with the divisor (the number dividing) or the remainder.',
+      related: ['divisor', 'sum', 'difference']
+    },
+    each: {
+      term: 'Each',
+      everyday: 'Used to refer to every one of two or more people or things, regarded and identified separately.',
+      math: 'An indicator of individual distribution or multiplication across group members.',
+      examples: 'If Rahul bought 3 books for $5 each, the total cost is 3 × 5 = $15.',
+      misconception: 'Confused with "altogether". "Each" tells you the value per item, whereas "altogether" represents the combined sum.',
+      related: ['respectively', 'equal']
+    },
+    equal: {
+      term: 'Equal',
+      everyday: 'Being the same in quantity, size, degree, or value.',
+      math: 'Having the exact same numerical value, amount, or algebraic representation.',
+      examples: '2x + 10 = 50 states that the left expression is equal to 50.',
+      misconception: 'Treating the equals sign as an action prompt (e.g. "write the answer here") rather than a statement of equivalence balance.',
+      related: ['respectively', 'each']
     }
   };
   const [selectedTerm, setSelectedTerm] = useState('factor');
@@ -49910,10 +49982,9 @@ function VachanaApp({ onBack }) {
 
   // --- 7. Readability Analyzer State ---
   const [readText, setReadText] = useState('A train leaves the station traveling at sixty kilometers per hour. A second train leaves four hours later from the same platform in the same direction, traveling at ninety kilometers per hour. How long will it take for the second train to overtake the first train?');
-  const [readMetrics, setReadMetrics] = useState({ ease: 0, grade: 0, words: 0, sentences: 0, syllables: 0 });
 
-  useEffect(() => {
-    if (!readText.trim()) return;
+  const readMetrics = useMemo(() => {
+    if (!readText.trim()) return { ease: 0, grade: 0, words: 0, sentences: 0, syllables: 0 };
     const wordsArr = readText.trim().split(/\s+/).filter(w => w.length > 0);
     const words = wordsArr.length;
     const sentences = readText.split(/[.!?]+/).filter(s => s.trim().length > 0).length || 1;
@@ -49934,13 +50005,13 @@ function VachanaApp({ onBack }) {
     const ease = 206.835 - (1.015 * asl) - (84.6 * asw);
     const grade = (0.39 * asl) + (11.8 * asw) - 15.59;
 
-    setReadMetrics({
+    return {
       words,
       sentences,
       syllables,
       ease: Math.round(ease * 10) / 10,
       grade: Math.round(grade * 10) / 10
-    });
+    };
   }, [readText]);
 
   // --- 8. Pronoun Resolver State ---
@@ -50023,8 +50094,6 @@ function VachanaApp({ onBack }) {
   };
 
   // --- 11. Jumbled Word Equations State ---
-  const initialJumbled = ['adding', 'three times', 'y', 'four to', 'the sum of'];
-  const correctJumbledOrder = [1, 4, 0, 3, 2]; // three times the sum of adding four to y
   const [jumbledBlocks, setJumbledBlocks] = useState([
     'y', 'adding', 'the sum of', 'three times', 'four to'
   ]);
@@ -51008,7 +51077,7 @@ function VachanaApp({ onBack }) {
               <p style={{ fontSize: '0.95rem', marginBottom: '14px' }}>
                 Build the algebraic structure of the relationship without numeric values: 
                 <br />
-                <strong>"A factory produces A widgets per hour. A second factory produces B widgets per hour but starts C hours later. How long does it take for both factories to produce a total of D widgets?"</strong>
+                <strong>"A factory produces A widgets per hour. A second factory produces B widgets per hour. If they operate together, how long does it take for both factories to produce a total of D widgets?"</strong>
               </p>
               
               <div style={{ minHeight: '50px', background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '12px', padding: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '16px' }}>

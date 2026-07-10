@@ -144,12 +144,12 @@ This document details the pedagogical foundations, cognitive models, and academi
   * Paivio, A. (1986). *Mental Representations: A Dual Coding Approach*. Oxford University Press.
   * Leinhardt, G., Zaslavsky, O., & Stein, M. K. (1990). Functions, Graphs, and Graphing: Tasks, Learning, and Teaching. *Review of Educational Research*, 60(1), 1-64.
 
-### 20. Error Communication
-* **Pedagogical Framework**: Productive Failure (Kapur, 2008) & Self-Explanation Effect (Chi et al., 1989).
-* **Research Context**: Analyzing worked examples that contain calculation errors, identifying them, and articulating *why* they are wrong is more effective at building logical rigor than solving problems correctly.
+### 20. Root Decoder
+* **Pedagogical Framework**: Morphological Analysis in Math Vocabulary (Monroe & Orme, 2002) & Etymological Scaffolding.
+* **Research Context**: Breaking down mathematical terms into their Greek and Latin roots (e.g., "poly" meaning many, "equi" meaning equal) helps students decode complex words morphologically, which bridges general language skills and abstract mathematical notation.
 * **Key References**:
-  * Kapur, M. (2008). Productive Failure. *Cognition and Instruction*, 26(3), 379-424.
-  * Chi, M. T., Bassok, M., Lewis, M. W., Reimann, P., & Glaser, R. (1989). Self-Explanations: How Students Study and Use Examples in Learning to Solve Problems. *Cognitive Science*, 13(2), 145-182.
+  * Monroe, E. E., & Orme, M. P. (2002). Developing Mathematical Vocabulary: Which Strategy is Best? *School Science and Mathematics*, 102(3), 139-142.
+  * Rubenstein, R. N., & Thompson, D. R. (2002). Understanding and Supporting Children's Mathematical Vocabulary Development. *Teaching Children Mathematics*, 9(2), 107-112.
 
 ### 21. Concept Simplification
 * **Pedagogical Framework**: Analogy-Based Learning (Gentner, 1983) & The Feynman Technique.
