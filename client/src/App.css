@@ -813,7 +813,7 @@ button:disabled {
   left: auto;
   z-index: 101;
   width: 520px;
-  max-height: 480px;
+  max-height: 580px;
   background: var(--clr-card);
   border: 1px solid var(--clr-text-soft);
   border-left: 3px solid var(--clr-accent);
@@ -858,7 +858,7 @@ button:disabled {
   .word-explorer-panel {
     grid-template-columns: 1fr;
     width: min(320px, calc(100vw - 48px));
-    max-height: 400px;
+    max-height: 480px;
   }
 }
 
@@ -953,6 +953,79 @@ button:disabled {
   font-size: 1.05rem;
   line-height: 1.55;
   color: var(--clr-text);
+}
+
+/* (2) In Simple Words — the child-friendly rewrite. This is the
+   headline explanation the student sees first. */
+.word-explorer-reader-simple {
+  margin: 0 0 14px 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 1.04rem;
+  line-height: 1.55;
+  color: var(--clr-text);
+  font-weight: 500;
+}
+
+/* (3) Visual — a small centered inline SVG. The SVG itself uses
+   currentColor for stroke so it inherits the parent text color. */
+.word-explorer-reader-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0 18px 0;
+  color: var(--clr-text);
+}
+
+.glossary-visual {
+  width: 132px;
+  height: auto;
+  max-width: 100%;
+  display: block;
+}
+
+/* (4) Real-life Example — subtle, muted, one-line accent on the
+   icon to keep it visually quieter than the headline. */
+.word-explorer-reader-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--clr-text-soft);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* (5) Remember — short memory-tip. Highlighted with the existing
+   accent-soft token so it reads as a callout without inventing new
+   colors or backgrounds. */
+.word-explorer-reader-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-accent-soft);
+  color: var(--clr-accent);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.word-explorer-reader-icon {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.word-explorer-reader-body {
+  flex: 1;
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

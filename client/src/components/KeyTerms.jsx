@@ -6,53 +6,66 @@
  * expands a 2-column anchored panel below it:
  *   - LEFT:  vertical list of the curated glossary terms for the topic
  *            (each row is a navigation button).
- *   - RIGHT: the explanation viewer — a heading and a paragraph showing the
- *            selected word and its definition. NOT a tooltip, NOT a popover.
+ *   - RIGHT: the explanation viewer, showing for the selected word:
+ *              1. Title
+ *              2. In Simple Words  (child-friendly rewrite)
+ *              3. Visual           (small inline SVG)
+ *              4. Real-life Example
+ *              5. Remember         (memory tip)
  *
  * Only ONE glossary system exists: `KeyTerms` reads from the same
- * `matchMap` and `topicGlossaryMap.json` that the in-question
+ * `glossaryTerms.json` and `topicGlossaryMap.json` that the in-question
  * `<GlossaryText>` reads from. Definitions are never duplicated.
  *
  * Behaviour:
- *   - Click "Word Explorer" button  → panel toggles open/closed
- *   - Panel opens → first curated term auto-selected; right pane populated
- *   - Click a word on the left         → right pane updates; panel stays open
- *   - Click the already-selected word  → no-op (stays selected)
- *   - Click outside the panel           → panel closes
- *   - Press Escape                      → panel closes
- *   - Window resize (mobile ↔ desktop) → CSS Grid handles layout swap
+ *   - Click "Word Explorer" button  -> panel toggles open/closed
+ *   - Panel opens -> first curated term auto-selected; right pane populated
+ *   - Click a word on the left        -> right pane updates; panel stays open
+ *   - Click the already-selected word -> no-op (stays selected)
+ *   - Click outside the panel        -> panel closes
+ *   - Press Escape                   -> panel closes
+ *   - Window resize (mobile <-> desktop) -> CSS Grid handles layout swap
  *
  * Edge cases:
  *   - Topic has no curated terms, or all terms are missing from the
- *     glossary, or the data files are malformed → entire component returns
+ *     glossary, or the data files are malformed -> entire component returns
  *     `null` (no button rendered). Quizzes still work.
- *   - Selected term somehow has no definition → right pane shows
- *     "Definition unavailable." (defensive fallback).
+ *   - Selected term somehow has no simpleMeaning -> falls back to
+ *     `definition` so the right pane is never empty (defensive fallback).
+ *   - Missing visualId / realLifeExample / memoryTip -> those sections
+ *     are simply not rendered (clean gap, no placeholder).
  *
- * Internal component name and CSS classes are unchanged. Only the
- * user-facing string ("Learn These Words") is replaced ("Word Explorer").
+ * Internal component name and CSS classes are unchanged.
  */
 
 import { useState, useEffect, useRef } from 'react'
 import topicGlossaryMap from '../data/topicGlossaryMap.json'
-import { matchMap } from './GlossaryText'
+import glossaryTerms from '../data/glossaryTerms.json'
+import GlossaryVisual from '../data/glossaryVisuals'
 
 export default function KeyTerms({ topicKey }) {
   // -------------------------------------------------------------------
-  // Data resolution — fail-safe try/catch around the entire read.
+  // Data resolution - fail-safe try/catch around the entire read.
   // -------------------------------------------------------------------
   let validEntries = []
   try {
     if (
       topicKey && typeof topicKey === 'string' &&
       topicGlossaryMap && typeof topicGlossaryMap === 'object' &&
-      matchMap && typeof matchMap === 'object'
+      Array.isArray(glossaryTerms)
     ) {
       const termKeys = topicGlossaryMap[topicKey] || []
+      // Build a lowercase -> full-entry lookup once.
+      const lookup = new Map()
+      for (const e of glossaryTerms) {
+        if (e && typeof e.term === 'string') {
+          lookup.set(e.term.toLowerCase(), e)
+        }
+      }
       const seen = new Set()
       for (const key of termKeys) {
         if (!key || typeof key !== 'string') continue
-        const entry = matchMap[String(key).toLowerCase()]
+        const entry = lookup.get(String(key).toLowerCase())
         if (!entry) continue
         const dedupeKey = entry.term && entry.term.toLowerCase()
         if (!dedupeKey || seen.has(dedupeKey)) continue
@@ -65,7 +78,6 @@ export default function KeyTerms({ topicKey }) {
       console.warn('Word Explorer: failed to read data, hiding.', err)
     }
     return null
-
   }
 
   if (validEntries.length === 0) return null
@@ -88,7 +100,7 @@ export default function KeyTerms({ topicKey }) {
     } else {
       setSelectedKey(null)
     }
-    // We intentionally depend only on isOpen — switching word is the
+    // We intentionally depend only on isOpen - switching word is the
     // user's action via the dedicated handler below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
@@ -179,9 +191,30 @@ export default function KeyTerms({ topicKey }) {
           </div>
           <div className="word-explorer-reader" aria-live="polite">
             <h4 className="word-explorer-reader-term">{selectedEntry.term}</h4>
-            <p className="word-explorer-reader-def">
-              {selectedEntry.definition || 'Definition unavailable.'}
+
+            <p className="word-explorer-reader-simple">
+              {selectedEntry.simpleMeaning || selectedEntry.definition || 'Definition unavailable.'}
             </p>
+
+            {selectedEntry.visualId ? (
+              <div className="word-explorer-reader-visual" aria-hidden="true">
+                <GlossaryVisual id={selectedEntry.visualId} />
+              </div>
+            ) : null}
+
+            {selectedEntry.realLifeExample ? (
+              <div className="word-explorer-reader-example">
+                <span className="word-explorer-reader-icon" aria-hidden="true">🌍</span>
+                <span className="word-explorer-reader-body">{selectedEntry.realLifeExample}</span>
+              </div>
+            ) : null}
+
+            {selectedEntry.memoryTip ? (
+              <div className="word-explorer-reader-tip">
+                <span className="word-explorer-reader-icon" aria-hidden="true">💡</span>
+                <span className="word-explorer-reader-body">{selectedEntry.memoryTip}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
