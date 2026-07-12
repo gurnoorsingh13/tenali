@@ -36096,16 +36096,19 @@ function App() {
       return (
         <ActiveApp
           onBack={journeyContext ? async () => {
-            try {
-              await journeyFetch('/api/learning-journey/complete-concept', {
-                method: 'POST',
-                body: JSON.stringify({
-                  topicId: journeyContext.topicId,
-                  conceptKey: journeyContext.conceptKey
-                })
-              });
-            } catch (e) {
-              console.error('Failed to save concept progress:', e);
+            const isCompleted = !!document.querySelector('.final-score');
+            if (isCompleted) {
+              try {
+                await journeyFetch('/api/learning-journey/complete-concept', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    topicId: journeyContext.topicId,
+                    conceptKey: journeyContext.conceptKey
+                  })
+                });
+              } catch (e) {
+                console.error('Failed to save concept progress:', e);
+              }
             }
             setJourneyContext(null);
             setMode('learning_journey_topic');
