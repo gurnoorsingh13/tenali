@@ -27,6 +27,33 @@ import './App.css'
 // API base URL from environment variables (Vite)
 const API = import.meta.env.VITE_API_BASE_URL || '';
 
+// Global fetch interceptor to automatically attach authorization header
+const originalFetch = window.fetch;
+window.fetch = function(url, options) {
+  try {
+    const token = localStorage.getItem('tenali-auth-token');
+    const urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
+    if (token && urlStr && (urlStr.includes('/api/') || urlStr.includes('-api/') || urlStr.includes('/gk-api/'))) {
+      options = options || {};
+      if (!options.headers) {
+        options.headers = {};
+      }
+      if (typeof Headers !== 'undefined' && options.headers instanceof Headers) {
+        if (!options.headers.has('Authorization')) {
+          options.headers.append('Authorization', `Bearer ${token}`);
+        }
+      } else {
+        if (!options.headers['Authorization'] && !options.headers['authorization']) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Fetch interceptor error:', e);
+  }
+  return originalFetch(url, options);
+};
+
 // App version — increment with each commit
 const TENALI_VERSION = '1.0.86'
 const TENALI_BUILD_DATE = '2026-05-03 18:28 IST'
@@ -42514,7 +42541,7 @@ function ProfileShowcase({ onSelectTopic }) {
  * @param {Object} props
  * @param {Function} props.onBack - Callback to return to home menu
  */
-function GKApp({ onBack }) {
+function GKApp({ onBack, markTopicCompleted }) {
   // Current question object: {id, question, options: [A, B, C, D], ...}
   const [question, setQuestion] = useState(null)
   // User's selected option: 'A', 'B', 'C', or 'D'
@@ -42557,6 +42584,12 @@ function GKApp({ onBack }) {
   const loadQuestion = async (excludeIds) => {
     if (questionNumber >= totalQ) {
       setFinished(true)
+      {
+        const pass = score / totalQ >= 0.8
+        if (pass && typeof markTopicCompleted === 'function') {
+          markTopicCompleted('gk', 'easy')
+        }
+      }
       timer.reset()
       return
     }

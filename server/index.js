@@ -102,6 +102,140 @@ auth.connectMongo()
  * { correct: true, correctAnswer: 8, message: '...', solved: true,
  *   explanation: 'Step 1: Write the problem: 5 + 3\nStep 2: Calculate: 5 + 3 = 8\n...' }
  */
+// Student Attempt Logger Helper
+function extractAttemptDetails(req) {
+  const path = req.path;
+  const body = req.body || {};
+  const match = /^\/([a-z0-9]+)-api\/check/i.exec(path);
+  if (!match) return null;
+  const topicKey = match[1];
+
+  let questionPrompt = '';
+  let userInput = '';
+
+  // Extract user answer
+  if (body.answer !== undefined) userInput = String(body.answer);
+  else if (body.answerOption !== undefined) userInput = String(body.answerOption);
+  else if (body.userAnswer !== undefined) userInput = String(body.userAnswer);
+  else if (body.val !== undefined) userInput = String(body.val);
+  else userInput = JSON.stringify(body);
+
+  // Extract prompt based on topic
+  switch (topicKey) {
+    case 'gk': {
+      const gkQuestions = typeof questions !== 'undefined' ? questions : [];
+      const q = gkQuestions.find((item) => Number(item.id) === Number(body.id));
+      questionPrompt = q ? q.question : `GK Question ID: ${body.id}`;
+      break;
+    }
+    case 'addition':
+      questionPrompt = `Addition: ${body.a} + ${body.b}`;
+      break;
+    case 'basicarith':
+      questionPrompt = `Arithmetic: ${body.a} ${body.op} ${body.b}`;
+      break;
+    case 'multiply':
+      questionPrompt = `Multiplication: ${body.table} x ${body.multiplier}`;
+      break;
+    case 'quadratic':
+      questionPrompt = `Evaluate y = ${body.a}x^2 + ${body.b}x + ${body.c} at x = ${body.x}`;
+      break;
+    case 'sqrt':
+      questionPrompt = `Approximate square root of ${body.q}`;
+      break;
+    case 'vocab': {
+      const vQuestions = typeof vocabQuestions !== 'undefined' ? vocabQuestions : [];
+      const q = vQuestions.find((item) => Number(item.id) === Number(body.id));
+      questionPrompt = q ? `Vocabulary: what is the meaning of "${q.word}"?` : `Vocabulary Question ID: ${body.id}`;
+      break;
+    }
+    default:
+      if (body.prompt) {
+        questionPrompt = body.prompt;
+      } else if (body.question) {
+        questionPrompt = body.question;
+      } else {
+        const params = { ...body };
+        delete params.answer;
+        delete params.answerOption;
+        delete params.userAnswer;
+        delete params.val;
+        delete params.solve;
+        questionPrompt = `${topicKey.toUpperCase()} Problem: ` + JSON.stringify(params);
+      }
+  }
+
+  return { topicKey, questionPrompt, userInput };
+}
+
+// Global middleware to log student attempts for all quiz/check APIs
+app.use((req, res, next) => {
+  if (req.method !== 'POST' || !req.path.includes('-api/check')) {
+    return next();
+  }
+
+  const isSolveOnly = req.body && req.body.solve === true;
+  const originalJson = res.json.bind(res);
+
+  res.json = function (data) {
+    const jsonResult = originalJson(data);
+
+    if (isSolveOnly) return jsonResult;
+
+    // Run async logging in the background
+    (async () => {
+      try {
+        const user = await getUserFromReq(req);
+        if (user) {
+          const details = extractAttemptDetails(req);
+          if (details) {
+            const { topicKey, questionPrompt, userInput } = details;
+            
+            const isMongo = typeof user._id !== 'undefined';
+            if (isMongo) {
+              if (auth.StudentAttemptLog) {
+                await auth.StudentAttemptLog.create({
+                  studentId: user._id,
+                  topicKey,
+                  questionPrompt,
+                  userInput,
+                  correct: !!data.correct,
+                  hintsClickedCount: req.body.hintsUsed || 0,
+                  timeSpentSeconds: req.body.timeSpentSeconds || 0,
+                  stageNumber: 3,
+                  challengeType: 'standard'
+                });
+              }
+            } else {
+              if (!user.attemptLogs) {
+                user.attemptLogs = [];
+              }
+              user.attemptLogs.push({
+                topicKey,
+                questionPrompt,
+                userInput,
+                correct: !!data.correct,
+                timestamp: new Date(),
+                hintsClickedCount: req.body.hintsUsed || 0,
+                timeSpentSeconds: req.body.timeSpentSeconds || 0,
+                stageNumber: 3,
+                challengeType: 'standard'
+              });
+              await user.save();
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[attempt-logger] Failed to log student attempt:', err.message);
+      }
+    })();
+
+    return jsonResult;
+  };
+
+  next();
+});
+
 app.use((req, res, next) => {
   // Only intercept POST requests to check endpoints
   if (req.method !== 'POST' || !req.path.includes('-api/check')) {
@@ -8939,7 +9073,45 @@ app.get('/enhanced', (_req, res) => {
 // LEARNING TRANSFER CHALLENGES & PROGRESS SYNC API
 // ═══════════════════════════════════════════════════════════════════════════
 
+const DB_FILE = path.join(__dirname, 'in_memory_users_db.json');
 const inMemoryUserProfiles = {};
+
+function loadInMemoryProfiles() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      for (const [username, profile] of Object.entries(data)) {
+        inMemoryUserProfiles[username] = {
+          ...profile,
+          save: async function() {
+            saveInMemoryProfiles();
+            return this;
+          }
+        };
+      }
+      console.log(`[auth] Loaded ${Object.keys(inMemoryUserProfiles).length} in-memory user profiles from persistent file fallback`);
+    }
+  } catch (err) {
+    console.error('[auth] Failed to load in-memory profiles:', err.message);
+  }
+}
+
+function saveInMemoryProfiles() {
+  try {
+    const cleaned = {};
+    for (const [username, profile] of Object.entries(inMemoryUserProfiles)) {
+      const clone = { ...profile };
+      delete clone.save;
+      cleaned[username] = clone;
+    }
+    fs.writeFileSync(DB_FILE, JSON.stringify(cleaned, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[auth] Failed to save in-memory profiles:', err.message);
+  }
+}
+
+// Initialize on server start
+loadInMemoryProfiles();
 
 function getInMemoryUser(username) {
   const lowercaseUsername = username.toLowerCase();
@@ -8955,10 +9127,13 @@ function getInMemoryUser(username) {
       streak: 0,
       lastActiveDate: "",
       createdAt: new Date(),
+      milestones: [],
       save: async function() {
+        saveInMemoryProfiles();
         return this;
       }
     };
+    saveInMemoryProfiles();
   }
   return inMemoryUserProfiles[lowercaseUsername];
 }
@@ -9116,6 +9291,89 @@ app.get('/api/progress', async (req, res) => {
   }
 });
 
+// Helper to populate and synchronize user milestones retroactively
+function ensureUserMilestones(user) {
+  if (!user.milestones) {
+    user.milestones = [];
+  }
+  
+  const hasJoined = user.milestones.some(m => m.event === 'Joined Tenali');
+  if (!hasJoined) {
+    user.milestones.push({
+      event: 'Joined Tenali',
+      date: user.createdAt || new Date(),
+      type: 'system'
+    });
+  }
+
+  if (user.achievements && user.achievements.completedCollections) {
+    user.achievements.completedCollections.forEach(c => {
+      const col = collections.find(colVal => colVal.collectionId === c.collectionId);
+      const eventName = `Mastered ${col ? col.name : c.collectionId}`;
+      const hasCol = user.milestones.some(m => m.event === eventName);
+      if (!hasCol) {
+        user.milestones.push({
+          event: eventName,
+          date: c.completedAt || new Date(),
+          type: 'collection',
+          badgeType: col ? col.badgeType : 'trophy'
+        });
+      }
+    });
+  }
+
+  if (user.completedTopics) {
+    user.completedTopics.forEach(topicKey => {
+      let suffix = '';
+      let displaySuffix = '';
+      if (topicKey.endsWith('-started')) {
+        suffix = '-started';
+        displaySuffix = 'Started';
+      } else if (topicKey.endsWith('-easy')) {
+        suffix = '-easy';
+        displaySuffix = 'Unlocked Bronze in';
+      } else if (topicKey.endsWith('-medium')) {
+        suffix = '-medium';
+        displaySuffix = 'Unlocked Silver in';
+      } else if (topicKey.endsWith('-hard') || topicKey.endsWith('-gold')) {
+        suffix = topicKey.endsWith('-hard') ? '-hard' : '-gold';
+        displaySuffix = 'Unlocked Gold in';
+      }
+      
+      if (suffix) {
+        const baseTopic = topicKey.slice(0, -suffix.length);
+        const displayName = baseTopic.charAt(0).toUpperCase() + baseTopic.slice(1);
+        const eventName = `${displaySuffix} ${displayName}`;
+        const hasTopic = user.milestones.some(m => m.event === eventName);
+        if (!hasTopic) {
+          user.milestones.push({
+            event: eventName,
+            date: user.createdAt || new Date(),
+            type: 'topic',
+            badgeType: 'topic'
+          });
+        }
+      }
+    });
+  }
+
+  const streakMilestones = [3, 7, 30];
+  streakMilestones.forEach(days => {
+    if ((user.streak || 0) >= days) {
+      const eventName = `Reached a ${days}-Day Streak!`;
+      const hasStreak = user.milestones.some(m => m.event === eventName);
+      if (!hasStreak) {
+        user.milestones.push({
+          event: eventName,
+          date: user.createdAt || new Date(),
+          type: 'streak',
+          badgeType: `streak_${days}`
+        });
+      }
+    }
+  });
+}
+
 app.post('/api/progress', express.json(), async (req, res) => {
   try {
     const user = await getUserFromReq(req);
@@ -9123,6 +9381,10 @@ app.post('/api/progress', express.json(), async (req, res) => {
       return res.json({ success: true, guest: true });
     }
     const { completedTopics, goldMastery, coins, totalSolved } = req.body;
+    
+    const oldCompleted = user.completedTopics || [];
+    const oldStreak = user.streak || 0;
+    
     if (completedTopics) user.completedTopics = completedTopics;
     if (goldMastery) user.goldMastery = goldMastery;
     if (coins !== undefined) user.coins = coins;
@@ -9130,6 +9392,74 @@ app.post('/api/progress', express.json(), async (req, res) => {
     
     checkDailyStreak(user);
     const newlyCompleted = evaluateCollections(user);
+    
+    // Manage journey milestones
+    ensureUserMilestones(user);
+    
+    const newlyAddedTopics = (user.completedTopics || []).filter(t => !oldCompleted.includes(t));
+    newlyAddedTopics.forEach(topicKey => {
+      let suffix = '';
+      let displaySuffix = '';
+      if (topicKey.endsWith('-started')) {
+        suffix = '-started';
+        displaySuffix = 'Started';
+      } else if (topicKey.endsWith('-easy')) {
+        suffix = '-easy';
+        displaySuffix = 'Unlocked Bronze in';
+      } else if (topicKey.endsWith('-medium')) {
+        suffix = '-medium';
+        displaySuffix = 'Unlocked Silver in';
+      } else if (topicKey.endsWith('-hard') || topicKey.endsWith('-gold')) {
+        suffix = topicKey.endsWith('-hard') ? '-hard' : '-gold';
+        displaySuffix = 'Unlocked Gold in';
+      }
+      
+      if (suffix) {
+        const baseTopic = topicKey.slice(0, -suffix.length);
+        const displayName = baseTopic.charAt(0).toUpperCase() + baseTopic.slice(1);
+        const eventName = `${displaySuffix} ${displayName}`;
+        const hasTopic = user.milestones.some(m => m.event === eventName);
+        if (!hasTopic) {
+          user.milestones.push({
+            event: eventName,
+            date: new Date(),
+            type: 'topic',
+            badgeType: 'topic'
+          });
+        }
+      }
+    });
+
+    newlyCompleted.forEach(colId => {
+      const col = collections.find(colVal => colVal.collectionId === colId);
+      const eventName = `Mastered ${col ? col.name : colId}`;
+      const hasCol = user.milestones.some(m => m.event === eventName);
+      if (!hasCol) {
+        user.milestones.push({
+          event: eventName,
+          date: new Date(),
+          type: 'collection',
+          badgeType: col ? col.badgeType : 'trophy'
+        });
+      }
+    });
+
+    const streakMilestones = [3, 7, 30];
+    streakMilestones.forEach(days => {
+      if (oldStreak < days && (user.streak || 0) >= days) {
+        const eventName = `Reached a ${days}-Day Streak!`;
+        const hasStreak = user.milestones.some(m => m.event === eventName);
+        if (!hasStreak) {
+          user.milestones.push({
+            event: eventName,
+            date: new Date(),
+            type: 'streak',
+            badgeType: `streak_${days}`
+          });
+        }
+      }
+    });
+
     await user.save();
     
     res.json({
@@ -9305,26 +9635,15 @@ app.get('/api/profile/showcase', async (req, res) => {
       };
     });
     
-    const timeline = [];
-    if (user.createdAt) {
-      timeline.push({
-        event: 'Joined Tenali',
-        date: user.createdAt,
-        type: 'system'
-      });
-    }
+    // Ensure all milestones are retroactively populated/synchronized
+    ensureUserMilestones(user);
     
-    if (user.achievements && user.achievements.completedCollections) {
-      user.achievements.completedCollections.forEach(c => {
-        const col = collections.find(colVal => colVal.collectionId === c.collectionId);
-        timeline.push({
-          event: `Mastered ${col ? col.name : c.collectionId}`,
-          date: c.completedAt,
-          type: 'collection',
-          badgeType: col ? col.badgeType : 'trophy'
-        });
-      });
-    }
+    const timeline = (user.milestones || []).map(m => ({
+      event: m.event,
+      date: m.date,
+      type: m.type || 'topic',
+      badgeType: m.badgeType || 'topic'
+    }));
     
     timeline.sort((a, b) => new Date(b.date) - new Date(a.date));
     

@@ -3,3 +3,4 @@ node_modules
 client/dist
 server.log
 docs/
+server/in_memory_users_db.json

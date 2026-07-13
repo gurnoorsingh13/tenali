@@ -43,7 +43,15 @@ const UserSchema = new mongoose.Schema({
   pinnedBadges: { type: [String], default: [] },
   totalSolved: { type: Number, default: 0 },
   streak: { type: Number, default: 0 },
-  lastActiveDate: { type: String, default: "" }
+  lastActiveDate: { type: String, default: "" },
+  milestones: [
+    {
+      event: { type: String, required: true },
+      date: { type: Date, default: Date.now },
+      type: { type: String },
+      badgeType: { type: String }
+    }
+  ]
 });
 
 const User = mongoose.model('User', UserSchema);
