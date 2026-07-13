@@ -29,7 +29,7 @@ const API = import.meta.env.VITE_API_BASE_URL || '';
 
 // Global fetch interceptor to automatically attach authorization header
 const originalFetch = window.fetch;
-window.fetch = function(url, options) {
+window.fetch = function (url, options) {
   try {
     const token = localStorage.getItem('tenali-auth-token');
     const urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
@@ -190,15 +190,7 @@ function AuthMenu() {
                 >
                   Puzzles
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { window.location.href = '/collections'; setOpen(false) }}
-                  style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--clr-text)', cursor: 'pointer', fontSize: '0.95rem' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-                >
-                  Collections
-                </button>
+
                 <button
                   type="button"
                   onClick={() => { window.location.href = '/profile'; setOpen(false) }}
@@ -40671,7 +40663,33 @@ const getTopicBadgeType = (topicKey, completedTopicsList) => {
 
 function App() {
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
-  const [mode, setMode] = useState(null)
+  const [mode, setMode] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('mode') || null;
+    } catch {
+      return null;
+    }
+  })
+
+  // Synchronize browser URL query parameters dynamically with the active mode state
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const currentMode = params.get('mode');
+      if (mode) {
+        if (currentMode !== mode) {
+          window.history.replaceState({}, '', `/?mode=${mode}`);
+        }
+      } else {
+        if (currentMode) {
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync URL mode:', e);
+    }
+  }, [mode]);
 
   const { user } = useAuth()
   const [completedTopics, setCompletedTopics] = useState(() => {
@@ -40691,6 +40709,7 @@ function App() {
   })
   const [celebrationQueue, setCelebrationQueue] = useState([])
   const [transferTopic, setTransferTopic] = useState(null)
+  const syncTimeoutRef = useRef(null)
 
   // Sync progress with backend on mount & whenever user changes
   useEffect(() => {
@@ -40727,20 +40746,36 @@ function App() {
     return () => window.removeEventListener('tenali-auth-change', handleAuthChange)
   }, [user])
 
-  const syncProgressToServer = async (newCompleted, newGold, newCoins, newSolved, newStreak) => {
-    const activeSolved = newSolved !== undefined ? newSolved : totalSolved
-    const activeStreak = newStreak !== undefined ? newStreak : streak
-    localStorage.setItem('tenali-completed-topics', JSON.stringify(newCompleted))
-    localStorage.setItem('tenali-gold-mastery', JSON.stringify(newGold))
-    localStorage.setItem('tenali-coins', String(newCoins))
-    localStorage.setItem('tenali-total-solved', String(activeSolved))
-    localStorage.setItem('tenali-streak', String(activeStreak))
+  const syncProgressToServer = (newCompleted, newGold, newCoins, newSolved, newStreak) => {
+    // 1. Read current values from localStorage (which might be newer than React state due to concurrent updates)
+    let localCompleted = [];
+    try { localCompleted = JSON.parse(localStorage.getItem('tenali-completed-topics') || '[]') } catch { }
+    let localGold = [];
+    try { localGold = JSON.parse(localStorage.getItem('tenali-gold-mastery') || '[]') } catch { }
+    let localCoins = 0;
+    try { localCoins = parseInt(localStorage.getItem('tenali-coins') || '0', 10) } catch { }
+    let localSolved = 0;
+    try { localSolved = parseInt(localStorage.getItem('tenali-total-solved') || '0', 10) } catch { }
+    let localStreak = 0;
+    try { localStreak = parseInt(localStorage.getItem('tenali-streak') || '0', 10) } catch { }
 
-    // Check for new unlocks locally
+    // 2. Merge incoming values with local storage using union/max to prevent progress regression
+    const mergedCompleted = Array.from(new Set([...localCompleted, ...(newCompleted || completedTopics)]));
+    const mergedGold = Array.from(new Set([...localGold, ...(newGold || goldMastery)]));
+    const mergedCoins = Math.max(localCoins, newCoins !== undefined ? newCoins : coins);
+    const mergedSolved = Math.max(localSolved, newSolved !== undefined ? newSolved : totalSolved);
+    const mergedStreak = Math.max(localStreak, newStreak !== undefined ? newStreak : streak);
+
+    // 3. Immediately write back to localStorage so that any synchronous subsequent reads are correct
+    localStorage.setItem('tenali-completed-topics', JSON.stringify(mergedCompleted));
+    localStorage.setItem('tenali-gold-mastery', JSON.stringify(mergedGold));
+    localStorage.setItem('tenali-coins', String(mergedCoins));
+    localStorage.setItem('tenali-total-solved', String(mergedSolved));
+    localStorage.setItem('tenali-streak', String(mergedStreak));
+
+    // 4. Check for newly unlocked keys locally relative to the *state* completedTopics to trigger animations/modals
     const enqueues = [];
-
-    // 1. Topic Badge unlocks/upgrades
-    const newlyUnlockedKeys = newCompleted.filter(k => !completedTopics.includes(k));
+    const newlyUnlockedKeys = mergedCompleted.filter(k => !completedTopics.includes(k));
     newlyUnlockedKeys.forEach(k => {
       if (k.endsWith('-started')) {
         const topicKey = k.replace('-started', '');
@@ -40781,8 +40816,7 @@ function App() {
       }
     });
 
-    // 2. Streak milestones
-    if (streak < 3 && activeStreak >= 3) {
+    if (streak < 3 && mergedStreak >= 3) {
       enqueues.push({
         title: "Streak Milestone!",
         badgeType: "streak_3",
@@ -40790,7 +40824,7 @@ function App() {
         message: "Congratulations! You have unlocked the 3-Day Streak badge for maintaining an active learning streak for 3 consecutive days."
       });
     }
-    if (streak < 7 && activeStreak >= 7) {
+    if (streak < 7 && mergedStreak >= 7) {
       enqueues.push({
         title: "Streak Milestone!",
         badgeType: "streak_7",
@@ -40798,7 +40832,7 @@ function App() {
         message: "Congratulations! You have unlocked the 7-Day Streak badge for maintaining an active learning streak for 7 consecutive days."
       });
     }
-    if (streak < 30 && activeStreak >= 30) {
+    if (streak < 30 && mergedStreak >= 30) {
       enqueues.push({
         title: "Streak Milestone!",
         badgeType: "streak_30",
@@ -40811,67 +40845,74 @@ function App() {
       setCelebrationQueue(prev => [...prev, ...enqueues]);
     }
 
-    const token = localStorage.getItem('tenali-auth-token')
-    if (!token) return
+    // 5. Debounce the server-side sync network request
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
 
-    try {
-      const r = await fetch(`${API}/api/progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          completedTopics: newCompleted,
-          goldMastery: newGold,
-          coins: newCoins,
-          totalSolved: activeSolved
+    syncTimeoutRef.current = setTimeout(async () => {
+      const token = localStorage.getItem('tenali-auth-token')
+      if (!token) return
+
+      try {
+        const r = await fetch(`${API}/api/progress`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            completedTopics: mergedCompleted,
+            goldMastery: mergedGold,
+            coins: mergedCoins,
+            totalSolved: mergedSolved
+          })
         })
-      })
-      if (r.ok) {
-        const data = await r.json()
-        if (data && data.success) {
-          if (data.coins !== undefined && data.coins !== newCoins) {
-            setCoins(data.coins)
-            localStorage.setItem('tenali-coins', String(data.coins))
-          }
-          if (data.streak !== undefined && data.streak !== activeStreak) {
-            setStreak(data.streak)
-            localStorage.setItem('tenali-streak', String(data.streak))
-          }
-          if (data.newlyCompleted && data.newlyCompleted.length > 0) {
-            const serverEnqueues = [];
-            data.newlyCompleted.forEach(colId => {
-              const displayName = colId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-              const defaultBadgeTypes = {
-                'counting-critters': 'dino',
-                'arithmetic-basics': 'trophy',
-                'fraction-explorer': 'feast',
-                'geometry-master': 'wizard',
-                'division-detective': 'detective',
-                'time-traveler': 'rocket',
-                'data-detective': 'chest',
-                'algebra-alchemist': 'flask',
-                'pythagoras-path': 'shield',
-                'trig-treasure': 'crown'
-              };
-              const bType = defaultBadgeTypes[colId] || 'trophy';
-              serverEnqueues.push({
-                title: "Album Completed!",
-                badgeType: bType,
-                level: "gold",
-                message: `Congratulations! You have completed the ${displayName} Collection and unlocked the Gold Album Badge!`
+        if (r.ok) {
+          const data = await r.json()
+          if (data && data.success) {
+            if (data.coins !== undefined && data.coins !== mergedCoins) {
+              setCoins(data.coins)
+              localStorage.setItem('tenali-coins', String(data.coins))
+            }
+            if (data.streak !== undefined && data.streak !== mergedStreak) {
+              setStreak(data.streak)
+              localStorage.setItem('tenali-streak', String(data.streak))
+            }
+            if (data.newlyCompleted && data.newlyCompleted.length > 0) {
+              const serverEnqueues = [];
+              data.newlyCompleted.forEach(colId => {
+                const displayName = colId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const defaultBadgeTypes = {
+                  'counting-critters': 'dino',
+                  'arithmetic-basics': 'trophy',
+                  'fraction-explorer': 'feast',
+                  'geometry-master': 'wizard',
+                  'division-detective': 'detective',
+                  'time-traveler': 'rocket',
+                  'data-detective': 'chest',
+                  'algebra-alchemist': 'flask',
+                  'pythagoras-path': 'shield',
+                  'trig-treasure': 'crown'
+                };
+                const bType = defaultBadgeTypes[colId] || 'trophy';
+                serverEnqueues.push({
+                  title: "Album Completed!",
+                  badgeType: bType,
+                  level: "gold",
+                  message: `Congratulations! You have completed the ${displayName} Collection and unlocked the Gold Album Badge!`
+                });
               });
-            });
-            if (serverEnqueues.length > 0) {
-              setCelebrationQueue(prev => [...prev, ...serverEnqueues]);
+              if (serverEnqueues.length > 0) {
+                setCelebrationQueue(prev => [...prev, ...serverEnqueues]);
+              }
             }
           }
         }
+      } catch (e) {
+        console.error('Failed to push progress to backend:', e)
       }
-    } catch (e) {
-      console.error('Failed to push progress to backend:', e)
-    }
+    }, 200);
   }
 
   useEffect(() => {
@@ -41007,31 +41048,7 @@ function App() {
   // Check if current URL matches a specific student page
   const pathname = window.location.pathname.replace(/\/$/, '').toLowerCase()
 
-  // Route: /collections
-  if (pathname === '/collections') {
-    return (
-      <div className="app-shell">
-        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-        <div className="card">
-          <AuthGate>
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px' }}>
-                <img src="/tenali.png" alt="Tenali Raman" style={{ width: '80px', height: 'auto', flexShrink: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/'} />
-                <div>
-                  <h1 style={{ margin: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/'}>Tenali</h1>
-                  <p className="subtitle" style={{ margin: 0 }}>View your achievements and milestones</p>
-                </div>
-              </div>
-              <AchievementCollections completedTopics={completedTopics} onSelectTopic={(topicKey) => { setMode(topicKey) }} />
-            </div>
-          </AuthGate>
-        </div>
-        {renderCelebrationModal()}
-      </div>
-    )
-  }
+
 
   // Route: /profile
   if (pathname === '/profile') {
@@ -41050,7 +41067,7 @@ function App() {
                   <p className="subtitle" style={{ margin: 0 }}>View your achievements and milestones</p>
                 </div>
               </div>
-              <ProfileShowcase onSelectTopic={(topicKey) => { setMode(topicKey) }} />
+              <ProfileShowcase onSelectTopic={(topicKey) => { window.location.href = `/?mode=${topicKey}` }} />
             </div>
           </AuthGate>
         </div>
@@ -41981,6 +41998,11 @@ const TOPIC_DISPLAY_NAMES = {
   'coordgeom': 'Coordinate Geometry'
 };
 
+const getTopicDisplayName = (key) => {
+  if (!key) return '';
+  return TOPIC_DISPLAY_NAMES[key] || (key.charAt(0).toUpperCase() + key.slice(1));
+};
+
 function AchievementCollections({ completedTopics = [], onSelectTopic }) {
   const [data, setData] = useState(null)
   const [selectedBook, setSelectedBook] = useState(null)
@@ -42061,7 +42083,7 @@ function AchievementCollections({ completedTopics = [], onSelectTopic }) {
                       onSelectTopic(book.nextTopic);
                     }
                   }}>
-                    Play Next: {book.nextTopic.charAt(0).toUpperCase() + book.nextTopic.slice(1)}
+                    Play Next: {getTopicDisplayName(book.nextTopic)}
                   </button>
                 )}
                 {isDone && <div className="book-complete-tag">Completed</div>}
@@ -42087,16 +42109,14 @@ function AchievementCollections({ completedTopics = [], onSelectTopic }) {
                     const isStartedOrCompleted = level !== 'locked';
                     return (
                       <div key={topic.topicKey} className={`topic-row-check ${topic.completed ? 'completed' : isStartedOrCompleted ? 'completed' : 'locked'}`} onClick={() => {
-                        if (!topic.completed) {
-                          setSelectedBook(null);
-                          onSelectTopic(topic.topicKey);
-                        }
+                        setSelectedBook(null);
+                        onSelectTopic(topic.topicKey);
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px' }}>
                           <BadgeIcon type="trophy" level={level} size={32} locked={level === 'locked'} />
                         </div>
                         <div className="topic-text-info">
-                          <span className="topic-check-name">{topic.topicKey.charAt(0).toUpperCase() + topic.topicKey.slice(1)}</span>
+                          <span className="topic-check-name">{getTopicDisplayName(topic.topicKey)}</span>
                           <span className="topic-check-status">
                             {level === 'gold' ? 'Gold Mastery!' : level === 'silver' ? 'Silver Complete!' : level === 'bronze' ? 'Bronze Complete!' : level === 'blue' ? 'Practice Started!' : 'Click to start practice'}
                           </span>
@@ -42134,7 +42154,8 @@ function ProfileShowcase({ onSelectTopic }) {
   const [activeBadgeDetail, setActiveBadgeDetail] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [sectionExpanded, setSectionExpanded] = useState(false)
-  
+  const [showcaseExpanded, setShowcaseExpanded] = useState(true)
+
   const dropdownRef = useRef(null)
 
   const completedTopics = useMemo(() => {
@@ -42283,45 +42304,57 @@ function ProfileShowcase({ onSelectTopic }) {
 
       {/* My Badges Cabinet Section */}
       <div className="my-badges-section">
-        <h3>My Badges Showcase</h3>
-        {unlockedBadges.length === 0 ? (
-          <div className="empty-badges-card">
-            <span style={{ fontSize: '2.5rem' }}>🏆</span>
-            <p>You haven't unlocked any badges yet. Start solving quizzes to earn your first badge!</p>
-          </div>
-        ) : (
-          <div className="unlocked-badges-grid">
-            {unlockedBadges.map(badge => {
-              const itemLevel = badge.type === 'collection'
-                ? 'gold'
-                : badge.type === 'topic'
-                  ? getTopicBadgeLevel(badge.badgeId, completedTopics)
-                  : '';
-              return (
-                <div
-                  key={badge.badgeId}
-                  className={`unlocked-badge-card level-${itemLevel}`}
-                  title={`${badge.name}: ${badge.description}`}
-                  onClick={() => setActiveBadgeDetail({ ...badge, level: itemLevel, isLocked: false })}
-                >
-                  <div className="unlocked-badge-aura" />
-                  <BadgeIcon
-                    type={badge.badgeType}
-                    size={64}
-                    level={itemLevel}
-                  />
-                  <span className="unlocked-badge-name">{badge.name}</span>
-                  <span className="unlocked-badge-type-tag">{badge.type}</span>
-                </div>
-              )
-            })}
+        <button
+          className={`collapsible-header-btn ${!showcaseExpanded ? 'collapsed' : ''}`}
+          onClick={() => setShowcaseExpanded(!showcaseExpanded)}
+          type="button"
+        >
+          <span style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>My Badges Showcase</span>
+          <span className="collapsible-chevron" style={{ transform: showcaseExpanded ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}>▼</span>
+        </button>
+
+        {showcaseExpanded && (
+          <div style={{ marginTop: '20px' }}>
+            {unlockedBadges.length === 0 ? (
+              <div className="empty-badges-card">
+                <span style={{ fontSize: '2.5rem' }}>🏆</span>
+                <p>You haven't unlocked any badges yet. Start solving quizzes to earn your first badge!</p>
+              </div>
+            ) : (
+              <div className="unlocked-badges-grid">
+                {unlockedBadges.map(badge => {
+                  const itemLevel = badge.type === 'collection'
+                    ? 'gold'
+                    : badge.type === 'topic'
+                      ? getTopicBadgeLevel(badge.badgeId, completedTopics)
+                      : '';
+                  return (
+                    <div
+                      key={badge.badgeId}
+                      className={`unlocked-badge-card level-${itemLevel}`}
+                      title={`${badge.name}: ${badge.description}`}
+                      onClick={() => setActiveBadgeDetail({ ...badge, level: itemLevel, isLocked: false })}
+                    >
+                      <div className="unlocked-badge-aura" />
+                      <BadgeIcon
+                        type={badge.badgeType}
+                        size={64}
+                        level={itemLevel}
+                      />
+                      <span className="unlocked-badge-name">{badge.name}</span>
+                      <span className="unlocked-badge-type-tag">{badge.type}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Badges Yet to Receive Collapsible Section */}
       <div className="yet-to-receive-section" style={{ marginTop: '32px' }}>
-        <button 
+        <button
           className={`collapsible-header-btn ${!sectionExpanded ? 'collapsed' : ''}`}
           onClick={() => setSectionExpanded(!sectionExpanded)}
           type="button"
@@ -42334,7 +42367,7 @@ function ProfileShowcase({ onSelectTopic }) {
           <div className="collapsible-content-wrapper" style={{ marginTop: '20px' }}>
             {/* Custom Interactive Dropdown Menu */}
             <div className="yet-to-receive-dropdown-container" ref={dropdownRef}>
-              <button 
+              <button
                 className={`yet-to-receive-trigger ${dropdownOpen ? 'open' : ''}`}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 type="button"
@@ -42354,7 +42387,7 @@ function ProfileShowcase({ onSelectTopic }) {
 
               {dropdownOpen && (
                 <div className="yet-to-receive-dropdown-menu">
-                  <button 
+                  <button
                     className={`menu-item ${selectedSection === 'bookshelf' ? 'active' : ''}`}
                     onClick={() => { setSelectedSection('bookshelf'); setDropdownOpen(false); }}
                     type="button"
@@ -42365,7 +42398,7 @@ function ProfileShowcase({ onSelectTopic }) {
                       <span>Progress through albums and unlock custom visual books</span>
                     </div>
                   </button>
-                  <button 
+                  <button
                     className={`menu-item ${selectedSection === 'mastery' ? 'active' : ''}`}
                     onClick={() => { setSelectedSection('mastery'); setDropdownOpen(false); }}
                     type="button"
@@ -42376,7 +42409,7 @@ function ProfileShowcase({ onSelectTopic }) {
                       <span>Master math topics to upgrade your badges from blue to gold</span>
                     </div>
                   </button>
-                  <button 
+                  <button
                     className={`menu-item ${selectedSection === 'streaks' ? 'active' : ''}`}
                     onClick={() => { setSelectedSection('streaks'); setDropdownOpen(false); }}
                     type="button"
@@ -42406,8 +42439,8 @@ function ProfileShowcase({ onSelectTopic }) {
                       lockedTopics.map(item => {
                         const itemLevel = getTopicBadgeLevel(item.badgeId, completedTopics);
                         return (
-                          <div 
-                            key={item.badgeId} 
+                          <div
+                            key={item.badgeId}
                             className={`unlocked-badge-card locked-badge-card level-${itemLevel}`}
                             title={`${item.name}: ${item.requirement}`}
                             onClick={() => setActiveBadgeDetail({ ...item, level: itemLevel, isLocked: true })}
@@ -42431,8 +42464,8 @@ function ProfileShowcase({ onSelectTopic }) {
                       </div>
                     ) : (
                       lockedStreaks.map(item => (
-                        <div 
-                          key={item.badgeId} 
+                        <div
+                          key={item.badgeId}
                           className="unlocked-badge-card locked-badge-card"
                           title={`${item.name}: ${item.requirement}`}
                           onClick={() => setActiveBadgeDetail({ ...item, level: '', isLocked: true })}
@@ -42481,7 +42514,7 @@ function ProfileShowcase({ onSelectTopic }) {
         <div className="badge-detail-overlay" onClick={() => setActiveBadgeDetail(null)}>
           <div className="badge-detail-modal" onClick={e => e.stopPropagation()}>
             <button className="badge-detail-close" onClick={() => setActiveBadgeDetail(null)}>✕</button>
-            
+
             <div className="badge-detail-hero">
               <div className={`badge-detail-aura level-${activeBadgeDetail.level}`} style={{ background: activeBadgeDetail.isLocked ? '#e11d48' : '' }} />
               <BadgeIcon
@@ -42499,15 +42532,15 @@ function ProfileShowcase({ onSelectTopic }) {
             <span className="badge-detail-tag" style={{ background: activeBadgeDetail.isLocked ? 'rgba(225, 29, 72, 0.15)' : '', borderColor: activeBadgeDetail.isLocked ? '#e11d48' : '', color: activeBadgeDetail.isLocked ? '#f43f5e' : '' }}>
               {activeBadgeDetail.isLocked ? 'Locked ' : ''}{activeBadgeDetail.type} Badge
             </span>
-            
+
             <p className="badge-detail-desc">{activeBadgeDetail.description}</p>
-            
+
             {activeBadgeDetail.isLocked ? (
               <div className="badge-detail-requirement">
                 <strong>How to Unlock:</strong>
                 <p style={{ marginBottom: activeBadgeDetail.type === 'topic' ? '14px' : '0' }}>{activeBadgeDetail.requirement}</p>
                 {activeBadgeDetail.type === 'topic' && (
-                  <button 
+                  <button
                     className="book-next-btn"
                     style={{ width: '100%', display: 'block' }}
                     onClick={() => {
@@ -43958,7 +43991,7 @@ function GymQuiz({ title, subtitle, typeKeys, welcomeText, algebraInput, onBack 
  * @param {Object} props
  * @param {Function} props.onBack - Callback to return to home menu
  */
-function BasicArithApp({ onBack }) {
+function BasicArithApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, setTransferTopic, setMode }) {
   // Difficulty level: 'easy', 'medium', 'hard', 'extrahard'
   const [difficulty, setDifficulty] = useState('easy')
   // Adaptive mode enabled?
@@ -43995,6 +44028,15 @@ function BasicArithApp({ onBack }) {
   // Timer
   const timer = useTimer()
   const advanceFnRef = useRef(null)
+
+  useEffect(() => {
+    if (finished) {
+      const pass = score / totalQ >= 0.8
+      if (pass && markTopicCompleted) {
+        markTopicCompleted('basicarith', isAdaptive ? 'adaptive' : difficulty)
+      }
+    }
+  }, [finished, score, totalQ, markTopicCompleted, isAdaptive, difficulty])
 
   const effectiveDiff = () => isAdaptive ? adaptiveLevel(adaptScoreRef.current) : difficulty
 
@@ -44587,7 +44629,7 @@ function buildExtensionBatch(sourceTables, count) {
   return pool.slice(0, count)
 }
 
-function MultiplyApp({ onBack }) {
+function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, setTransferTopic, setMode }) {
   // --- Persistent state ---
   const [stats, setStats] = useState(() => loadMultStats())
   // --- Phase: 'picker' (level chooser) | 'level2-setup' (weak-table picker) |
@@ -44622,6 +44664,21 @@ function MultiplyApp({ onBack }) {
   const l3TimerRef = useRef(null)
   const l3DeadlineRef = useRef(0)
   const timer = useTimer()
+
+  useEffect(() => {
+    if (phase === 'finished') {
+      const pass = results.length > 0 && (score / results.length >= 0.8)
+      if (pass && markTopicCompleted) {
+        if (level === 1) {
+          markTopicCompleted('multiply', 'easy')
+        } else if (level === 2) {
+          markTopicCompleted('multiply', 'medium')
+        } else if (level === 3) {
+          markTopicCompleted('multiply', 'hard')
+        }
+      }
+    }
+  }, [phase, score, results.length, level, markTopicCompleted])
 
   // ─── Helpers ──────────────────────────────────────────────────────────
   const nextQuestion = (planArr, index) => {
