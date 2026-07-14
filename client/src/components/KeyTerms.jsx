@@ -215,6 +215,18 @@ export default function KeyTerms({ topicKey }) {
                 <span className="word-explorer-reader-body">{selectedEntry.memoryTip}</span>
               </div>
             ) : null}
+
+            {selectedEntry.differentiates && Object.keys(selectedEntry.differentiates).length > 0 ? (
+              <div className="word-explorer-reader-difference">
+                <div className="word-explorer-reader-section-label">≠ Differs from</div>
+                {Object.entries(selectedEntry.differentiates).map(([otherTerm, explanation]) => (
+                  <div key={otherTerm} className="word-explorer-diff-row">
+                    <span className="word-explorer-diff-term">{otherTerm}</span>
+                    <span className="word-explorer-diff-body">{explanation}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       )}

@@ -4,6 +4,11 @@
                                 "m":  "Depression = looking down.",
                                 "r":  "Looking down from a balcony at someone below uses an angle of depression."
                             },
+    "addition":  {
+                     "s":  "Putting numbers together to make a bigger number.",
+                     "m":  "Addition = putting together.",
+                     "r":  "3 plus 2 means 3 dots and 2 dots together = 5 dots. If you have 3 apples and someone gives you 2 more, you now have 5."
+                 },
     "cone":  {
                  "s":  "A 3D shape with a round base and a pointy top.",
                  "m":  "Cone = pointy on top.",
@@ -14,11 +19,6 @@
                   "m":  "Speed = distance over time.",
                   "r":  "A car going 60 km per hour has a speed of 60 km/h."
               },
-    "unit":  {
-                 "s":  "A standard way of measuring something, like metres for length or seconds for time.",
-                 "m":  "Unit = standard measure.",
-                 "r":  "Centimetres, kilograms, and degrees are all units."
-             },
     "column":  {
                    "s":  "A vertical line of entries in a matrix.",
                    "m":  "Column = vertical line.",
@@ -69,16 +69,16 @@
                 "m":  "Log = log shorthand.",
                 "r":  "Log base 10 of 100 is 2 because 10 squared = 100."
             },
-    "vector":  {
-                   "s":  "A quantity with both size and direction.",
-                   "m":  "Vector = arrow with length.",
-                   "r":  "An arrow showing 5 km east is a vector."
+    "function":  {
+                     "s":  "A rule that takes one input and gives one output.",
+                     "m":  "Function = input to output.",
+                     "r":  "A vending machine is a function - same input gives same snack."
+                 },
+    "BODMAS":  {
+                   "s":  "The order to follow in a calculation: Brackets, Orders, Divide, Multiply, Add, Subtract.",
+                   "m":  "BODMAS = order of operations.",
+                   "r":  "For 2 + 3 times 4, BODMAS says multiply first: 2 + 12 = 14."
                },
-    "face":  {
-                 "s":  "A flat surface on the outside of a 3D shape.",
-                 "m":  "Face = flat side.",
-                 "r":  "A dice has 6 square faces."
-             },
     "sine":  {
                  "s":  "A ratio of sides in a right-angled triangle: opposite over hypotenuse.",
                  "m":  "Sine = opposite over long side.",
@@ -104,11 +104,6 @@
                            "m":  "Complex = real + imaginary.",
                            "r":  "Engineers use complex numbers to design electrical circuits."
                        },
-    "union":  {
-                  "s":  "A set that contains every element in either of two or more sets.",
-                  "m":  "Union = combine everything.",
-                  "r":  "The union of {1,2} and {2,3} is {1,2,3}."
-              },
     "interior angle":  {
                            "s":  "An angle found inside a shape.",
                            "m":  "Interior = inside angle.",
@@ -124,11 +119,6 @@
                      "m":  "Gradient = steepness.",
                      "r":  "A steep hill has a bigger gradient than a gentle slope."
                  },
-    "domain":  {
-                   "s":  "All the numbers you are allowed to put into a function.",
-                   "m":  "Domain = inputs allowed.",
-                   "r":  "In y = 1/x, the domain is all numbers except 0 - you cannot divide by zero."
-               },
     "circle":  {
                    "s":  "A perfectly round flat shape.",
                    "m":  "Circle = one round curve.",
@@ -149,11 +139,11 @@
                     "m":  "Integer = whole number.",
                     "r":  "Negative 3, 0, and 5 are all integers."
                 },
-    "negative":  {
-                     "s":  "A number less than zero.",
-                     "m":  "Negative = smaller than zero.",
-                     "r":  "Negative 5 and negative 100 are both below zero."
-                 },
+    "biased":  {
+                   "s":  "When a test favours one result more than others.",
+                   "m":  "Biased = unfair lean.",
+                   "r":  "A weighted coin is biased toward one side."
+               },
     "standard form":  {
                           "s":  "A way to write very big or small numbers cleanly.",
                           "m":  "Standard form = tidy big number.",
@@ -214,11 +204,11 @@
                    "m":  "Subset = inside another set.",
                    "r":  "The set of even numbers is a subset of all integers."
                },
-    "simplify":  {
-                     "s":  "To make an expression shorter by combining like parts.",
-                     "m":  "Simplify = make shorter.",
-                     "r":  "Simplifying 2x + 3x gives 5x."
-                 },
+    "compass rose":  {
+                         "s":  "A star-shaped diagram of the directions on a map.",
+                         "m":  "Compass rose = the directions star on a map.",
+                         "r":  "The compass rose on a map shows North, South, East, West and the four diagonal directions."
+                     },
     "octagon":  {
                     "s":  "A flat shape with 8 straight sides.",
                     "m":  "Octa = eight.",
@@ -249,11 +239,6 @@
                          "m":  "Discriminant decides the roots.",
                          "r":  "If positive, the quadratic has two real solutions."
                      },
-    "proportion":  {
-                       "s":  "A statement that two ratios are equal.",
-                       "m":  "Proportion = equal ratios.",
-                       "r":  "If 2 oranges cost 50p, 4 oranges cost 100p - same proportion."
-                   },
     "inverse sine":  {
                          "s":  "The angle whose sine is a given number, also called arcsin.",
                          "m":  "Inverse sine = arcsin.",
@@ -264,16 +249,26 @@
                         "m":  "Root = undo the square.",
                         "r":  "The square root of 9 is 3 because 3 times 3 = 9."
                     },
-    "distance":  {
-                     "s":  "How far apart two points are, or how far something has travelled.",
-                     "m":  "Distance = how far.",
-                     "r":  "The distance from your home to school might be 2 km."
-                 },
-    "terminating decimal":  {
-                                "s":  "A decimal that stops after a few digits.",
-                                "m":  "Terminating = ends neatly.",
-                                "r":  "1/4 = 0.25 - it stops cleanly."
-                            },
+    "like terms":  {
+                       "s":  "Terms that have the same variables to the same powers.",
+                       "m":  "Like terms match.",
+                       "r":  "3x and 5x are like terms - both have just x."
+                   },
+    "scalar":  {
+                   "s":  "A quantity with only size, no direction.",
+                   "m":  "Scalar = just a number.",
+                   "r":  "Mass and temperature are scalars."
+               },
+    "factorise":  {
+                      "s":  "To write an expression as a product of its factors.",
+                      "m":  "Factorise = factor out.",
+                      "r":  "Factorising 2x + 6 gives 2 times x+3."
+                  },
+    "inverse cosine":  {
+                           "s":  "The angle whose cosine is a given number, also called arccos.",
+                           "m":  "Inverse cosine = arccos.",
+                           "r":  "If cos(x) = 0.5, the inverse cosine gives x = 60 degrees."
+                       },
     "turning point":  {
                           "s":  "A point on a curve where it changes direction.",
                           "m":  "Turning point = direction change.",
@@ -319,21 +314,16 @@
                        "m":  "Longest side = hypotenuse.",
                        "r":  "On a ladder leaning against a wall, the ladder itself is the hypotenuse."
                    },
-    "diameter":  {
-                     "s":  "The distance straight across a circle through the middle.",
-                     "m":  "Diameter = across.",
-                     "r":  "If a pizza is 30 cm across, the diameter is 30 cm."
-                 },
+    "ratio":  {
+                  "s":  "A way to compare two quantities.",
+                  "m":  "Ratio compares two things.",
+                  "r":  "If there are 3 boys and 2 girls, the ratio is 3 to 2."
+              },
     "prism":  {
                   "s":  "A 3D shape with two matching polygon ends and flat sides.",
                   "m":  "Prism = stretched polygon.",
                   "r":  "A bar of chocolate is like a prism."
               },
-    "adjacent":  {
-                     "s":  "The side of a right-angled triangle next to a chosen angle (not the hypotenuse).",
-                     "m":  "Adjacent = right beside.",
-                     "r":  "The side next to a chosen corner is the adjacent side."
-                 },
     "approximation":  {
                           "s":  "A number close to the exact value but easier to use.",
                           "m":  "Approximation = close enough.",
@@ -349,36 +339,51 @@
                               "m":  "Definite integral = exact area.",
                               "r":  "The integral from 0 to 2 of x dx = 2 - a definite area."
                           },
-    "function":  {
-                     "s":  "A rule that takes one input and gives one output.",
-                     "m":  "Function = input to output.",
-                     "r":  "A vending machine is a function - same input gives same snack."
-                 },
+    "SSS":  {
+                "s":  "Three matching sides = the triangles are exactly the same.",
+                "m":  "SSS = Side-Side-Side.",
+                "r":  "If you measure three sides of one triangle and three sides of another and they all match, the two triangles are identical copies."
+            },
+    "multiplication":  {
+                           "s":  "Adding a number to itself many times.",
+                           "m":  "Multiplication = repeated adding.",
+                           "r":  "3 times 4 means 3 groups of 4 dots = 4 + 4 + 4 = 12."
+                       },
     "consecutive":  {
                         "s":  "Numbers that follow each other with no gaps.",
                         "m":  "Consecutive = one after another.",
                         "r":  "5, 6, 7 are three consecutive numbers."
                     },
-    "population":  {
-                       "s":  "The whole group being studied in a survey.",
-                       "m":  "Population = entire group.",
-                       "r":  "If you survey 100 voters, the population is all the voters."
-                   },
+    "trapezium":  {
+                      "s":  "A four-sided shape with one pair of parallel sides.",
+                      "m":  "Trapezium = one pair parallel.",
+                      "r":  "A table with slanted legs is shaped like a trapezium."
+                  },
     "identity matrix":  {
                             "s":  "A square matrix with 1s on the diagonal and 0s elsewhere.",
                             "m":  "Identity matrix = matrix one.",
                             "r":  "It is the matrix version of the number 1."
                         },
+    "ASA":  {
+                "s":  "Two angles and the side between them = the triangles match.",
+                "m":  "ASA = Angle-Side-Angle.",
+                "r":  "If you know two angles and the side they share, you can reconstruct the triangle exactly."
+            },
+    "rotational symmetry":  {
+                                "s":  "When a shape looks the same after being rotated.",
+                                "m":  "Rotational symmetry = spin-match.",
+                                "r":  "A starfish looks the same after turning a bit - that is rotational symmetry."
+                            },
     "midpoint":  {
                      "s":  "The point exactly halfway along a line.",
                      "m":  "Midpoint = middle point.",
                      "r":  "The center mark on a ruler shows the midpoint of a line."
                  },
-    "inverse cosine":  {
-                           "s":  "The angle whose cosine is a given number, also called arccos.",
-                           "m":  "Inverse cosine = arccos.",
-                           "r":  "If cos(x) = 0.5, the inverse cosine gives x = 60 degrees."
-                       },
+    "inverse tangent":  {
+                            "s":  "The angle whose tangent is a given number, also called arctan.",
+                            "m":  "Inverse tangent = arctan.",
+                            "r":  "If tan(x) = 1, the inverse tangent gives x = 45 degrees."
+                        },
     "scalene triangle":  {
                              "s":  "A triangle where all three sides are different lengths.",
                              "m":  "Scalene = all sides different.",
@@ -409,11 +414,6 @@
                         "m":  "Right angle = square corner.",
                         "r":  "The corner of a piece of paper is a right angle."
                     },
-    "directrix":  {
-                      "s":  "A straight line that helps define a curve like a parabola.",
-                      "m":  "Directrix = guide line for a curve.",
-                      "r":  "The directrix is like a guide line that the curve never crosses."
-                  },
     "magnitude":  {
                       "s":  "The size or length of a vector.",
                       "m":  "Magnitude = just the size.",
@@ -429,16 +429,11 @@
                      "m":  "Quotient = divide result.",
                      "r":  "The quotient of 20 divided by 4 is 5."
                  },
-    "input":  {
-                  "s":  "A number you put into a function.",
-                  "m":  "Input = what goes in.",
-                  "r":  "In f(x) = 2x, the input is x and the output is the answer."
-              },
-    "outcome":  {
-                    "s":  "One possible result of an experiment.",
-                    "m":  "Outcome = single result.",
-                    "r":  "Heads or tails are outcomes of flipping a coin."
-                },
+    "subtraction":  {
+                        "s":  "Taking one number away from another.",
+                        "m":  "Subtraction = take away.",
+                        "r":  "If you have 5 apples and give 2 away, you have 5 - 2 = 3 apples left."
+                    },
     "cosine rule":  {
                         "s":  "A rule connecting sides and angles in any triangle.",
                         "m":  "Cosine rule = c squared = a squared + b squared - 2ab cos C.",
@@ -459,26 +454,26 @@
                                  "m":  "Equilateral = equal sides.",
                                  "r":  "A road sign for warning is often an equilateral triangle."
                              },
+    "recurring decimal":  {
+                              "s":  "A decimal where the digits repeat forever.",
+                              "m":  "Recurring = repeats forever.",
+                              "r":  "1/3 = 0.333... - the 3 keeps repeating."
+                          },
     "whole number":  {
                          "s":  "A number with no fractions, including zero.",
                          "m":  "Whole = no bits missing.",
                          "r":  "0, 1, 2, 3 are whole numbers."
                      },
-    "indefinite integral":  {
-                                "s":  "An integral with no limits, giving a family of answers.",
-                                "m":  "Indefinite integral = general area.",
-                                "r":  "The integral of x dx = x squared over 2 plus C is an indefinite integral."
-                            },
     "matrix":  {
                    "s":  "A grid of numbers arranged in rows and columns.",
                    "m":  "Matrix = number grid.",
                    "r":  "A spreadsheet with rows of grades is like a matrix."
                },
-    "acute angle":  {
-                        "s":  "An angle smaller than 90 degrees.",
-                        "m":  "Acute = tiny cute angle.",
-                        "r":  "The tip of a sharp pencil makes an acute angle."
-                    },
+    "significant figures":  {
+                                "s":  "The meaningful digits in a number, starting from the first non-zero one.",
+                                "m":  "Significant figures = real digits.",
+                                "r":  "In 0.00452, the significant figures are 4, 5, 2."
+                            },
     "segment":  {
                     "s":  "The region inside a circle between a chord and the arc.",
                     "m":  "Segment = chord and arc.",
@@ -494,11 +489,6 @@
                            "m":  "Scalar product = same as dot product.",
                            "r":  "Scalar product = dot product."
                        },
-    "round":  {
-                  "s":  "To replace a number with a nearby simpler one.",
-                  "m":  "Round = snap to nearest.",
-                  "r":  "Rounding 4.7 to the nearest whole gives 5."
-              },
     "reflex angle":  {
                          "s":  "An angle bigger than 180 but less than 360 degrees.",
                          "m":  "Reflex = flipped-over angle.",
@@ -529,11 +519,11 @@
                    "m":  "Sector = pizza-slice shape.",
                    "r":  "A pizza slice is a sector of the pizza."
                },
-    "like terms":  {
-                       "s":  "Terms that have the same variables to the same powers.",
-                       "m":  "Like terms match.",
-                       "r":  "3x and 5x are like terms - both have just x."
-                   },
+    "negative":  {
+                     "s":  "A number less than zero.",
+                     "m":  "Negative = smaller than zero.",
+                     "r":  "Negative 5 and negative 100 are both below zero."
+                 },
     "centre":  {
                    "s":  "The middle point of a circle, the same distance from every edge.",
                    "m":  "Centre = middle point.",
@@ -559,21 +549,16 @@
                  "m":  "Surd = messy root.",
                  "r":  "Square root of 2 is a surd - about 1.414 but never exact."
              },
-    "trapezium":  {
-                      "s":  "A four-sided shape with one pair of parallel sides.",
-                      "m":  "Trapezium = one pair parallel.",
-                      "r":  "A table with slanted legs is shaped like a trapezium."
-                  },
+    "simplify":  {
+                     "s":  "To make an expression shorter by combining like parts.",
+                     "m":  "Simplify = make shorter.",
+                     "r":  "Simplifying 2x + 3x gives 5x."
+                 },
     "cosine":  {
                    "s":  "A ratio in a right-angled triangle: adjacent over hypotenuse.",
                    "m":  "Cosine = adjacent over long side.",
                    "r":  "cos of an angle = side next to angle divided by hypotenuse."
                },
-    "inverse tangent":  {
-                            "s":  "The angle whose tangent is a given number, also called arctan.",
-                            "m":  "Inverse tangent = arctan.",
-                            "r":  "If tan(x) = 1, the inverse tangent gives x = 45 degrees."
-                        },
     "y-intercept":  {
                         "s":  "The point where a line crosses the y-axis.",
                         "m":  "Y-intercept = y-axis crossing.",
@@ -604,11 +589,6 @@
                      "m":  "Positive = bigger than zero.",
                      "r":  "5 and 100 are both positive numbers."
                  },
-    "principal":  {
-                      "s":  "The original amount of money borrowed, invested, or saved, before any interest.",
-                      "m":  "Principal = starting money.",
-                      "r":  "If you invest 1000 pounds, the principal is 1000 pounds."
-                  },
     "obtuse angle":  {
                          "s":  "An angle bigger than 90 but less than 180 degrees.",
                          "m":  "Obtuse = wide open.",
@@ -619,6 +599,11 @@
                             "m":  "Rational = fraction-able.",
                             "r":  "1/2 and 0.75 are both rational."
                         },
+    "integration":  {
+                        "s":  "The reverse of differentiation, used to find areas.",
+                        "m":  "Integration = area finder.",
+                        "r":  "Integration can find the area under a curve."
+                    },
     "mutually exclusive":  {
                                "s":  "Two events that cannot both happen.",
                                "m":  "Mutually exclusive = no overlap.",
@@ -659,21 +644,21 @@
                      "m":  "Discount = price reduction.",
                      "r":  "A 20 percent discount on a 10 pound toy means you pay only 8 pounds."
                  },
-    "empty set":  {
-                      "s":  "The set that contains no elements at all.",
-                      "m":  "Empty set = nothing inside.",
-                      "r":  "A box with nothing inside is like an empty set."
-                  },
     "rate":  {
                  "s":  "A comparison of two quantities measured in different units.",
                  "m":  "Rate = per something.",
                  "r":  "Miles per hour is a rate - miles compared to hours."
              },
-    "scalar":  {
-                   "s":  "A quantity with only size, no direction.",
-                   "m":  "Scalar = just a number.",
-                   "r":  "Mass and temperature are scalars."
-               },
+    "time":  {
+                 "s":  "A measure of how long something takes, in seconds, minutes, hours, or days.",
+                 "m":  "Time = how long.",
+                 "r":  "A 100 metre race takes about 10 seconds - that is the time."
+             },
+    "congruent":  {
+                      "s":  "Exactly the same shape and same size.",
+                      "m":  "Congruent = clone twins.",
+                      "r":  "Two identical cookie-cutter stars are congruent."
+                  },
     "denominator":  {
                         "s":  "The bottom number in a fraction.",
                         "m":  "Bottom = parts total.",
@@ -689,20 +674,25 @@
                         "m":  "Enlargement = resize.",
                         "r":  "Photocopying a picture bigger is an enlargement."
                     },
-    "loss":  {
-                 "s":  "What happens when you spend more than you earn.",
-                 "m":  "Loss = spending more than earned.",
-                 "r":  "If a shop pays 100 pounds for stock and sells it for only 80 pounds, that is a loss."
+    "west":  {
+                 "s":  "The direction to your left when facing North.",
+                 "m":  "West = left of North = 270 bearing.",
+                 "r":  "The sun sets in the West. A bearing of 270 means due West."
              },
+    "principal":  {
+                      "s":  "The original amount of money borrowed, invested, or saved, before any interest.",
+                      "m":  "Principal = starting money.",
+                      "r":  "If you invest 1000 pounds, the principal is 1000 pounds."
+                  },
     "heptagon":  {
                      "s":  "A flat shape with 7 straight sides.",
                      "m":  "Hepta = seven.",
                      "r":  "A heptagon has 7 sides - it is rare in everyday life."
                  },
-    "ratio":  {
-                  "s":  "A way to compare two quantities.",
-                  "m":  "Ratio compares two things.",
-                  "r":  "If there are 3 boys and 2 girls, the ratio is 3 to 2."
+    "input":  {
+                  "s":  "A number you put into a function.",
+                  "m":  "Input = what goes in.",
+                  "r":  "In f(x) = 2x, the input is x and the output is the answer."
               },
     "equivalent fraction":  {
                                 "s":  "A different fraction with the same value.",
@@ -724,15 +714,20 @@
                    "m":  "Median = middle one.",
                    "r":  "In 3, 5, 7 the median is 5 because it sits in the middle."
                },
-    "quadrant":  {
-                     "s":  "One of the four sections a graph is split into by its axes.",
-                     "m":  "Quadrant = quarter of a graph.",
-                     "r":  "The top-right section of a graph is Quadrant I."
-                 },
-    "sine rule":  {
-                      "s":  "A rule connecting sides and angles in any triangle.",
-                      "m":  "Sine rule = sides match sines.",
-                      "r":  "Use the sine rule to find a missing side of any triangle."
+    "outcome":  {
+                    "s":  "One possible result of an experiment.",
+                    "m":  "Outcome = single result.",
+                    "r":  "Heads or tails are outcomes of flipping a coin."
+                },
+    "union":  {
+                  "s":  "A set that contains every element in either of two or more sets.",
+                  "m":  "Union = combine everything.",
+                  "r":  "The union of {1,2} and {2,3} is {1,2,3}."
+              },
+    "variation":  {
+                      "s":  "When one number changes, another changes too in a pattern.",
+                      "m":  "Variation = one thing changing affects another.",
+                      "r":  "The more hours you work, the more money you earn - that is variation."
                   },
     "real number":  {
                         "s":  "Any number you can find on a number line.",
@@ -779,11 +774,21 @@
                               "m":  "Irrational = no fraction form.",
                               "r":  "Pi is irrational - it never ends or repeats."
                           },
-    "natural number":  {
-                           "s":  "A counting number: 1, 2, 3, and so on.",
-                           "m":  "Natural = for counting.",
-                           "r":  "Counting fingers: 1, 2, 3 - these are natural numbers."
-                       },
+    "area":  {
+                 "s":  "How much flat space a shape covers.",
+                 "m":  "Area = inside space.",
+                 "r":  "The rug on your bedroom floor - its size is the area."
+             },
+    "RHS":  {
+                "s":  "Two right triangles with same hypotenuse + one side = the triangles match.",
+                "m":  "RHS = Right angle, Hypotenuse, Side.",
+                "r":  "Used to prove two right-angled triangles are congruent when you know the hypotenuse and one leg of each."
+            },
+    "acute angle":  {
+                        "s":  "An angle smaller than 90 degrees.",
+                        "m":  "Acute = tiny cute angle.",
+                        "r":  "The tip of a sharp pencil makes an acute angle."
+                    },
     "scatter graph":  {
                           "s":  "A graph of dots showing pairs of values.",
                           "m":  "Scatter graph = dot cloud.",
@@ -799,16 +804,26 @@
                    "m":  "Radius = from center out.",
                    "r":  "Half the width of a pizza is its radius."
                },
-    "inverse":  {
-                    "s":  "The operation that undoes another.",
-                    "m":  "Inverse = undo.",
-                    "r":  "Subtraction is the inverse of addition."
-                },
+    "sample":  {
+                   "s":  "A small group chosen from a bigger group.",
+                   "m":  "Sample = small pick.",
+                   "r":  "A poll of 100 voters is a sample of all voters."
+               },
+    "loss":  {
+                 "s":  "What happens when you spend more than you earn.",
+                 "m":  "Loss = spending more than earned.",
+                 "r":  "If a shop pays 100 pounds for stock and sells it for only 80 pounds, that is a loss."
+             },
     "tessellation":  {
                          "s":  "A pattern of shapes fitted together with no gaps.",
                          "m":  "Tessellation = tiled pattern.",
                          "r":  "Honeycomb in a beehive is a tessellation of hexagons."
                      },
+    "cube root":  {
+                      "s":  "The number that, times itself three times, gives the original.",
+                      "m":  "Cube root = undo the cube.",
+                      "r":  "The cube root of 27 is 3 because 3 times 3 times 3 = 27."
+                  },
     "exponent":  {
                      "s":  "A small number showing how many times to multiply a base by itself.",
                      "m":  "Exponent counts the copies.",
@@ -819,21 +834,16 @@
                   "m":  "Chord = across the circle.",
                   "r":  "A straight cut across a pizza is a chord."
               },
-    "sphere":  {
-                   "s":  "A perfectly round 3D shape, like a ball.",
-                   "m":  "Sphere = round 3D.",
-                   "r":  "A basketball is a sphere."
-               },
+    "indefinite integral":  {
+                                "s":  "An integral with no limits, giving a family of answers.",
+                                "m":  "Indefinite integral = general area.",
+                                "r":  "The integral of x dx = x squared over 2 plus C is an indefinite integral."
+                            },
     "diagonal":  {
                      "s":  "A line that joins two corners that are not next to each other.",
                      "m":  "Diagonal = across the corners.",
                      "r":  "The line from top-left to bottom-right of a square is a diagonal."
                  },
-    "differentiate":  {
-                          "s":  "To find the derivative of a function.",
-                          "m":  "Differentiate = find derivative.",
-                          "r":  "You differentiate x squared to get 2x."
-                      },
     "x-intercept":  {
                         "s":  "The point where a line crosses the x-axis.",
                         "m":  "X-intercept = x-axis crossing.",
@@ -849,16 +859,16 @@
                   "m":  "Focus = special point inside a curve.",
                   "r":  "In a satellite dish, the focus is where the signals collect to one spot."
               },
+    "terminating decimal":  {
+                                "s":  "A decimal that stops after a few digits.",
+                                "m":  "Terminating = ends neatly.",
+                                "r":  "1/4 = 0.25 - it stops cleanly."
+                            },
     "parallelogram":  {
                           "s":  "A four-sided shape where opposite sides run parallel.",
                           "m":  "Parallel sides, four corners.",
                           "r":  "A pushed-over square becomes a parallelogram."
                       },
-    "absolute value":  {
-                           "s":  "The size of a number ignoring whether it is positive or negative.",
-                           "m":  "Absolute value = distance from zero.",
-                           "r":  "The absolute value of negative 5 is 5 - we drop the sign."
-                       },
     "binomial":  {
                      "s":  "A math expression with exactly two parts.",
                      "m":  "Binomial = bi (two) + nomial (terms).",
@@ -869,11 +879,11 @@
                   "m":  "Limit = getting closer.",
                   "r":  "As x gets near 0, 1 divided by x grows without limit."
               },
-    "significant figures":  {
-                                "s":  "The meaningful digits in a number, starting from the first non-zero one.",
-                                "m":  "Significant figures = real digits.",
-                                "r":  "In 0.00452, the significant figures are 4, 5, 2."
-                            },
+    "inverse":  {
+                    "s":  "The operation that undoes another.",
+                    "m":  "Inverse = undo.",
+                    "r":  "Subtraction is the inverse of addition."
+                },
     "logarithm":  {
                       "s":  "The power a base must be raised to give a particular number.",
                       "m":  "Logarithm = reverse of power.",
@@ -889,36 +899,41 @@
                        "m":  "Poly means many terms.",
                        "r":  "2x squared + 3x - 1 is a polynomial."
                    },
-    "mixed number":  {
-                         "s":  "A whole number written next to a fraction.",
-                         "m":  "Mixed = whole + fraction.",
-                         "r":  "2 and 3/4 is a mixed number - two and three-quarters."
-                     },
+    "directrix":  {
+                      "s":  "A straight line that helps define a curve like a parabola.",
+                      "m":  "Directrix = guide line for a curve.",
+                      "r":  "The directrix is like a guide line that the curve never crosses."
+                  },
     "compound interest":  {
                               "s":  "Interest calculated on the original amount plus any interest already earned.",
                               "m":  "Compound = on top of interest.",
                               "r":  "Compound interest makes savings grow faster because each year earns interest on top of last year."
                           },
-    "equation":  {
-                     "s":  "A math sentence with an equals sign.",
-                     "m":  "Equation = equal statement.",
-                     "r":  "2 + 3 = 5 is an equation."
-                 },
+    "south":  {
+                  "s":  "The direction shown at the bottom of a map.",
+                  "m":  "South = bottom of the map = 180 bearing.",
+                  "r":  "A bearing of 180 means due South - the opposite of North."
+              },
+    "sphere":  {
+                   "s":  "A perfectly round 3D shape, like a ball.",
+                   "m":  "Sphere = round 3D.",
+                   "r":  "A basketball is a sphere."
+               },
     "fraction":  {
                      "s":  "A number written as one number over another.",
                      "m":  "Fraction = parts of a whole.",
                      "r":  "3/4 means 3 parts out of 4 equal parts."
                  },
-    "sample":  {
-                   "s":  "A small group chosen from a bigger group.",
-                   "m":  "Sample = small pick.",
-                   "r":  "A poll of 100 voters is a sample of all voters."
+    "vector":  {
+                   "s":  "A quantity with both size and direction.",
+                   "m":  "Vector = arrow with length.",
+                   "r":  "An arrow showing 5 km east is a vector."
                },
-    "inverse matrix":  {
-                           "s":  "A matrix that undoes the effect of another matrix.",
-                           "m":  "Inverse matrix = undoing matrix.",
-                           "r":  "Multiplying a matrix by its inverse gives the identity."
-                       },
+    "compass":  {
+                    "s":  "A tool that shows you which way is North.",
+                    "m":  "Compass needle points North.",
+                    "r":  "A hiker uses a compass to find their way through a forest. The needle always points to magnetic North."
+                },
     "line of best fit":  {
                              "s":  "A straight line that passes closest to most points on a scatter graph.",
                              "m":  "Best fit = closest line.",
@@ -929,11 +944,11 @@
                  "m":  "Edge = where faces meet.",
                  "r":  "The 12 edges of a dice are its lines where faces meet."
              },
-    "rhombus":  {
-                    "s":  "A four-sided shape with all sides the same length.",
-                    "m":  "Rhombus = tilted square.",
-                    "r":  "A diamond shape on a playing card is a rhombus."
-                },
+    "round":  {
+                  "s":  "To replace a number with a nearby simpler one.",
+                  "m":  "Round = snap to nearest.",
+                  "r":  "Rounding 4.7 to the nearest whole gives 5."
+              },
     "improper fraction":  {
                               "s":  "A fraction where the top is bigger than the bottom.",
                               "m":  "Improper = big over small.",
@@ -944,26 +959,26 @@
                      "m":  "Identity = always true.",
                      "r":  "x + x = 2x is an identity - it always works."
                  },
-    "rotational symmetry":  {
-                                "s":  "When a shape looks the same after being rotated.",
-                                "m":  "Rotational symmetry = spin-match.",
-                                "r":  "A starfish looks the same after turning a bit - that is rotational symmetry."
-                            },
+    "expand":  {
+                   "s":  "To multiply out the brackets in an expression.",
+                   "m":  "Expand = open the brackets.",
+                   "r":  "Expanding 2 times x+3 gives 2x + 6."
+               },
     "numerator":  {
                       "s":  "The top number in a fraction.",
                       "m":  "Top number = numerator.",
                       "r":  "If a pizza is cut into 8 slices and you take 3, the 3 is the numerator."
                   },
-    "recurring decimal":  {
-                              "s":  "A decimal where the digits repeat forever.",
-                              "m":  "Recurring = repeats forever.",
-                              "r":  "1/3 = 0.333... - the 3 keeps repeating."
-                          },
-    "transpose":  {
-                      "s":  "A new matrix made by swapping rows and columns.",
-                      "m":  "Transpose = swap rows and columns.",
-                      "r":  "Transposing flips a matrix along its diagonal."
+    "empty set":  {
+                      "s":  "The set that contains no elements at all.",
+                      "m":  "Empty set = nothing inside.",
+                      "r":  "A box with nothing inside is like an empty set."
                   },
+    "distance":  {
+                     "s":  "How far apart two points are, or how far something has travelled.",
+                     "m":  "Distance = how far.",
+                     "r":  "The distance from your home to school might be 2 km."
+                 },
     "decimal":  {
                     "s":  "A number with a dot showing parts of a whole.",
                     "m":  "Decimal = dot number.",
@@ -974,6 +989,11 @@
                                "m":  "Relative frequency = share of times.",
                                "r":  "If you flip tails 30 times in 100 flips, the relative frequency is 30/100."
                            },
+    "equation":  {
+                     "s":  "A math sentence with an equals sign.",
+                     "m":  "Equation = equal statement.",
+                     "r":  "2 + 3 = 5 is an equation."
+                 },
     "dividend":  {
                      "s":  "Money a company pays you for owning its shares.",
                      "m":  "Dividend = money from shares.",
@@ -1024,31 +1044,36 @@
                     "m":  "Product = times result.",
                     "r":  "The product of 3 and 4 is 12."
                 },
-    "factorise":  {
-                      "s":  "To write an expression as a product of its factors.",
-                      "m":  "Factorise = factor out.",
-                      "r":  "Factorising 2x + 6 gives 2 times x+3."
-                  },
+    "unit":  {
+                 "s":  "A standard way of measuring something, like metres for length or seconds for time.",
+                 "m":  "Unit = standard measure.",
+                 "r":  "Centimetres, kilograms, and degrees are all units."
+             },
     "exponential growth":  {
                                "s":  "Growth that gets faster and faster over time.",
                                "m":  "Growth = faster and faster.",
                                "r":  "A bacteria colony under exponential growth can double every hour."
                            },
-    "integration":  {
-                        "s":  "The reverse of differentiation, used to find areas.",
-                        "m":  "Integration = area finder.",
-                        "r":  "Integration can find the area under a curve."
-                    },
+    "division":  {
+                     "s":  "Sharing or splitting into equal groups.",
+                     "m":  "Division = fair sharing.",
+                     "r":  "12 divided by 3 means split 12 cookies into 3 equal groups = 4 each."
+                 },
+    "mixed number":  {
+                         "s":  "A whole number written next to a fraction.",
+                         "m":  "Mixed = whole + fraction.",
+                         "r":  "2 and 3/4 is a mixed number - two and three-quarters."
+                     },
     "volume":  {
                    "s":  "The amount of 3D space inside a solid.",
                    "m":  "Volume = inside 3D space.",
                    "r":  "The volume of a fish tank tells you how much water fits inside."
                },
-    "line of symmetry":  {
-                             "s":  "A line that splits a shape into two mirror halves.",
-                             "m":  "Symmetry line = mirror line.",
-                             "r":  "The line down the middle of a heart is a line of symmetry."
-                         },
+    "inverse matrix":  {
+                           "s":  "A matrix that undoes the effect of another matrix.",
+                           "m":  "Inverse matrix = undoing matrix.",
+                           "r":  "Multiplying a matrix by its inverse gives the identity."
+                       },
     "pentagon":  {
                      "s":  "A flat shape with 5 straight sides.",
                      "m":  "Penta = five.",
@@ -1059,6 +1084,11 @@
                             "m":  "Proper = small over big.",
                             "r":  "2/5 is a proper fraction."
                         },
+    "line of symmetry":  {
+                             "s":  "A line that splits a shape into two mirror halves.",
+                             "m":  "Symmetry line = mirror line.",
+                             "r":  "The line down the middle of a heart is a line of symmetry."
+                         },
     "outlier":  {
                     "s":  "A value much bigger or smaller than the rest.",
                     "m":  "Outlier = weird one out.",
@@ -1069,16 +1099,21 @@
                  "m":  "Mean = average.",
                  "r":  "If your last 4 test scores were 70, 80, 90, 100, the mean is 85."
              },
-    "tree diagram":  {
-                         "s":  "A branching diagram showing all possible outcomes.",
-                         "m":  "Tree diagram = branching chart.",
-                         "r":  "A tree diagram for two coin flips shows 4 outcomes."
-                     },
+    "absolute value":  {
+                           "s":  "The size of a number ignoring whether it is positive or negative.",
+                           "m":  "Absolute value = distance from zero.",
+                           "r":  "The absolute value of negative 5 is 5 - we drop the sign."
+                       },
     "bisector":  {
                      "s":  "A line that splits something into two equal parts.",
                      "m":  "Bisector cuts in half.",
                      "r":  "A median of a triangle is a kind of bisector."
                  },
+    "population":  {
+                       "s":  "The whole group being studied in a survey.",
+                       "m":  "Population = entire group.",
+                       "r":  "If you survey 100 voters, the population is all the voters."
+                   },
     "square":  {
                    "s":  "A four-sided shape with all sides equal and all corners square.",
                    "m":  "Square = equal sides, right corners.",
@@ -1094,11 +1129,11 @@
                        "m":  "Inequality = not-equal signs.",
                        "r":  "x \u003e 5 means x is greater than 5."
                    },
-    "biased":  {
-                   "s":  "When a test favours one result more than others.",
-                   "m":  "Biased = unfair lean.",
-                   "r":  "A weighted coin is biased toward one side."
-               },
+    "tree diagram":  {
+                         "s":  "A branching diagram showing all possible outcomes.",
+                         "m":  "Tree diagram = branching chart.",
+                         "r":  "A tree diagram for two coin flips shows 4 outcomes."
+                     },
     "Venn diagram":  {
                          "s":  "A diagram of overlapping circles that show relationships between sets.",
                          "m":  "Venn = overlapping circles.",
@@ -1109,21 +1144,26 @@
                   "m":  "Angle = corner opening.",
                   "r":  "The corner of an open book makes an angle."
               },
-    "power":  {
-                  "s":  "A small raised number showing repeated multiplication.",
-                  "m":  "Power = times count.",
-                  "r":  "In 2 cubed, the 3 is the power."
-              },
+    "transpose":  {
+                      "s":  "A new matrix made by swapping rows and columns.",
+                      "m":  "Transpose = swap rows and columns.",
+                      "r":  "Transposing flips a matrix along its diagonal."
+                  },
+    "rhombus":  {
+                    "s":  "A four-sided shape with all sides the same length.",
+                    "m":  "Rhombus = tilted square.",
+                    "r":  "A diamond shape on a playing card is a rhombus."
+                },
     "derivative":  {
                        "s":  "A function that gives the rate of change of another function.",
                        "m":  "Derivative = slope function.",
                        "r":  "The derivative of x squared is 2x - it gives the slope."
                    },
-    "expand":  {
-                   "s":  "To multiply out the brackets in an expression.",
-                   "m":  "Expand = open the brackets.",
-                   "r":  "Expanding 2 times x+3 gives 2x + 6."
-               },
+    "adjacent":  {
+                     "s":  "The side of a right-angled triangle next to a chosen angle (not the hypotenuse).",
+                     "m":  "Adjacent = right beside.",
+                     "r":  "The side next to a chosen corner is the adjacent side."
+                 },
     "tangent":  {
                     "s":  "A straight line that just touches a curve at one point.",
                     "m":  "Tangent = light touch.",
@@ -1149,11 +1189,16 @@
                        "m":  "Horizontal = like the horizon.",
                        "r":  "The line of the horizon when you look out at sea is horizontal."
                    },
-    "variation":  {
-                      "s":  "When one number changes, another changes too in a pattern.",
-                      "m":  "Variation = one thing changing affects another.",
-                      "r":  "The more hours you work, the more money you earn - that is variation."
-                  },
+    "domain":  {
+                   "s":  "All the numbers you are allowed to put into a function.",
+                   "m":  "Domain = inputs allowed.",
+                   "r":  "In y = 1/x, the domain is all numbers except 0 - you cannot divide by zero."
+               },
+    "integral":  {
+                     "s":  "The result of integration, representing area under a curve.",
+                     "m":  "Integral = area result.",
+                     "r":  "The integral of 2x is x squared."
+                 },
     "event":  {
                   "s":  "Something that can happen, often in a probability experiment.",
                   "m":  "Event = what happens.",
@@ -1174,6 +1219,11 @@
                      "m":  "Symmetry = mirror match.",
                      "r":  "A butterfly has symmetry - both wings match."
                  },
+    "simple interest":  {
+                            "s":  "Interest calculated only on the original amount borrowed or invested.",
+                            "m":  "Simple = on the original only.",
+                            "r":  "Simple interest on 100 pounds at 5 percent for 3 years is just 100 times 5 percent times 3."
+                        },
     "digit":  {
                   "s":  "One of the single symbols used to write numbers.",
                   "m":  "Digit = single symbol.",
@@ -1194,41 +1244,46 @@
                       "m":  "Bar chart = tall bars.",
                       "r":  "A bar chart shows how many sales each shop made."
                   },
-    "congruent":  {
-                      "s":  "Exactly the same shape and same size.",
-                      "m":  "Congruent = clone twins.",
-                      "r":  "Two identical cookie-cutter stars are congruent."
-                  },
+    "proportion":  {
+                       "s":  "A statement that two ratios are equal.",
+                       "m":  "Proportion = equal ratios.",
+                       "r":  "If 2 oranges cost 50p, 4 oranges cost 100p - same proportion."
+                   },
     "opposite":  {
                      "s":  "The side of a right-angled triangle across from a chosen angle.",
                      "m":  "Opposite = across from.",
                      "r":  "The side far from a chosen corner is the opposite side."
                  },
-    "simple interest":  {
-                            "s":  "Interest calculated only on the original amount borrowed or invested.",
-                            "m":  "Simple = on the original only.",
-                            "r":  "Simple interest on 100 pounds at 5 percent for 3 years is just 100 times 5 percent times 3."
-                        },
+    "sine rule":  {
+                      "s":  "A rule connecting sides and angles in any triangle.",
+                      "m":  "Sine rule = sides match sines.",
+                      "r":  "Use the sine rule to find a missing side of any triangle."
+                  },
     "asymptote":  {
                       "s":  "A line that a curve gets closer to but never touches.",
                       "m":  "Asymptote = almost-touching line.",
                       "r":  "A car driving toward the horizon but never reaching it is like an asymptote."
                   },
-    "percent":  {
-                    "s":  "A number written as parts per hundred, with a percent sign.",
-                    "m":  "Percent = per 100.",
-                    "r":  "50 percent means 50 out of every 100."
-                },
-    "BODMAS":  {
-                   "s":  "The order to follow in a calculation: Brackets, Orders, Divide, Multiply, Add, Subtract.",
-                   "m":  "BODMAS = order of operations.",
-                   "r":  "For 2 + 3 times 4, BODMAS says multiply first: 2 + 12 = 14."
-               },
-    "cross-section":  {
-                          "s":  "The shape you see when you slice through a 3D object.",
-                          "m":  "Cross-section = slice shape.",
-                          "r":  "Cutting a carrot gives a circle cross-section."
+    "quadrant":  {
+                     "s":  "One of the four sections a graph is split into by its axes.",
+                     "m":  "Quadrant = quarter of a graph.",
+                     "r":  "The top-right section of a graph is Quadrant I."
+                 },
+    "differentiate":  {
+                          "s":  "To find the derivative of a function.",
+                          "m":  "Differentiate = find derivative.",
+                          "r":  "You differentiate x squared to get 2x."
                       },
+    "east":  {
+                 "s":  "The direction to your right when facing North.",
+                 "m":  "East = right of North = 090 bearing.",
+                 "r":  "The sun rises in the East. A bearing of 090 means due East."
+             },
+    "north":  {
+                  "s":  "The direction shown at the top of a map.",
+                  "m":  "North = top of the map = 000 bearing.",
+                  "r":  "On a map, North is at the top. A bearing of 000 means due North."
+              },
     "transformation":  {
                            "s":  "Any way of moving or resizing a shape.",
                            "m":  "Transformation = change of position.",
@@ -1239,11 +1294,11 @@
                          "m":  "Tan = opposite over next door.",
                          "r":  "tan of an angle = opposite divided by adjacent."
                      },
-    "area":  {
-                 "s":  "How much flat space a shape covers.",
-                 "m":  "Area = inside space.",
-                 "r":  "The rug on your bedroom floor - its size is the area."
-             },
+    "bearing angle":  {
+                          "s":  "How far around the compass from North, measured clockwise.",
+                          "m":  "Bearing = turn from North, clockwise.",
+                          "r":  "A bearing of 090 means due East. A bearing of 225 is South-West (halfway between South and West)."
+                      },
     "line graph":  {
                        "s":  "A graph using lines to show how something changes over time.",
                        "m":  "Line graph = tracking changes.",
@@ -1254,11 +1309,16 @@
                         "m":  "Exponential = fast growth.",
                         "r":  "Population growth can be exponential - doubling every few years."
                     },
-    "time":  {
-                 "s":  "A measure of how long something takes, in seconds, minutes, hours, or days.",
-                 "m":  "Time = how long.",
-                 "r":  "A 100 metre race takes about 10 seconds - that is the time."
-             },
+    "SAS":  {
+                "s":  "Two sides and the angle between them = the triangles match.",
+                "m":  "SAS = Side-Angle-Side.",
+                "r":  "If two sides and the angle between them are the same, the two triangles are identical - it is the most common way to prove congruence."
+            },
+    "percent":  {
+                    "s":  "A number written as parts per hundred, with a percent sign.",
+                    "m":  "Percent = per 100.",
+                    "r":  "50 percent means 50 out of every 100."
+                },
     "correlation":  {
                         "s":  "When two variables tend to change together.",
                         "m":  "Correlation = changes together.",
@@ -1279,16 +1339,26 @@
                           "m":  "Quad = four sides.",
                           "r":  "A window pane is usually a quadrilateral."
                       },
-    "cube root":  {
-                      "s":  "The number that, times itself three times, gives the original.",
-                      "m":  "Cube root = undo the cube.",
-                      "r":  "The cube root of 27 is 3 because 3 times 3 times 3 = 27."
-                  },
-    "integral":  {
-                     "s":  "The result of integration, representing area under a curve.",
-                     "m":  "Integral = area result.",
-                     "r":  "The integral of 2x is x squared."
+    "cross-section":  {
+                          "s":  "The shape you see when you slice through a 3D object.",
+                          "m":  "Cross-section = slice shape.",
+                          "r":  "Cutting a carrot gives a circle cross-section."
+                      },
+    "isosceles triangle":  {
+                               "s":  "A triangle with two sides of the same length.",
+                               "m":  "Isosceles = two equal legs.",
+                               "r":  "A slice of sandwich cut straight down is often isosceles."
+                           },
+    "diameter":  {
+                     "s":  "The distance straight across a circle through the middle.",
+                     "m":  "Diameter = across.",
+                     "r":  "If a pizza is 30 cm across, the diameter is 30 cm."
                  },
+    "face":  {
+                 "s":  "A flat surface on the outside of a 3D shape.",
+                 "m":  "Face = flat side.",
+                 "r":  "A dice has 6 square faces."
+             },
     "dot product":  {
                         "s":  "A way to multiply two vectors, giving one number.",
                         "m":  "Dot product = vector times vector.",
@@ -1299,16 +1369,21 @@
                      "m":  "Solution = answer that works.",
                      "r":  "In x + 1 = 4, the solution is x = 3."
                  },
-    "isosceles triangle":  {
-                               "s":  "A triangle with two sides of the same length.",
-                               "m":  "Isosceles = two equal legs.",
-                               "r":  "A slice of sandwich cut straight down is often isosceles."
-                           },
+    "natural number":  {
+                           "s":  "A counting number: 1, 2, 3, and so on.",
+                           "m":  "Natural = for counting.",
+                           "r":  "Counting fingers: 1, 2, 3 - these are natural numbers."
+                       },
     "decimal place":  {
                           "s":  "The position of a digit to the right of a decimal point.",
                           "m":  "Decimal place = position past the dot.",
                           "r":  "In 3.14, the 1 is the first decimal place."
                       },
+    "power":  {
+                  "s":  "A small raised number showing repeated multiplication.",
+                  "m":  "Power = times count.",
+                  "r":  "In 2 cubed, the 3 is the power."
+              },
     "base":  {
                  "s":  "The number being multiplied by itself in a power.",
                  "m":  "Base = bottom number.",

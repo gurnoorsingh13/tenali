@@ -1,5 +1,5 @@
 /**
- * glossaryVisuals.jsx — Inline SVG visual registry for Feature AQ.
+ * glossaryVisuals.jsx ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Inline SVG visual registry for Feature AQ.
  *
  * One small SVG component per curated glossary term. All entries share
  * `viewBox="0 0 120 120"`, the `glossary-visual` className, and stroke-based
@@ -117,48 +117,57 @@ const V = {
   angle: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="20" y1="100" x2="100" y2="100" />
-      <line x1="20" y1="100" x2="95" y2="35" />
-      <path d="M50 100 A30 30 0 0 0 64 84" />
+      <line x1="20" y1="100" x2="80" y2="60" />
+      <path d="M50 100 A30 30 0 0 0 43 80" />
+      <text x="62" y="92" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "right angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="18,100 100,100 100,18" />
-      <rect x="82" y="82" width="18" height="18" />
+      <polyline points="20,100 100,100 100,20" />
+      <line x1="100" y1="100" x2="100" y2="20" />
+      <path d="M70 100 A30 30 0 0 0 100 70" />
+      <rect x="80" y="80" width="20" height="20" />
+      <text x="78" y="76" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif" textAnchor="middle">90&#176;</text>
     </svg>
   ),
   "acute angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="20" y1="100" x2="100" y2="100" />
-      <line x1="20" y1="100" x2="95" y2="65" />
-      <path d="M48 100 A28 28 0 0 0 50 78" />
+      <line x1="20" y1="100" x2="90" y2="80" />
+      <path d="M50 100 A30 30 0 0 0 49 92" />
+      <text x="62" y="96" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "obtuse angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="20" y1="100" x2="100" y2="100" />
-      <line x1="20" y1="100" x2="35" y2="30" />
-      <path d="M50 100 A30 30 0 0 1 30 60" />
+      <line x1="20" y1="100" x2="5" y2="30" />
+      <path d="M50 100 A30 30 0 0 0 5 70" />
+      <text x="40" y="74" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "reflex angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="20" y1="100" x2="100" y2="100" />
-      <line x1="20" y1="100" x2="35" y2="30" />
-      <path d="M70 100 A50 50 0 1 1 30 60" />
+      <line x1="20" y1="100" x2="5" y2="30" />
+      <path d="M50 100 A30 30 0 1 0 5 70" />
+      <text x="50" y="40" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "interior angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-      <polygon points="20,90 100,90 60,20" />
-      <path d="M50 90 A25 25 0 0 1 42 65" />
+      <polygon points="20,95 100,95 60,25" />
+      <path d="M45 95 A25 25 0 0 0 32 73" />
+      <text x="38" y="92" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "exterior angle": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <polyline points="20,85 80,85 80,30" />
-      <line x1="80" y1="85" x2="110" y2="85" />
-      <path d="M98 85 A18 18 0 0 0 88 67" />
+      <polyline points="20,90 80,90 80,30" />
+      <line x1="80" y1="90" x2="105" y2="90" />
+      <path d="M98 90 A18 18 0 1 0 80 72" />
+      <text x="100" y="70" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   parallel: () => (
@@ -208,10 +217,10 @@ const V = {
       <circle cx="60" cy="60" r="40" />
       <line x1="60" y1="20" x2="60" y2="100" />
       <polygon points="55,25 65,25 60,15" fill="currentColor" />
+      <text x="64" y="14" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif" fontWeight="600">N</text>
       <line x1="60" y1="60" x2="98" y2="35" strokeWidth="2" />
       <path d="M60 45 A15 15 0 0 1 73 52" strokeWidth="1.5" />
       <polygon points="93,32 100,35 96,42" fill="currentColor" />
-      <text x="78" y="32" fill="currentColor" fontSize="12" fontFamily="serif">N</text>
     </svg>
   ),
 
@@ -225,7 +234,11 @@ const V = {
   chord: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="60" cy="60" r="40" />
-      <line x1="28" y1="82" x2="92" y2="38" strokeWidth="2.5" />
+      <line x1="34" y1="84" x2="86" y2="36" strokeWidth="2.5" />
+      <circle cx="34" cy="84" r="2.5" fill="currentColor" />
+      <circle cx="86" cy="36" r="2.5" fill="currentColor" />
+      <text x="86" y="30" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif">endpoints on circle</text>
+      <line x1="86" y1="33" x2="88" y2="34" strokeWidth="0.5" />
     </svg>
   ),
   sector: () => (
@@ -246,15 +259,23 @@ const V = {
   ),
   semicircle: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="20" y1="90" x2="100" y2="90" />
-      <path d="M20 90 A40 40 0 0 0 100 90" />
+      <line x1="20" y1="80" x2="100" y2="80" />
+      <path d="M20 80 A40 40 0 0 0 100 80" />
+      <line x1="20" y1="75" x2="100" y2="75" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+      <line x1="60" y1="76" x2="60" y2="80" strokeWidth="1" />
+      <text x="62" y="74" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">diameter</text>
+      <text x="60" y="100" fill="currentColor" stroke="none" textAnchor="middle" fontSize="12" fontFamily="serif">half of a circle</text>
     </svg>
   ),
   circumference: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="60" cy="60" r="40" />
+      <circle cx="60" cy="60" r="40" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
       <path d="M60 20 A40 40 0 0 1 100 60" strokeWidth="3" />
       <path d="M100 60 A40 40 0 0 1 60 100" strokeWidth="3" />
+      <path d="M60 100 A40 40 0 0 1 20 60" strokeWidth="3" />
+      <path d="M20 60 A40 40 0 0 1 60 20" strokeWidth="3" />
+      <polygon points="98,55 104,60 98,65" fill="currentColor" />
+      <text x="60" y="112" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">C = 2&#960;r</text>
     </svg>
   ),
   radius: () => (
@@ -269,6 +290,8 @@ const V = {
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="60" cy="60" r="40" />
       <line x1="20" y1="60" x2="100" y2="60" strokeWidth="2.5" />
+      <text x="62" y="48" fill="currentColor" stroke="none" fontSize="16" fontFamily="serif" fontStyle="italic" textAnchor="middle">d</text>
+      <line x1="60" y1="56" x2="60" y2="52" strokeWidth="1" />
     </svg>
   ),
   centre: () => (
@@ -350,7 +373,7 @@ const V = {
       <rect x="12" y="50" width="18" height="22" />
       <rect x="48" y="35" width="32" height="52" />
       <rect x="92" y="22" width="18" height="78" />
-      <text x="60" y="105" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif" textAnchor="middle" opacity="0.7">ÃƒÆ’Ã¢â‚¬â€1  ÃƒÆ’Ã¢â‚¬â€2  ÃƒÆ’Ã¢â‚¬â€3</text>
+      <text x="60" y="105" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif" textAnchor="middle" opacity="0.7">&#215;1  &#215;2  &#215;3</text>
     </svg>
   ),
   symmetry: () => (
@@ -450,9 +473,11 @@ const V = {
   ),
   expand: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="35" y="72" fill="currentColor" textAnchor="middle" fontSize="18" fontFamily="serif">2(x+3)</text>
-      <text x="90" y="72" fill="currentColor" textAnchor="middle" fontSize="18" fontFamily="serif">2x+6</text>
-      <polygon points="62,64 75,64 68,76" fill="currentColor" />
+      <text x="32" y="75" fill="currentColor" textAnchor="middle" fontSize="18" fontFamily="serif">2(x+3)</text>
+      <text x="88" y="75" fill="currentColor" textAnchor="middle" fontSize="18" fontFamily="serif">2x+6</text>
+      <line x1="55" y1="60" x2="65" y2="60" strokeWidth="1.5" />
+      <polygon points="62,57 68,60 62,63" fill="currentColor" />
+      <text x="60" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="12" fontFamily="serif" opacity="0.6">multiply out</text>
     </svg>
   ),
   factorise: () => (
@@ -493,7 +518,7 @@ const V = {
       <line x1="60" y1="15" x2="60" y2="105" />
       <line x1="22" y1="95" x2="98" y2="30" strokeWidth="2" />
       <circle cx="60" cy="42" r="4" fill="currentColor" />
-      <text x="68" y="36" fill="currentColor" stroke="none" fontSize="13" fontFamily="serif">y-int</text>
+      <text x="76" y="42" fill="currentColor" stroke="none" fontSize="13" fontFamily="serif">y-int</text>
     </svg>
   ),
   "x-intercept": () => (
@@ -502,7 +527,7 @@ const V = {
       <line x1="60" y1="15" x2="60" y2="105" />
       <line x1="22" y1="95" x2="98" y2="30" strokeWidth="2" />
       <circle cx="92" cy="48" r="4" fill="currentColor" />
-      <text x="70" y="48" fill="currentColor" stroke="none" fontSize="13" fontFamily="serif">x-int</text>
+      <text x="92" y="36" fill="currentColor" stroke="none" fontSize="13" fontFamily="serif" textAnchor="middle">x-int</text>
     </svg>
   ),
   discriminant: () => (
@@ -538,13 +563,19 @@ const V = {
   ),
   integer: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <line x1="15" y1="60" x2="105" y2="60" />
-      <circle cx="25" cy="60" r="2" fill="currentColor" />
-      <circle cx="40" cy="60" r="2" fill="currentColor" />
-      <circle cx="55" cy="60" r="2" fill="currentColor" />
-      <circle cx="70" cy="60" r="2" fill="currentColor" />
-      <circle cx="85" cy="60" r="2" fill="currentColor" />
-      <circle cx="100" cy="60" r="2" fill="currentColor" />
+      <line x1="15" y1="55" x2="105" y2="55" />
+      <circle cx="25" cy="55" r="2.5" fill="currentColor" />
+      <circle cx="40" cy="55" r="2.5" fill="currentColor" />
+      <circle cx="55" cy="55" r="2.5" fill="currentColor" />
+      <circle cx="70" cy="55" r="2.5" fill="currentColor" />
+      <circle cx="85" cy="55" r="2.5" fill="currentColor" />
+      <circle cx="100" cy="55" r="2.5" fill="currentColor" />
+      <text x="25" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">-2</text>
+      <text x="40" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">-1</text>
+      <text x="55" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">0</text>
+      <text x="70" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">1</text>
+      <text x="85" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">2</text>
+      <text x="100" y="75" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">3</text>
     </svg>
   ),
   fraction: () => (
@@ -608,7 +639,9 @@ const V = {
   ),
   "recurring decimal": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <text x="60" y="76" fill="currentColor" stroke="none" textAnchor="middle" fontSize="32" fontFamily="serif">0.3&#x0304;3&#x0304;3&#x0304;</text>
+      <text x="60" y="62" fill="currentColor" textAnchor="middle" fontSize="28" fontFamily="serif">0.3333&#8230;</text>
+      <path d="M76 38 L92 38" stroke="currentColor" strokeWidth="1.5" />
+      <text x="60" y="92" fill="currentColor" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.7">keeps going forever</text>
     </svg>
   ),
   "terminating decimal": () => (
@@ -778,21 +811,29 @@ const V = {
   "rational number": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="40" y1="60" x2="80" y2="60" />
-      <text x="60" y="52" fill="currentColor" stroke="none" textAnchor="middle" fontSize="26" fontFamily="serif">p</text>
-      <text x="60" y="92" fill="currentColor" stroke="none" textAnchor="middle" fontSize="26" fontFamily="serif">q</text>
+      <text x="60" y="50" fill="currentColor" stroke="none" textAnchor="middle" fontSize="26" fontFamily="serif">p</text>
+      <text x="60" y="84" fill="currentColor" stroke="none" textAnchor="middle" fontSize="26" fontFamily="serif">q</text>
     </svg>
   ),
   "irrational number": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="60" y="78" fill="currentColor" textAnchor="middle" fontSize="44" fontFamily="serif">&#8730;2</text>
+      <text x="60" y="72" fill="currentColor" textAnchor="middle" fontSize="44" fontFamily="serif">&#8730;2</text>
     </svg>
   ),
   "real number": () => (
-    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
       <line x1="15" y1="60" x2="105" y2="60" />
-      <line x1="25" y1="55" x2="25" y2="65" />
-      <line x1="60" y1="55" x2="60" y2="65" />
-      <line x1="95" y1="55" x2="95" y2="65" />
+      <circle cx="20" cy="60" r="2" fill="currentColor" />
+      <circle cx="35" cy="60" r="2" fill="currentColor" />
+      <circle cx="50" cy="60" r="2" fill="currentColor" />
+      <circle cx="70" cy="60" r="2" fill="currentColor" />
+      <circle cx="85" cy="60" r="2" fill="currentColor" />
+      <circle cx="100" cy="60" r="2" fill="currentColor" />
+      <text x="20" y="80" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">-3</text>
+      <text x="50" y="80" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">0</text>
+      <text x="85" y="80" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">2</text>
+      <text x="100" y="76" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif">&#960;</text>
+      <text x="60" y="100" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.6">all real numbers</text>
     </svg>
   ),
   consecutive: () => (
@@ -1129,16 +1170,16 @@ const V = {
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="15" y1="95" x2="105" y2="95" strokeDasharray="4 3" />
       <line x1="30" y1="95" x2="95" y2="40" />
-      <path d="M50 95 A30 30 0 0 0 64 81" strokeWidth="1.5" />
-      <text x="62" y="92" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
+      <path d="M50 95 A30 30 0 0 0 39 72" />
+      <text x="60" y="88" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "angle of depression": () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="15" y1="30" x2="105" y2="30" strokeDasharray="4 3" />
       <line x1="30" y1="30" x2="95" y2="90" />
-      <path d="M50 30 A30 30 0 0 1 64 44" strokeWidth="1.5" />
-      <text x="62" y="36" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
+      <path d="M50 30 A30 30 0 0 1 39 53" />
+      <text x="60" y="42" fill="currentColor" stroke="none" fontSize="14" fontFamily="serif" textAnchor="middle">&#952;</text>
     </svg>
   ),
   "sine rule": () => (
@@ -1194,10 +1235,15 @@ const V = {
     </svg>
   ),
   differentiate: () => (
-    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="35" y="68" fill="currentColor" textAnchor="middle" fontSize="20" fontFamily="serif">x&#178;</text>
-      <polygon points="60,60 75,60 67,72" fill="currentColor" />
-      <text x="92" y="68" fill="currentColor" textAnchor="middle" fontSize="22" fontFamily="serif">2x</text>
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="20" y="40" width="35" height="40" rx="4" />
+      <text x="37" y="64" fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontFamily="serif" fontStyle="italic">f(x)</text>
+      <line x1="60" y1="60" x2="75" y2="60" strokeWidth="1.5" />
+      <polygon points="70,55 78,60 70,65" fill="currentColor" stroke="none" />
+      <rect x="80" y="40" width="35" height="40" rx="4" />
+      <text x="97" y="64" fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontFamily="serif" fontStyle="italic">f&#8242;(x)</text>
+      <text x="97" y="50" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif">d/dx</text>
+      <text x="60" y="100" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.6">find the derivative</text>
     </svg>
   ),
   "gradient function": () => (
@@ -1265,23 +1311,34 @@ const V = {
   ),
   displacement: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="22" y1="82" x2="98" y2="38" />
-      <polygon points="93,32 102,40 96,44" fill="currentColor" stroke="none" />
-      <circle cx="22" cy="82" r="3" fill="currentColor" stroke="none" />
-      <circle cx="98" cy="38" r="3" fill="currentColor" stroke="none" />
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+          <polygon points="1,1 5,3 1,5" fill="currentColor" stroke="none" />
+        </marker>
+      </defs>
+      <line x1="25" y1="95" x2="90" y2="30" marker-end="url(#arrow)" />
+      <circle cx="25" cy="95" r="3.5" fill="currentColor" stroke="none" />
     </svg>
   ),
   vector: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="22" y1="92" x2="98" y2="32" />
-      <polygon points="90,30 100,32 95,42" fill="currentColor" stroke="none" />
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+          <polygon points="1,1 5,3 1,5" fill="currentColor" stroke="none" />
+        </marker>
+      </defs>
+      <line x1="25" y1="95" x2="90" y2="30" marker-end="url(#arrow)" />
     </svg>
   ),
   magnitude: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="22" y1="92" x2="98" y2="32" />
-      <polygon points="90,30 100,32 95,42" fill="currentColor" stroke="none" />
-      <text x="55" y="60" fill="currentColor" stroke="none" fontSize="18" fontFamily="serif" textAnchor="middle" transform="rotate(-44 55 60)">|v|</text>
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+          <polygon points="1,1 5,3 1,5" fill="currentColor" stroke="none" />
+        </marker>
+      </defs>
+      <line x1="25" y1="95" x2="90" y2="30" marker-end="url(#arrow)" />
+      <text x="50" y="52" fill="currentColor" stroke="none" font-size="16" font-family="serif" font-weight="bold" text-anchor="middle" transform="rotate(-45 50 52)">|v|</text>
     </svg>
   ),
   "dot product": () => (
@@ -1290,8 +1347,8 @@ const V = {
     </svg>
   ),
   "scalar product": () => (
-    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="60" y="68" fill="currentColor" textAnchor="middle" fontSize="22" fontFamily="serif">a &#183; b = |a||b|cos&#952;</text>
+    <svg viewBox="0 0 150 110" className="glossary-visual" aria-hidden="true" fill="currentColor">
+      <text x="50%" y="55%" font-family="monospace, sans-serif" font-size="14" font-weight="bold" text-anchor="middle"> a · b = |a||b|cosθ</text>
     </svg>
   ),
   row: () => (
@@ -1471,8 +1528,10 @@ const V = {
   ),
   interest: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="60" y="68" fill="currentColor" textAnchor="middle" fontSize="22" fontFamily="serif">money paid for borrowing</text>
-      <text x="60" y="93" fill="currentColor" textAnchor="middle" fontSize="14" fontFamily="serif" opacity="0.6">or earned on saving</text>
+      <circle cx="60" cy="50" r="14" fill="none" stroke="currentColor" strokeWidth="2" />
+      <text x="60" y="55" fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontFamily="serif">$</text>
+      <text x="60" y="82" fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontFamily="serif">interest</text>
+      <text x="60" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.6">paid for borrowing</text>
     </svg>
   ),
   "simple interest": () => (
@@ -1488,8 +1547,9 @@ const V = {
   ),
   principal: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true">
-      <text x="60" y="72" fill="currentColor" textAnchor="middle" fontSize="32" fontFamily="serif">P = $1000</text>
-      <text x="60" y="98" fill="currentColor" textAnchor="middle" fontSize="12" fontFamily="serif" opacity="0.6">the starting amount</text>
+      <text x="60" y="68" fill="currentColor" textAnchor="middle" fontSize="36" fontFamily="serif">P</text>
+      <text x="60" y="92" fill="currentColor" textAnchor="middle" fontSize="13" fontFamily="serif" opacity="0.6">the starting amount</text>
+      <line x1="30" y1="68" x2="90" y2="68" strokeWidth="1" strokeDasharray="2 2" />
     </svg>
   ),
   depreciation: () => (
@@ -1557,10 +1617,14 @@ const V = {
   ),
   congruent: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-      <polygon points="15,75 45,75 30,40" />
-      <polygon points="68,75 98,75 83,40" />
-      <line x1="48" y1="60" x2="68" y2="60" />
-      <line x1="60" y1="60" x2="80" y2="60" />
+      <polygon points="15,80 45,80 30,45" />
+      <polygon points="68,80 98,80 83,45" />
+      <line x1="48" y1="80" x2="56" y2="80" strokeWidth="2" />
+      <line x1="60" y1="80" x2="60" y2="75" />
+      <line x1="64" y1="80" x2="72" y2="80" strokeWidth="2" />
+      <path d="M52 60 A8 8 0 0 1 60 64" strokeWidth="1" />
+      <path d="M68 60 A8 8 0 0 0 60 64" strokeWidth="1" />
+      <text x="60" y="100" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">same shape and size</text>
     </svg>
   ),
   gradient: () => (
@@ -1657,14 +1721,25 @@ const V = {
   parabola: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M15 95 Q60 10 105 95" />
+      <line x1="60" y1="15" x2="60" y2="100" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
       <line x1="15" y1="95" x2="105" y2="95" strokeWidth="1" />
+      <circle cx="60" cy="95" r="2" fill="currentColor" />
+      <circle cx="60" cy="35" r="2.5" fill="currentColor" />
+      <text x="48" y="38" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">F</text>
+      <text x="62" y="100" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">vertex</text>
     </svg>
   ),
   hyperbola: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M15 60 Q35 25 55 25" />
-      <path d="M105 60 Q85 95 65 95" />
-      <line x1="15" y1="60" x2="105" y2="60" strokeWidth="1" strokeDasharray="3 3" />
+      <line x1="15" y1="60" x2="105" y2="60" strokeWidth="1" opacity="0.4" />
+      <line x1="60" y1="20" x2="60" y2="100" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+      <path d="M15 60 C30 30 50 30 56 50" />
+      <path d="M105 60 C90 90 70 90 64 70" />
+      <circle cx="55" cy="55" r="2.5" fill="currentColor" />
+      <text x="42" y="50" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">F1</text>
+      <circle cx="65" cy="65" r="2.5" fill="currentColor" />
+      <text x="78" y="74" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">F2</text>
+      <circle cx="60" cy="60" r="1.5" fill="currentColor" />
     </svg>
   ),
   focus: () => (
@@ -1738,7 +1813,7 @@ const V = {
       <text x="92" y="55" fill="currentColor" stroke="none" textAnchor="middle" fontSize="13" fontFamily="serif">y</text>
     </svg>
   ),
-  // MISSING VISUALS (14) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â appended to fill gaps in V
+  // MISSING VISUALS (14) appended to fill gaps in V (cleaned)
   quadrant: () => (
     <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="15" y1="60" x2="105" y2="60" />
@@ -1845,6 +1920,203 @@ const V = {
       <text x="60" y="98" fill="currentColor" textAnchor="middle" fontSize="12" fontFamily="serif" opacity="0.6">family of antiderivatives</text>
     </svg>
   ),
+
+  subtraction: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="15" y1="60" x2="105" y2="60" />
+      <circle cx="30" cy="60" r="4" fill="currentColor" />
+      <circle cx="45" cy="60" r="4" fill="currentColor" />
+      <circle cx="60" cy="60" r="4" fill="currentColor" />
+      <circle cx="75" cy="60" r="4" fill="currentColor" />
+      <circle cx="90" cy="60" r="4" fill="currentColor" />
+      <line x1="79" y1="50" x2="101" y2="70" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="101" y1="50" x2="79" y2="70" stroke="currentColor" strokeWidth="1.5" />
+      <text x="60" y="92" fill="currentColor" textAnchor="middle" fontSize="14" fontFamily="serif">5 &#8722; 2 = 3</text>
+    </svg>
+  ),
+  multiplication: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="28" cy="35" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="44" cy="35" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="60" cy="35" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="35" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="28" cy="55" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="44" cy="55" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="60" cy="55" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="55" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="28" cy="75" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="44" cy="75" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="60" cy="75" r="3.5" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="75" r="3.5" fill="currentColor" stroke="none" />
+      <rect x="22" y="28" width="60" height="54" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 2" />
+      <text x="60" y="102" fill="currentColor" textAnchor="middle" fontSize="14" fontFamily="serif">3 &#215; 4 = 12</text>
+    </svg>
+  ),
+  division: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="25" cy="30" r="4" fill="currentColor" stroke="none" />
+      <circle cx="42" cy="30" r="4" fill="currentColor" stroke="none" />
+      <circle cx="59" cy="30" r="4" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="30" r="4" fill="currentColor" stroke="none" />
+      <circle cx="25" cy="60" r="4" fill="currentColor" stroke="none" />
+      <circle cx="42" cy="60" r="4" fill="currentColor" stroke="none" />
+      <circle cx="59" cy="60" r="4" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="60" r="4" fill="currentColor" stroke="none" />
+      <circle cx="25" cy="90" r="4" fill="currentColor" stroke="none" />
+      <circle cx="42" cy="90" r="4" fill="currentColor" stroke="none" />
+      <circle cx="59" cy="90" r="4" fill="currentColor" stroke="none" />
+      <circle cx="76" cy="90" r="4" fill="currentColor" stroke="none" />
+      <line x1="16" y1="18" x2="16" y2="102" strokeWidth="1" strokeDasharray="3 2" />
+      <line x1="85" y1="18" x2="85" y2="102" strokeWidth="1" strokeDasharray="3 2" />
+      <text x="60" y="116" fill="currentColor" textAnchor="middle" fontSize="13" fontFamily="serif">12 &#247; 3 = 4</text>
+    </svg>
+  ),
+
+
+  addition: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="30" cy="60" r="4" fill="currentColor" />
+      <circle cx="45" cy="60" r="4" fill="currentColor" />
+      <circle cx="60" cy="60" r="4" fill="currentColor" />
+      <text x="45" y="40" fill="currentColor" stroke="none" textAnchor="middle" fontSize="12" fontFamily="serif">3</text>
+      <text x="60" y="80" fill="currentColor" stroke="none" textAnchor="middle" fontSize="22" fontFamily="serif">+</text>
+      <circle cx="75" cy="60" r="4" fill="currentColor" />
+      <circle cx="90" cy="60" r="4" fill="currentColor" />
+      <text x="82" y="40" fill="currentColor" stroke="none" textAnchor="middle" fontSize="12" fontFamily="serif">2</text>
+      <text x="60" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontFamily="serif">3 + 2 = 5</text>
+    </svg>
+  ),
+
+  // BEARING-RELATED ADDITIONS (8 new visuals)
+  "bearing angle": () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="60" cy="60" r="40" />
+      <line x1="60" y1="20" x2="60" y2="100" />
+      <polygon points="55,25 65,25 60,15" fill="currentColor" />
+      <text x="64" y="14" fill="currentColor" stroke="none" fontSize="12" fontFamily="serif" fontWeight="600">N</text>
+      <line x1="60" y1="60" x2="100" y2="60" strokeWidth="2" />
+      <polygon points="95,55 100,60 95,65" fill="currentColor" />
+      <path d="M60 45 A15 15 0 0 1 73 52" strokeWidth="1.5" />
+      <text x="78" y="42" fill="currentColor" stroke="none" fontSize="11" fontFamily="serif">090&#176;</text>
+      <text x="60" y="113" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.6">clockwise from N</text>
+    </svg>
+  ),
+  compass: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="60" cy="60" r="42" />
+      <circle cx="60" cy="60" r="2" fill="currentColor" />
+      <polygon points="60,18 65,58 60,53 55,58" fill="currentColor" />
+      <polygon points="60,102 55,62 60,67 65,62" fill="currentColor" />
+      <text x="60" y="14" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" fontWeight="600">N</text>
+    </svg>
+  ),
+  north: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M60 25 L52 60 L60 53 L68 60 Z" fill="currentColor" />
+      <text x="60" y="80" fill="currentColor" stroke="none" textAnchor="middle" fontSize="20" fontFamily="serif" fontWeight="600">N</text>
+      <text x="60" y="100" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.6">top of map</text>
+    </svg>
+  ),
+  south: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M60 90 L52 60 L60 65 L68 60 Z" fill="currentColor" />
+      <text x="60" y="45" fill="currentColor" stroke="none" textAnchor="middle" fontSize="20" fontFamily="serif" fontWeight="600">S</text>
+      <text x="60" y="28" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.6">bottom of map</text>
+    </svg>
+  ),
+  east: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M95 60 L60 52 L65 60 L60 68 Z" fill="currentColor" />
+      <text x="35" y="68" fill="currentColor" stroke="none" textAnchor="middle" fontSize="20" fontFamily="serif" fontWeight="600">E</text>
+      <text x="35" y="48" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.6">right of N</text>
+    </svg>
+  ),
+  west: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M25 60 L60 52 L55 60 L60 68 Z" fill="currentColor" />
+      <text x="85" y="68" fill="currentColor" stroke="none" textAnchor="middle" fontSize="20" fontFamily="serif" fontWeight="600">W</text>
+      <text x="85" y="48" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" opacity="0.6">left of N</text>
+    </svg>
+  ),
+  "compass rose": () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="60" cy="60" r="42" />
+      <line x1="60" y1="22" x2="60" y2="98" strokeWidth="2" />
+      <line x1="22" y1="60" x2="98" y2="60" strokeWidth="2" />
+      <line x1="33" y1="33" x2="87" y2="87" />
+      <line x1="33" y1="87" x2="87" y2="33" />
+      <text x="60" y="18" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" fontWeight="600">N</text>
+      <text x="60" y="112" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" fontWeight="600">S</text>
+      <text x="16" y="64" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" fontWeight="600">W</text>
+      <text x="104" y="64" fill="currentColor" stroke="none" textAnchor="middle" fontSize="11" fontFamily="serif" fontWeight="600">E</text>
+    </svg>
+  ),
+
+
+  SSS: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <polygon points="20,85 50,85 35,50" />
+      <line x1="20" y1="85" x2="50" y2="85" strokeWidth="2" />
+      <line x1="20" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <line x1="50" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <polygon points="75,85 105,85 90,50" />
+      <line x1="75" y1="85" x2="105" y2="85" strokeWidth="2" />
+      <line x1="75" y1="85" x2="90" y2="50" strokeWidth="2" />
+      <line x1="105" y1="85" x2="90" y2="50" strokeWidth="2" />
+      <text x="35" y="38" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">side=side</text>
+      <text x="60" y="50" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">side=side</text>
+      <text x="60" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">side=side</text>
+    </svg>
+  ),
+  SAS: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <polygon points="20,85 50,85 35,50" />
+      <line x1="20" y1="85" x2="50" y2="85" strokeWidth="2" />
+      <line x1="20" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <path d="M30 78 A10 10 0 0 1 40 78" strokeWidth="1" />
+      <line x1="50" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <polygon points="75,85 105,85 90,50" />
+      <line x1="75" y1="85" x2="105" y2="85" strokeWidth="2" />
+      <line x1="75" y1="85" x2="90" y2="50" strokeWidth="2" />
+      <path d="M85 78 A10 10 0 0 1 95 78" strokeWidth="1" />
+      <line x1="105" y1="85" x2="90" y2="50" strokeWidth="2" />
+      <text x="38" y="46" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">&#952;</text>
+      <text x="93" y="46" fill="currentColor" stroke="none" textAnchor="middle" fontSize="10" fontFamily="serif" opacity="0.7">&#952;</text>
+    </svg>
+  ),
+  ASA: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <polygon points="20,85 50,85 35,50" />
+      <line x1="20" y1="85" x2="50" y2="85" strokeWidth="2" />
+      <path d="M26 78 A10 10 0 0 1 40 78" strokeWidth="1" />
+      <line x1="20" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <path d="M28 65 A12 12 0 0 1 40 70" strokeWidth="1" />
+      <line x1="50" y1="85" x2="35" y2="50" strokeWidth="2" />
+      <polygon points="75,85 105,85 90,50" />
+      <line x1="75" y1="85" x2="105" y2="85" strokeWidth="2" />
+      <path d="M81 78 A10 10 0 0 1 95 78" strokeWidth="1" />
+      <line x1="75" y1="85" x2="90" y2="50" strokeWidth="2" />
+      <path d="M83 65 A12 12 0 0 1 95 70" strokeWidth="1" />
+      <line x1="105" y1="85" x2="90" y2="50" strokeWidth="2" />
+    </svg>
+  ),
+  RHS: () => (
+    <svg viewBox="0 0 120 120" className="glossary-visual" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <polygon points="20,90 50,90 50,40" />
+      <rect x="44" y="84" width="6" height="6" />
+      <line x1="20" y1="90" x2="50" y2="90" strokeWidth="2" />
+      <line x1="20" y1="90" x2="50" y2="40" strokeWidth="2" />
+      <line x1="50" y1="90" x2="50" y2="40" strokeWidth="2" />
+      <polygon points="75,90 105,90 105,40" />
+      <rect x="99" y="84" width="6" height="6" />
+      <line x1="75" y1="90" x2="105" y2="90" strokeWidth="2" />
+      <line x1="75" y1="90" x2="105" y2="40" strokeWidth="2" />
+      <line x1="105" y1="90" x2="105" y2="40" strokeWidth="2" />
+      <text x="35" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="9" fontFamily="serif" opacity="0.7">right + hyp + side</text>
+      <text x="90" y="105" fill="currentColor" stroke="none" textAnchor="middle" fontSize="9" fontFamily="serif" opacity="0.7">right + hyp + side</text>
+    </svg>
+  ),
+
 };
 
 
