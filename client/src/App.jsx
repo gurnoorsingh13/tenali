@@ -72,6 +72,7 @@ import VisualMathLabRedux, {
 import CoordinateGrid from './components/CoordinateGrid';
 import LanguageDashboard from './language/LanguageDashboard'
 import { VOCAB_CORPUS } from './vocabCorpus'
+import { useI18n } from './lib/i18n.jsx';
 
 // API base URL from environment variables (Vite)
 const API = import.meta.env.VITE_API_BASE_URL || '';
@@ -133,7 +134,7 @@ function useAuth() {
 
 // Hamburger button (top-right) + dropdown + login modal.
 // Renders globally — sits next to the .theme-toggle.
-function AuthMenu() {
+function AuthMenu({ t = (s) => s }) {
   const { user, login, logout } = useAuth()
   const [open, setOpen] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
@@ -39834,6 +39835,8 @@ function BalanceScaleApp({ onBack }) {
 }
 
 function App() {
+  const { t } = useI18n();
+
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
   const [mode, setMode] = useState(null)
   // Tracks if the active practice session should show the Goal Selector UI
