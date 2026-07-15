@@ -42296,6 +42296,35 @@ function App() {
             localStorage.setItem('tenali-coins', String(data.coins || 0))
             localStorage.setItem('tenali-total-solved', String(data.totalSolved || 0))
             localStorage.setItem('tenali-streak', String(data.streak || 0))
+
+            if (data.newlyCompleted && data.newlyCompleted.length > 0) {
+              const serverEnqueues = [];
+              data.newlyCompleted.forEach(colId => {
+                const displayName = colId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const defaultBadgeTypes = {
+                  'counting-critters': 'dino',
+                  'arithmetic-basics': 'trophy',
+                  'fraction-explorer': 'feast',
+                  'geometry-master': 'wizard',
+                  'division-detective': 'detective',
+                  'time-traveler': 'rocket',
+                  'data-detective': 'chest',
+                  'algebra-alchemist': 'flask',
+                  'pythagoras-path': 'shield',
+                  'trig-treasure': 'crown'
+                };
+                const bType = defaultBadgeTypes[colId] || 'trophy';
+                serverEnqueues.push({
+                  title: "Album Completed!",
+                  badgeType: bType,
+                  level: "gold",
+                  message: `Congratulations! You have completed the ${displayName} Collection and unlocked the Gold Album Badge!`
+                });
+              });
+              if (serverEnqueues.length > 0) {
+                setCelebrationQueue(prev => [...prev, ...serverEnqueues]);
+              }
+            }
           }
         }
       } catch (e) {
@@ -42346,6 +42375,81 @@ function App() {
     const finalCoins = newCoins !== undefined ? newCoins : localCoins;
     const finalSolved = newSolved !== undefined ? newSolved : localSolved;
     const finalStreak = newStreak !== undefined ? newStreak : localStreak;
+
+    // Check for new unlocks locally
+    const enqueues = [];
+
+    // 1. Topic Badge unlocks/upgrades
+    const newlyUnlockedKeys = finalCompleted.filter(k => !completedTopics.includes(k));
+    newlyUnlockedKeys.forEach(k => {
+      if (k.endsWith('-started')) {
+        const topicKey = k.replace('-started', '');
+        const displayName = topicKey.charAt(0).toUpperCase() + topicKey.slice(1);
+        enqueues.push({
+          title: "Badge Unlocked!",
+          badgeType: "topic",
+          level: "blue",
+          message: `Congratulations! You have unlocked the ${displayName} Blue badge for starting the ${displayName} learning module.`
+        });
+      } else if (k.endsWith('-easy')) {
+        const topicKey = k.replace('-easy', '');
+        const displayName = topicKey.charAt(0).toUpperCase() + topicKey.slice(1);
+        enqueues.push({
+          title: "Badge Upgraded!",
+          badgeType: "topic",
+          level: "bronze",
+          message: `Congratulations! You have unlocked the ${displayName} Bronze badge for completing the Easy difficulty in the ${displayName} quiz.`
+        });
+      } else if (k.endsWith('-medium')) {
+        const topicKey = k.replace('-medium', '');
+        const displayName = topicKey.charAt(0).toUpperCase() + topicKey.slice(1);
+        enqueues.push({
+          title: "Badge Upgraded!",
+          badgeType: "topic",
+          level: "silver",
+          message: `Congratulations! You have unlocked the ${displayName} Silver badge for completing the Medium difficulty in the ${displayName} quiz.`
+        });
+      } else if (k.endsWith('-hard') || k.endsWith('-gold')) {
+        const topicKey = k.replace(/-hard|-gold/, '');
+        const displayName = topicKey.charAt(0).toUpperCase() + topicKey.slice(1);
+        enqueues.push({
+          title: "Badge Upgraded!",
+          badgeType: "topic",
+          level: "gold",
+          message: `Congratulations! You have unlocked the ${displayName} Gold badge for completing the Hard difficulty in the ${displayName} quiz.`
+        });
+      }
+    });
+
+    // 2. Streak milestones
+    if (streak < 3 && finalStreak >= 3) {
+      enqueues.push({
+        title: "Streak Milestone!",
+        badgeType: "streak_3",
+        level: "",
+        message: "Congratulations! You have unlocked the 3-Day Streak badge for maintaining an active learning streak for 3 consecutive days."
+      });
+    }
+    if (streak < 7 && finalStreak >= 7) {
+      enqueues.push({
+        title: "Streak Milestone!",
+        badgeType: "streak_7",
+        level: "",
+        message: "Congratulations! You have unlocked the 7-Day Streak badge for maintaining an active learning streak for 7 consecutive days."
+      });
+    }
+    if (streak < 30 && finalStreak >= 30) {
+      enqueues.push({
+        title: "Streak Milestone!",
+        badgeType: "streak_30",
+        level: "",
+        message: "Congratulations! You have unlocked the 30-Day Streak badge for maintaining an active learning streak for 30 consecutive days."
+      });
+    }
+
+    if (enqueues.length > 0) {
+      setCelebrationQueue(prev => [...prev, ...enqueues]);
+    }
 
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(async () => {
