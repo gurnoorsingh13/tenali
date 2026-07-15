@@ -74,6 +74,7 @@ import VisualMathLabRedux, {
 import CoordinateGrid from './components/CoordinateGrid';
 import LanguageDashboard from './language/LanguageDashboard'
 import { VOCAB_CORPUS } from './vocabCorpus'
+import CuriosityApp from './Curiosity.jsx'
 
 // API base URL from environment variables (Vite)
 const API = import.meta.env.VITE_API_BASE_URL || '';
@@ -43956,6 +43957,7 @@ function App() {
     randommix: RandomMixApp,       // Random Mix (adaptive)
     custom: CustomApp,             // Custom lesson builder
     gym: GymApp,                   // Unified adaptive Gym — bundles all 7 below
+    curiosity: CuriosityApp,       // Curiosity Mode — experiment with "what if" variations
     guess: GuessNumberApp,         // Binary magic — guess a number 0–31
     gymdecimals: GymDecimalsApp,   // Gym Decimals — signed decimal multiplication (MCQ)
     funcgym: FuncGymApp,           // Functions Gym — polynomial evaluation (MCQ)
@@ -44138,6 +44140,11 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   // Visual Learning Universe lives only in the hamburger menu
   const mathLabEntry = { key: 'math-lab', name: '🔬 Visual Learning Universe', subtitle: 'Visual, Mensuration & Addition labs', color: 'orange' }
 
+  const hamburgerApps = [
+    ...featuredApps,
+    { key: 'curiosity', name: 'Curiosity Mode', subtitle: 'Explore "What if" variations', color: 'pink' },
+  ]
+
   // All regular quiz apps sorted alphabetically by name
   const regularApps = [
     { key: 'comic-addition', name: 'Comic Addition', subtitle: 'Story Mode', color: 'purple' },
@@ -44228,7 +44235,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   ]
 
   // Combined list for search filtering
-  const allApps = [...featuredApps, ...regularApps]
+  const allApps = [...hamburgerApps, ...regularApps]
 
   // Hamburger menu open state
   const menuRef = useRef(null)
@@ -44259,6 +44266,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   
   // Decide which items to show on the main grid list
   const displayGridApps = isGoalSelection ? filteredRegular : [...filteredRegular]
+  const filteredHamburgerApps = isSearching ? hamburgerApps.filter(matchFilter) : hamburgerApps
 
   // Grid layout tracking (for responsive display)
   const gridRef = useRef(null)
