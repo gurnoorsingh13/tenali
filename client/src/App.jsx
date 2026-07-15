@@ -42456,7 +42456,7 @@ function App() {
       const token = localStorage.getItem('tenali-auth-token');
       if (!token) return;
       try {
-        await fetch(`${API}/api/progress`, {
+        const response = await fetch(`${API}/api/progress`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -42470,6 +42470,46 @@ function App() {
             streak: finalStreak
           })
         });
+        if (response.ok) {
+          const data = await response.json();
+          // Update coins/streak if the server returned updated values
+          if (data.coins !== undefined) {
+            setCoins(data.coins);
+            localStorage.setItem('tenali-coins', String(data.coins));
+          }
+          if (data.streak !== undefined) {
+            setStreak(data.streak);
+            localStorage.setItem('tenali-streak', String(data.streak));
+          }
+          if (data.newlyCompleted && data.newlyCompleted.length > 0) {
+            const serverEnqueues = [];
+            data.newlyCompleted.forEach(colId => {
+              const displayName = colId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              const defaultBadgeTypes = {
+                'counting-critters': 'dino',
+                'arithmetic-basics': 'trophy',
+                'fraction-explorer': 'feast',
+                'geometry-master': 'wizard',
+                'division-detective': 'detective',
+                'time-traveler': 'rocket',
+                'data-detective': 'chest',
+                'algebra-alchemist': 'flask',
+                'pythagoras-path': 'shield',
+                'trig-treasure': 'crown'
+              };
+              const bType = defaultBadgeTypes[colId] || 'trophy';
+              serverEnqueues.push({
+                title: "Album Completed!",
+                badgeType: bType,
+                level: "gold",
+                message: `Congratulations! You have completed the ${displayName} Collection and unlocked the Gold Album Badge!`
+              });
+            });
+            if (serverEnqueues.length > 0) {
+              setCelebrationQueue(prev => [...prev, ...serverEnqueues]);
+            }
+          }
+        }
       } catch (e) {
         console.error('Sync to server failed:', e);
       }
@@ -42500,6 +42540,30 @@ function App() {
     setCoins(next);
     syncProgressToServer(completedTopics, goldMastery, next);
   };
+
+  useEffect(() => {
+    window.tenaliIncrementSolved = (amount) => {
+      setTotalSolved(prev => {
+        const next = prev + amount;
+        localStorage.setItem('tenali-total-solved', String(next));
+
+        let nextCompleted = completedTopics;
+        if (amount > 0 && mode && mode !== 'gk' && mode !== 'vocab' && mode !== 'randommix' && mode !== 'custom' && mode !== 'gym') {
+          const startedKey = `${mode}-started`;
+          if (!completedTopics.includes(startedKey)) {
+            nextCompleted = [...completedTopics, startedKey];
+            setCompletedTopics(nextCompleted);
+          }
+        }
+
+        syncProgressToServer(nextCompleted, goldMastery, coins, next);
+        return next;
+      });
+    };
+    return () => {
+      delete window.tenaliIncrementSolved;
+    };
+  }, [completedTopics, goldMastery, coins, totalSolved, mode]);
 
 
   // Current theme: 'dark' or 'light'
