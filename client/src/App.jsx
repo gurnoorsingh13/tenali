@@ -58,6 +58,8 @@ function useProgressSubmit(revealed, isCorrect, topic, questionId) {
 }
 import Vachana from './vachana'
 import './App.css'
+import GlossaryText from './components/GlossaryText'
+import KeyTerms from './components/KeyTerms'
 import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
 import VisualMathLabRedux, {
@@ -75,10 +77,6 @@ import { VOCAB_CORPUS } from './vocabCorpus'
 
 // API base URL from environment variables (Vite)
 const API = import.meta.env.VITE_API_BASE_URL || '';
-
-// App version — increment with each commit
-const TENALI_VERSION = '1.0.86'
-const TENALI_BUILD_DATE = '2026-05-03 18:28 IST'
 
 // ─── Auth helpers ───────────────────────────────────────────────────────────
 // Tiny pub/sub on top of localStorage so AuthMenu and AuthGate stay in sync.
@@ -297,22 +295,6 @@ function AuthGate({ children }) {
     </div>
   )
 }
-
-// Inject version badge into DOM once (appears on all routes)
-; (() => {
-  if (typeof document !== 'undefined' && !document.getElementById('tenali-version')) {
-    const el = document.createElement('div')
-    el.id = 'tenali-version'
-    Object.assign(el.style, {
-      position: 'fixed', top: '8px', right: '12px', zIndex: '9999',
-      fontSize: '0.65rem', opacity: '0.55', pointerEvents: 'none',
-      textAlign: 'right', lineHeight: '1.4', fontFamily: 'system-ui, sans-serif',
-      color: 'var(--clr-text-soft)',
-    })
-    el.innerHTML = `<div>v${TENALI_VERSION}</div><div>${TENALI_BUILD_DATE}</div>`
-    document.body.appendChild(el)
-  }
-})()
 
 // Default number of questions for quizzes
 const DEFAULT_TOTAL = 20
@@ -1999,7 +1981,7 @@ function ScaffoldedTablesApp({ studentName, defaultTable = 2 }) {
               {['🎉', '🏆', '⭐', '🌟', '🎊'][Math.floor(Math.random() * 5)]}
             </p>
             <p className="welcome-text" style={{ fontSize: '1.3rem', color: 'var(--clr-accent)' }}>
-              Fantastic work! You nailed {PHASE3_MASTERY_STREAK} in a row!
+              Fantastic work! You nailed {MASTERY_STREAK} in a row!
             </p>
             <p className="final-score">Score: {score}/{questionNum}</p>
             <p style={{ fontSize: '1.1rem', margin: '0.5rem 0', color: 'var(--clr-accent)' }}>
@@ -43110,14 +43092,12 @@ function GKApp({ onBack, isGoalMode = false }) {
     setQuestionNumber(0)
     setResults([])
     fetchingRef.current = false
-    // Don't clear seenIds — keep the localStorage history for no-repeat
-    loadQuestion(seenIds)
   }
 
   // Load first question only if started
   useEffect(() => {
     if (started && !finished && questionNumber === 0) {
-      loadQuestion([])
+      loadQuestion(seenIds)
     }
   }, [started, finished, questionNumber])
 
@@ -43277,7 +43257,7 @@ function GKApp({ onBack, isGoalMode = false }) {
       </div>}
       {started && !finished && <>
         <div className="progress-pill center">Question {questionNumber}/{totalQ}</div>
-        <div className="question-box">{loading || !question ? 'Loading question…' : question.question}</div>
+        <div className="question-box">{loading || !question ? 'Loading question…' : <GlossaryText text={question.question} />}</div>
         {question && (
           <div className="options-list">
             {question.options.map((option, idx) => {
@@ -45229,6 +45209,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
       if (isAdaptive) {
         setAdaptScore(prev => { const next = data.correct ? Math.min(3, prev + 0.25) : Math.max(0, prev - 0.35); adaptScoreRef.current = next; return next })
       }
+      setRevealed(true)
       return
     }
 
@@ -45322,8 +45303,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
           <p style={{ color: '#988D84', fontSize: '0.9rem', margin: '0 0 24px', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
             Practice addition!
           </p>
-
-
+          <KeyTerms topicKey="addition" />
 
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ color: '#F4F1ED', fontSize: '0.9rem', margin: '0 0 16px', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
@@ -46720,6 +46700,7 @@ const fetchQuestion = async () => {
     <QuizLayout title="Origin" subtitle="Add, subtract, multiply & divide positive & negative numbers" onBack={onBack} timer={started && !finished ? timer : null}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice basic arithmetic!</p>
+        <KeyTerms topicKey="basic-arithmetic" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -47042,6 +47023,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
     <QuizLayout title="Quadratic" subtitle="Given x, find y = ax² + bx + c" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice quadratic substitution!</p>
+        <KeyTerms topicKey="quadratics" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -48225,6 +48207,7 @@ function MultiplyApp({ onBack }) {
       {phase === 'picker' && (
         <div className="welcome-box">
           <p className="welcome-text">Choose your level</p>
+          <KeyTerms topicKey="multiplication" />
 
         {isGoalMode && (
         <>
@@ -48694,7 +48677,7 @@ const loadQuestion = async (excludeIds) => {
           {isAdaptive && <div className="progress-pill" style={{ background: ADAPT_COLORS[curAdaptLevel], color: '#fff' }}>{ADAPT_LABELS[curAdaptLevel]}</div>}
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
-        <div className="question-box vocab-word">{loading || !question ? 'Loading question…' : question.question}</div>
+        <div className="question-box vocab-word">{loading || !question ? 'Loading question…' : <GlossaryText text={question.question} />}</div>
         {question && (
           <div className="options-list">
             {question.options.map((option, idx) => {
@@ -48783,7 +48766,7 @@ const GYM_OPTION_LABEL = { A: '1', B: '2', C: '3', D: '4' }
  * difficulty, results table, auto-advance, "Solve" button) but renders each
  * question as a 4-button options grid instead of a free-form text input.
  */
-function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly }) {
+function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly, topicKey }) {
   return function GeneratedMCQuizApp({ onBack, isGoalMode = false }) {
     const diffs = Object.keys(diffLabels)
     const [difficulty, setDifficulty] = useState(diffs[0])
@@ -48987,6 +48970,7 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
         {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Practice {title.toLowerCase()}!</p>
           {tip && <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>{tip}</p>}
+          {topicKey && <KeyTerms topicKey={topicKey} />}
           {/* Difficulty selector — hidden entirely for adaptive-only puzzles
               (the gym puzzles), which always run in adaptive mode. */}
           {!adaptiveOnly && isGoalMode && (
@@ -49059,7 +49043,7 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
             {isAdaptive && <div className="progress-pill" style={{ background: ADAPT_COLORS[curAdaptLevel], color: '#fff' }}>{ADAPT_LABELS[curAdaptLevel]}</div>}
           </div>
           {question && <div style={{ textAlign: 'center' }}>
-            <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '8px 0 4px', lineHeight: '1.4' }}>{question.prompt}</div>
+            <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '8px 0 4px', lineHeight: '1.4' }}><GlossaryText text={question.prompt} /></div>
             <div className="options-grid" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
               {question.options.map(opt => {
                 const isSelected = selectedOption === opt.option
@@ -49104,7 +49088,7 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
   }
 }
 
-function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, answerField }) {
+function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, answerField, topicKey }) {
   return function GeneratedQuizApp({ onBack, initialDifficulty, initialNumQuestions, initialStarted, isGoalMode = false }) {
     const diffs = Object.keys(diffLabels)
     const [difficulty, setDifficulty] = useState(initialDifficulty || diffs[0])
@@ -49320,6 +49304,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
               Practice {title.toLowerCase()}!
             </p>
             {tip && <p style={{ fontSize: '0.85rem', color: '#A89C93', marginBottom: '16px' }}>{tip}</p>}
+            {topicKey && <KeyTerms topicKey={topicKey} />}
 
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ color: '#F4F1ED', fontSize: '0.9rem', margin: '0 0 16px', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
@@ -49382,7 +49367,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
             <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />
           )}
           {question && <div style={{ textAlign: 'center' }}>
-            <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}>{question.prompt}</div>
+            <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}><GlossaryText text={question.prompt} /></div>
             <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={getPlaceholder()} onKeyDown={handleKeyDown} autoFocus />
           </div>}
           {!question && loading && <div style={{ textAlign: 'center', padding: '24px', color: 'var(--clr-text-soft)' }}>Loading question…</div>}
@@ -49422,45 +49407,45 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
 
 // ── Generate all 14 new quiz apps ──────────────────────
 const TrigApp = makeQuizApp({
-  title: 'Trigonometry', subtitle: 'SOH-CAH-TOA, sine/cosine rule', apiPath: 'trig-api',
+  title: 'Trigonometry', subtitle: 'SOH-CAH-TOA, sine/cosine rule', apiPath: 'trig-api', topicKey: 'trigonometry',
   diffLabels: { easy: 'Easy — Pythagoras', medium: 'Medium — Find Angle', hard: 'Hard — Sine Rule', extrahard: 'Extra Hard — Cosine/Area' },
   placeholders: 'e.g. 13 or 45.5',
 })
 
 const IneqApp = makeQuizApp({
-  title: 'Inequalities', subtitle: 'Linear & quadratic inequalities', apiPath: 'ineq-api',
+  title: 'Inequalities', subtitle: 'Linear & quadratic inequalities', apiPath: 'ineq-api', topicKey: 'inequalities',
   diffLabels: { easy: 'Easy — Linear', medium: 'Medium — List integers', hard: 'Hard — Quadratic', extrahard: 'Extra Hard — Count' },
   placeholders: (q, d) => d === 'easy' ? 'e.g. x > 3' : d === 'medium' ? 'e.g. -1, 0, 1, 2' : d === 'hard' ? 'e.g. 1<=x<=5' : 'e.g. 7',
   tip: 'Use >= for ≥ and <= for ≤',
 })
 
 const CoordGeomApp = makeQuizApp({
-  title: 'Coordinate Geometry', subtitle: 'Midpoint, distance, gradient', apiPath: 'coordgeom-api',
+  title: 'Coordinate Geometry', subtitle: 'Midpoint, distance, gradient', apiPath: 'coordgeom-api', topicKey: 'coordinate-geometry',
   diffLabels: { easy: 'Easy — Midpoint', medium: 'Medium — Distance', hard: 'Hard — Gradient', extrahard: 'Extra Hard — Perp. Bisector' },
   placeholders: (q, d) => d === 'easy' ? 'e.g. (3, 4)' : d === 'hard' || d === 'extrahard' ? 'e.g. 3/4 or 2' : 'e.g. 13',
 })
 
 const ProbApp = makeQuizApp({
-  title: 'Probability', subtitle: 'Single & combined events', apiPath: 'prob-api',
+  title: 'Probability', subtitle: 'Single & combined events', apiPath: 'prob-api', topicKey: 'probability',
   diffLabels: { easy: 'Easy — Simple', medium: 'Medium — Independent', hard: 'Hard — Or events', extrahard: 'Extra Hard — No replacement' },
   placeholders: 'e.g. 3/10',
 })
 
 const StatsApp = makeQuizApp({
-  title: 'Statistics', subtitle: 'Mean, median, mode, range', apiPath: 'stats-api',
+  title: 'Statistics', subtitle: 'Mean, median, mode, range', apiPath: 'stats-api', topicKey: 'statistics',
   diffLabels: { easy: 'Easy — Mean', medium: 'Medium — Median', hard: 'Hard — Mode/Range', extrahard: 'Extra Hard — Frequency' },
   placeholders: 'e.g. 12 or 7/3',
 })
 
 const MatrixApp = makeQuizApp({
-  title: 'Matrices', subtitle: 'Add, multiply, determinant', apiPath: 'matrix-api',
+  title: 'Matrices', subtitle: 'Add, multiply, determinant', apiPath: 'matrix-api', topicKey: 'matrices',
   diffLabels: { easy: 'Easy — Addition', medium: 'Medium — Scalar ×', hard: 'Hard — Determinant', extrahard: 'Extra Hard — Multiply' },
   placeholders: (q, d) => d === 'hard' ? 'e.g. 7' : 'e.g. [1,2;3,4]',
   tip: 'Enter matrices as [a,b;c,d] — semicolon separates rows',
 })
 
 const VectorsApp = makeQuizApp({
-  title: 'Vectors', subtitle: 'Add, scale, magnitude', apiPath: 'vectors-api',
+  title: 'Vectors', subtitle: 'Add, scale, magnitude', apiPath: 'vectors-api', topicKey: 'vectors',
   diffLabels: { easy: 'Easy — Addition', medium: 'Medium — Scalar ×', hard: 'Hard — Magnitude', extrahard: 'Extra Hard — Position' },
   placeholders: (q, d) => d === 'hard' ? 'e.g. 13' : 'e.g. (3, -2)',
 })
@@ -49777,13 +49762,14 @@ const loadQuestion = async () => {
     }
 
     // Fallback
-    return <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}>{question.prompt}</div>
+    return <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}><GlossaryText text={question.prompt} /></div>
   }
 
   return (
     <QuizLayout title="Dot Products" subtitle="Vectors, matrix multiply, fill blanks" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice dot products & matrix multiplication!</p>
+        <KeyTerms topicKey="dot-products" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Easy/Medium: dot product of vectors. Hard: matrix multiply. Extra Hard: fill missing values.</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {DIFFS.map(d => (
@@ -49876,194 +49862,194 @@ const loadQuestion = async () => {
 }
 
 const TransformApp = makeQuizApp({
-  title: 'Transformations', subtitle: 'Reflect, translate, rotate, enlarge', apiPath: 'transform-api',
+  title: 'Transformations', subtitle: 'Reflect, translate, rotate, enlarge', apiPath: 'transform-api', topicKey: 'transformations',
   diffLabels: { easy: 'Easy — Reflect', medium: 'Medium — Translate', hard: 'Hard — Rotate', extrahard: 'Extra Hard — Enlarge' },
   placeholders: 'e.g. (-3, 4)',
 })
 
 const MensurApp = makeQuizApp({
-  title: 'Mensuration', subtitle: 'Area, volume, surface area', apiPath: 'mensur-api',
+  title: 'Mensuration', subtitle: 'Area, volume, surface area', apiPath: 'mensur-api', topicKey: 'mensuration',
   diffLabels: { easy: 'Easy — 2D Area', medium: 'Medium — Circle', hard: 'Hard — Volume', extrahard: 'Extra Hard — Surface Area' },
   placeholders: 'e.g. 150.72',
 })
 
 const BearingsApp = makeQuizApp({
-  title: 'Bearings', subtitle: 'Three-figure bearings', apiPath: 'bearings-api',
+  title: 'Bearings', subtitle: 'Three-figure bearings', apiPath: 'bearings-api', topicKey: 'bearings',
   diffLabels: { easy: 'Easy — Compass', medium: 'Medium — Back bearing', hard: 'Hard — From coords', extrahard: 'Extra Hard — Components' },
   placeholders: 'e.g. 045 or 270',
 })
 
 const LogApp = makeQuizApp({
-  title: 'Logarithms', subtitle: 'Evaluate, simplify, solve', apiPath: 'log-api',
+  title: 'Logarithms', subtitle: 'Evaluate, simplify, solve', apiPath: 'log-api', topicKey: 'logarithms',
   diffLabels: { easy: 'Easy — Evaluate', medium: 'Medium — Laws of logs', hard: 'Hard — Solve bˣ = n', extrahard: 'Extra Hard — Log equations' },
   placeholders: (q, d) => d === 'medium' ? 'e.g. 40 (the argument)' : 'e.g. 3',
 })
 
 const DiffApp = makeQuizApp({
-  title: 'Differentiation', subtitle: 'Power rule, turning points', apiPath: 'diff-api',
+  title: 'Differentiation', subtitle: 'Power rule, turning points', apiPath: 'diff-api', topicKey: 'differentiation',
   diffLabels: { easy: 'Easy — Power rule', medium: 'Medium — Polynomial', hard: 'Hard — Turning point x', extrahard: 'Extra Hard — Min/Max value' },
   placeholders: 'e.g. 12 or -3/2',
 })
 
 const BasesApp = makeQuizApp({
-  title: 'Number Bases', subtitle: 'Binary, decimal, hexadecimal', apiPath: 'bases-api',
+  title: 'Number Bases', subtitle: 'Binary, decimal, hexadecimal', apiPath: 'bases-api', topicKey: 'number-bases',
   diffLabels: { easy: 'Easy — Dec→Bin', medium: 'Medium — Bin→Dec', hard: 'Hard — Dec→Hex', extrahard: 'Extra Hard — Bin add / Hex→Bin' },
   placeholders: (q, d) => d === 'medium' ? 'e.g. 42' : d === 'hard' ? 'e.g. FF' : 'e.g. 101010',
 })
 
 const CircleThApp = makeQuizApp({
-  title: 'Circle Theorems', subtitle: 'Angles, tangents, cyclic quads', apiPath: 'circle-api',
+  title: 'Circle Theorems', subtitle: 'Angles, tangents, cyclic quads', apiPath: 'circle-api', topicKey: 'circle-theorems',
   diffLabels: { easy: 'Easy — Semicircle', medium: 'Medium — Centre/Circum', hard: 'Hard — Cyclic quad', extrahard: 'Extra Hard — Tangent' },
   placeholders: 'e.g. 45',
 })
 
 const IntegApp = makeQuizApp({
-  title: 'Integration', subtitle: 'Reverse differentiation & areas', apiPath: 'integ-api',
+  title: 'Integration', subtitle: 'Reverse differentiation & areas', apiPath: 'integ-api', topicKey: 'integration',
   diffLabels: { easy: 'Easy — Power rule', medium: 'Medium — Definite integral', hard: 'Hard — Substitution', extrahard: 'Extra Hard — Area under curve' },
   placeholders: 'e.g. 3/4', tip: 'Use fractions like 3/4 if needed',
 })
 
 const StdFormApp = makeQuizApp({
-  title: 'Standard Form', subtitle: 'Scientific notation operations', apiPath: 'stdform-api',
+  title: 'Standard Form', subtitle: 'Scientific notation operations', apiPath: 'stdform-api', topicKey: 'standard-form',
   diffLabels: { easy: 'Easy — Convert', medium: 'Medium — Multiply', hard: 'Hard — Divide', extrahard: 'Extra Hard — Add' },
   placeholders: 'e.g. 3.5 × 10^4', tip: 'Format: a × 10^n',
 })
 
 const BoundsApp = makeQuizApp({
-  title: 'Bounds', subtitle: 'Upper & lower bounds, error intervals', apiPath: 'bounds-api',
+  title: 'Bounds', subtitle: 'Upper & lower bounds, error intervals', apiPath: 'bounds-api', topicKey: 'bounds',
   diffLabels: { easy: 'Easy — Lower bound', medium: 'Medium — Nearest 10', hard: 'Hard — Sum bounds', extrahard: 'Extra Hard — Division bounds' },
   placeholders: 'e.g. 4.25',
 })
 
 const SDTApp = makeQuizApp({
-  title: 'Speed, Distance, Time', subtitle: 'Rate problems & conversions', apiPath: 'sdt-api',
+  title: 'Speed, Distance, Time', subtitle: 'Rate problems & conversions', apiPath: 'sdt-api', topicKey: 'speed-distance-time',
   diffLabels: { easy: 'Easy — Distance', medium: 'Medium — Time', hard: 'Hard — Average speed', extrahard: 'Extra Hard — Convert' },
   placeholders: 'e.g. 120',
 })
 
 const VariationApp = makeQuizApp({
-  title: 'Variation', subtitle: 'Direct & inverse proportion equations', apiPath: 'variation-api',
+  title: 'Variation', subtitle: 'Direct & inverse proportion equations', apiPath: 'variation-api', topicKey: 'variation',
   diffLabels: { easy: 'Easy — Direct (y∝x)', medium: 'Medium — Inverse (y∝1/x)', hard: 'Hard — y∝x²', extrahard: 'Extra Hard — y∝1/√x' },
   placeholders: 'e.g. 24',
 })
 
 const HcfLcmApp = makeQuizApp({
-  title: 'HCF & LCM', subtitle: 'Highest common factor & lowest common multiple', apiPath: 'hcflcm-api',
+  title: 'HCF & LCM', subtitle: 'Highest common factor & lowest common multiple', apiPath: 'hcflcm-api', topicKey: 'hcf-and-lcm',
   diffLabels: { easy: 'Easy — HCF', medium: 'Medium — LCM', hard: 'Hard — Three numbers', extrahard: 'Extra Hard — Word problem' },
   placeholders: 'e.g. 60',
 })
 
 const ProfitLossApp = makeQuizApp({
-  title: 'Profit & Loss', subtitle: 'Cost price, selling price, discounts', apiPath: 'profitloss-api',
+  title: 'Profit & Loss', subtitle: 'Cost price, selling price, discounts', apiPath: 'profitloss-api', topicKey: 'profit-and-loss',
   diffLabels: { easy: 'Easy — Find profit', medium: 'Medium — Profit %', hard: 'Hard — Discount', extrahard: 'Extra Hard — Successive discounts' },
   placeholders: 'e.g. 150',
 })
 
 const RoundingApp = makeQuizApp({
-  title: 'Rounding', subtitle: 'Decimal places, significant figures, estimation', apiPath: 'rounding-api',
+  title: 'Rounding', subtitle: 'Decimal places, significant figures, estimation', apiPath: 'rounding-api', topicKey: 'rounding',
   diffLabels: { easy: 'Easy — Decimal places', medium: 'Medium — Sig. figures', hard: 'Hard — Truncation', extrahard: 'Extra Hard — Estimation' },
   placeholders: 'e.g. 3.14',
 })
 
 const BinomialApp = makeQuizApp({
-  title: 'Binomial Theorem', subtitle: 'Expansions, coefficients, nCr', apiPath: 'binomial-api',
+  title: 'Binomial Theorem', subtitle: 'Expansions, coefficients, nCr', apiPath: 'binomial-api', topicKey: 'binomial-theorem',
   diffLabels: { easy: 'Easy — nCr', medium: 'Medium — (1+x)^n', hard: 'Hard — (a+bx)^n', extrahard: 'Extra Hard — Specific term' },
   placeholders: 'e.g. 210',
 })
 
 const ComplexApp = makeQuizApp({
-  title: 'Complex Numbers', subtitle: 'Add, multiply, modulus of complex numbers', apiPath: 'complex-api',
+  title: 'Complex Numbers', subtitle: 'Add, multiply, modulus of complex numbers', apiPath: 'complex-api', topicKey: 'complex-numbers',
   diffLabels: { easy: 'Easy — Addition', medium: 'Medium — Multiplication', hard: 'Hard — Modulus', extrahard: 'Extra Hard — z²' },
   placeholders: (q, d) => d === 'hard' ? 'e.g. 13' : 'e.g. 3,-2 for 3-2i',
   tip: 'For complex answers give a,b where z = a + bi',
 })
 
 const AnglesApp = makeQuizApp({
-  title: 'Angles', subtitle: 'Lines, points, parallel line angles', apiPath: 'angles-api',
+  title: 'Angles', subtitle: 'Lines, points, parallel line angles', apiPath: 'angles-api', topicKey: 'angles',
   diffLabels: { easy: 'Easy — Straight line', medium: 'Medium — At a point', hard: 'Hard — Vertically opposite', extrahard: 'Extra Hard — Parallel lines' },
   placeholders: 'e.g. 65',
 })
 
 const TrianglesApp = makeQuizApp({
-  title: 'Triangles', subtitle: 'Angle sum, isosceles, exterior angle', apiPath: 'triangles-api',
+  title: 'Triangles', subtitle: 'Angle sum, isosceles, exterior angle', apiPath: 'triangles-api', topicKey: 'triangles',
   diffLabels: { easy: 'Easy — Angle sum', medium: 'Medium — Isosceles', hard: 'Hard — Exterior angle', extrahard: 'Extra Hard — Multi-step' },
   placeholders: 'e.g. 72',
 })
 
 const CongruenceApp = makeQuizApp({
-  title: 'Congruence', subtitle: 'SSS, SAS, ASA, RHS', apiPath: 'congruence-api',
+  title: 'Congruence', subtitle: 'SSS, SAS, ASA, RHS', apiPath: 'congruence-api', topicKey: 'congruence',
   diffLabels: { easy: 'Easy — Find side', medium: 'Medium — Find angle', hard: 'Hard — Name the rule', extrahard: 'Extra Hard — In a figure' },
   placeholders: (q, d) => d === 'hard' ? 'e.g. SAS' : 'e.g. 7',
 })
 
 const PythagApp = makeQuizApp({
-  title: "Pythagoras' Theorem", subtitle: 'Hypotenuse, legs, 3D diagonal', apiPath: 'pythag-api',
+  title: "Pythagoras' Theorem", subtitle: 'Hypotenuse, legs, 3D diagonal', apiPath: 'pythag-api', topicKey: 'pythagoras-theorem',
   diffLabels: { easy: 'Easy — Hypotenuse', medium: 'Medium — Shorter side', hard: 'Hard — Word problem', extrahard: 'Extra Hard — 3D diagonal' },
   placeholders: 'e.g. 13',
 })
 
 const PolygonsApp = makeQuizApp({
-  title: 'Polygons', subtitle: 'Interior & exterior angles, diagonals', apiPath: 'polygons-api',
+  title: 'Polygons', subtitle: 'Interior & exterior angles, diagonals', apiPath: 'polygons-api', topicKey: 'polygons',
   diffLabels: { easy: 'Easy — Angle sum', medium: 'Medium — Each angle', hard: 'Hard — Find sides', extrahard: 'Extra Hard — Diagonals' },
   placeholders: 'e.g. 540',
 })
 
 const SimilarityApp = makeQuizApp({
-  title: 'Similarity', subtitle: 'Scale factor, area & volume ratios', apiPath: 'similarity-api',
+  title: 'Similarity', subtitle: 'Scale factor, area & volume ratios', apiPath: 'similarity-api', topicKey: 'similarity',
   diffLabels: { easy: 'Easy — Missing side', medium: 'Medium — Scale factor', hard: 'Hard — Area ratio', extrahard: 'Extra Hard — Volume ratio' },
   placeholders: 'e.g. 24',
 })
 
 const LinearEqApp = makeQuizApp({
-  title: 'Linear Equations', subtitle: 'Solve for x', apiPath: 'lineareq-api',
+  title: 'Linear Equations', subtitle: 'Solve for x', apiPath: 'lineareq-api', topicKey: 'linear-equations',
   diffLabels: { easy: 'Easy — ax+b=c', medium: 'Medium — ax+b=cx+d', hard: 'Hard — a(bx+c)=d', extrahard: 'Extra Hard — (ax+b)/c=d' },
   placeholders: 'e.g. 3 or -2.5',
 })
 
 const DecimalsApp = makeQuizApp({
-  title: 'Decimals', subtitle: 'Add, subtract, multiply, divide', apiPath: 'decimals-api',
+  title: 'Decimals', subtitle: 'Add, subtract, multiply, divide', apiPath: 'decimals-api', topicKey: 'decimals',
   diffLabels: { easy: 'Easy — Add', medium: 'Medium — Subtract', hard: 'Hard — Multiply', extrahard: 'Extra Hard — Divide' },
   placeholders: 'e.g. 6.1',
 })
 
 const PermCombApp = makeQuizApp({
-  title: 'Perm. & Comb.', subtitle: 'Permutations & combinations', apiPath: 'permcomb-api',
+  title: 'Perm. & Comb.', subtitle: 'Permutations & combinations', apiPath: 'permcomb-api', topicKey: 'permutations-and-combinations',
   diffLabels: { easy: 'Easy — nPr', medium: 'Medium — nCr', hard: 'Hard — Word problems', extrahard: 'Extra Hard — With/without repetition' },
   placeholders: 'e.g. 120',
 })
 
 const LimitsApp = makeQuizApp({
-  title: 'Limits', subtitle: 'Evaluate limits', apiPath: 'limits-api',
+  title: 'Limits', subtitle: 'Evaluate limits', apiPath: 'limits-api', topicKey: 'limits',
   diffLabels: { easy: 'Easy — Direct sub', medium: 'Medium — Factorable', hard: 'Hard — Trig limits', extrahard: 'Extra Hard — Limits at infinity' },
   placeholders: 'e.g. 4 or 0.5',
 })
 
 const InvTrigApp = makeQuizApp({
-  title: 'Inverse Trig', subtitle: 'arcsin, arccos, arctan', apiPath: 'invtrig-api',
+  title: 'Inverse Trig', subtitle: 'arcsin, arccos, arctan', apiPath: 'invtrig-api', topicKey: 'inverse-trigonometry',
   diffLabels: { easy: 'Easy — Basic values', medium: 'Medium — √ values', hard: 'Hard — Compositions', extrahard: 'Extra Hard — Principal values' },
   placeholders: 'e.g. 30 or 45',
 })
 
 const RemFactorApp = makeQuizApp({
-  title: 'Remainder Theorem', subtitle: 'Remainder & factor theorem', apiPath: 'remfactor-api',
+  title: 'Remainder Theorem', subtitle: 'Remainder & factor theorem', apiPath: 'remfactor-api', topicKey: 'remainder-theorem',
   diffLabels: { easy: 'Easy — Remainder (deg 2)', medium: 'Medium — Factor check', hard: 'Hard — Remainder (deg 3)', extrahard: 'Extra Hard — Find k' },
   placeholders: 'e.g. 7 or yes/no',
 })
 
 const HeronApp = makeQuizApp({
-  title: "Heron's Formula", subtitle: 'Triangle area from sides', apiPath: 'heron-api',
+  title: "Heron's Formula", subtitle: 'Triangle area from sides', apiPath: 'heron-api', topicKey: 'herons-formula',
   diffLabels: { easy: 'Easy — Semi-perimeter', medium: 'Medium — Integer area', hard: 'Hard — Decimal area', extrahard: 'Extra Hard — Find side' },
   placeholders: 'e.g. 24',
 })
 
 const SharesApp = makeQuizApp({
-  title: 'Shares & Dividends', subtitle: 'Shares, dividends, returns', apiPath: 'shares-api',
+  title: 'Shares & Dividends', subtitle: 'Shares, dividends, returns', apiPath: 'shares-api', topicKey: 'shares-and-dividends',
   diffLabels: { easy: 'Easy — Find dividend', medium: 'Medium — Income', hard: 'Hard — Return %', extrahard: 'Extra Hard — Buy for target' },
   placeholders: 'e.g. 500',
 })
 
 const BankingApp = makeQuizApp({
-  title: 'Banking (RD)', subtitle: 'Interest & recurring deposits', apiPath: 'banking-api',
+  title: 'Banking (RD)', subtitle: 'Interest & recurring deposits', apiPath: 'banking-api', topicKey: 'banking',
   diffLabels: { easy: 'Easy — Simple interest', medium: 'Medium — Compound interest', hard: 'Hard — RD maturity', extrahard: 'Extra Hard — Find installment' },
   placeholders: 'e.g. 12600',
 })
@@ -50771,7 +50757,7 @@ function GymApp({ onBack }) {
           {GYM_PUZZLE_TYPES.map(renderMasteryRow)}
         </div>
         {question && <div style={{ textAlign: 'center' }}>
-          <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '8px 0 4px', lineHeight: '1.4' }}>{question.prompt}</div>
+          <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '8px 0 4px', lineHeight: '1.4' }}><GlossaryText text={question.prompt} /></div>
           <div className="options-grid" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
             {question.options.map(opt => {
               const isSelected = selectedOption === opt.option
@@ -50824,37 +50810,37 @@ function GymApp({ onBack }) {
 // ──────────────────────────── /Gym ─────────────────────────────
 
 const GSTApp = makeQuizApp({
-  title: 'GST', subtitle: 'Goods & Services Tax', apiPath: 'gst-api',
+  title: 'GST', subtitle: 'Goods & Services Tax', apiPath: 'gst-api', topicKey: 'gst',
   diffLabels: { easy: 'Easy — GST amount', medium: 'Medium — Total with GST', hard: 'Hard — CGST+SGST', extrahard: 'Extra Hard — Input tax credit' },
   placeholders: 'e.g. 180',
 })
 
 const SectionApp = makeQuizApp({
-  title: 'Section Formula', subtitle: 'Midpoint, section, centroid', apiPath: 'section-api',
+  title: 'Section Formula', subtitle: 'Midpoint, section, centroid', apiPath: 'section-api', topicKey: 'section-formula',
   diffLabels: { easy: 'Easy — Midpoint', medium: 'Medium — Internal division', hard: 'Hard — Find ratio', extrahard: 'Extra Hard — Centroid' },
   placeholders: 'e.g. 3,5',
 })
 
 const LinProgApp = makeQuizApp({
-  title: 'Linear Programming', subtitle: 'Optimize objective functions', apiPath: 'linprog-api',
+  title: 'Linear Programming', subtitle: 'Optimize objective functions', apiPath: 'linprog-api', topicKey: 'linear-programming',
   diffLabels: { easy: 'Easy — Evaluate at vertex', medium: 'Medium — Max from vertices', hard: 'Hard — 2-constraint LP', extrahard: 'Extra Hard — 3-constraint LP' },
   placeholders: 'e.g. 42',
 })
 
 const CircMeasureApp = makeQuizApp({
-  title: 'Circular Measure', subtitle: 'Radians, arc length, sectors', apiPath: 'circmeasure-api',
+  title: 'Circular Measure', subtitle: 'Radians, arc length, sectors', apiPath: 'circmeasure-api', topicKey: 'circular-measure',
   diffLabels: { easy: 'Easy — Deg→Rad', medium: 'Medium — Rad→Deg', hard: 'Hard — Arc length', extrahard: 'Extra Hard — Sector area' },
   placeholders: 'e.g. 1.57',
 })
 
 const ConicsApp = makeQuizApp({
-  title: 'Conic Sections', subtitle: 'Circle, parabola, ellipse, hyperbola', apiPath: 'conics-api',
+  title: 'Conic Sections', subtitle: 'Circle, parabola, ellipse, hyperbola', apiPath: 'conics-api', topicKey: 'conic-sections',
   diffLabels: { easy: 'Easy — Identify conic', medium: 'Medium — Circle radius', hard: 'Hard — Eccentricity', extrahard: 'Extra Hard — Focus of parabola' },
   placeholders: (q, d) => d === 'easy' ? 'e.g. circle' : 'e.g. 5',
 })
 
 const DiffEqApp = makeQuizApp({
-  title: 'Differential Equations', subtitle: 'Order, degree, solve DEs', apiPath: 'diffeq-api',
+  title: 'Differential Equations', subtitle: 'Order, degree, solve DEs', apiPath: 'diffeq-api', topicKey: 'differential-equations',
   diffLabels: { easy: 'Easy — Find order', medium: 'Medium — Find degree', hard: 'Hard — Verify solution', extrahard: 'Extra Hard — Solve separable' },
   placeholders: (q, d) => d === 'hard' ? 'yes or no' : 'e.g. 2',
 })
@@ -51671,6 +51657,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Squaring" subtitle="(a + b)² = a² + 2ab + b²" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Square numbers quickly using the identity (a + b)² = a² + 2ab + b²</p>
+        <KeyTerms topicKey="squaring" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Split any number into a round part (a) and remainder (b), then fill in all four boxes.</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {DIFFS.map(d => (
@@ -52452,7 +52439,7 @@ function RandomMixApp({ onBack, isGoalMode = false }) {
       {!loading && question && (
         <>
           <div className="question-box">
-            {getPromptForType(currentTopic.key, question) || question.prompt || ''}
+            <GlossaryText text={getPromptForType(currentTopic.key, question) || question.prompt || ''} />
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -52655,6 +52642,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Sets" subtitle="Union, intersection, Venn diagrams" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice sets and Venn diagrams!</p>
+        <KeyTerms topicKey="sets" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>For listing elements, type like: 1, 3, 5 or {'{'}1, 3, 5{'}'}</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
@@ -52723,7 +52711,7 @@ const loadQuestion = async () => {
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         {question && <div style={{ textAlign: 'center' }}>
-          <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}>{question.prompt}</div>
+          <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}><GlossaryText text={question.prompt} /></div>
           <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={question.type === 'list' ? 'e.g. {1, 3, 5} or empty' : 'e.g. 12'} onKeyDown={handleKeyDown} autoFocus />
         </div>}
         {renderFeedback(feedback, isCorrect)}
@@ -52882,6 +52870,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Sequences & Series" subtitle="Arithmetic & geometric" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice sequences and series!</p>
+        <KeyTerms topicKey="sequences" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -52949,7 +52938,7 @@ const loadQuestion = async () => {
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         {question && <div style={{ textAlign: 'center' }}>
-          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}>{question.prompt}</div>
+          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}><GlossaryText text={question.prompt} /></div>
           <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder="e.g. 42 or 3/4" onKeyDown={handleKeyDown} autoFocus />
         </div>}
         {renderFeedback(feedback, isCorrect)}
@@ -53124,6 +53113,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Ratio & Proportion" subtitle="Simplify, divide, direct & inverse" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice ratio and proportion!</p>
+        <KeyTerms topicKey="ratios" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -53191,7 +53181,7 @@ const loadQuestion = async () => {
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         {question && <div style={{ textAlign: 'center' }}>
-          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}>{question.prompt}</div>
+          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}><GlossaryText text={question.prompt} /></div>
           <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={placeholders[isAdaptive ? adaptiveLevel(adaptScore) : difficulty] || 'Type your answer'} onKeyDown={handleKeyDown} autoFocus />
         </div>}
         {renderFeedback(feedback, isCorrect)}
@@ -53365,6 +53355,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Percentages" subtitle="Find, increase, reverse, compound" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice percentages!</p>
+        <KeyTerms topicKey="percentages" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -53432,7 +53423,7 @@ const loadQuestion = async () => {
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         {question && <div style={{ textAlign: 'center' }}>
-          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}>{question.prompt}</div>
+          <div className="question-prompt" style={{ fontSize: '1.4rem', margin: '20px 0' }}><GlossaryText text={question.prompt} /></div>
           <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder="Type your answer" onKeyDown={handleKeyDown} autoFocus />
         </div>}
         {renderFeedback(feedback, isCorrect)}
@@ -53633,6 +53624,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Indices" subtitle="Laws of exponents" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice laws of indices!</p>
+        <KeyTerms topicKey="indices" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -53955,6 +53947,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Surds" subtitle="Simplify, add, multiply, rationalise" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice working with surds!</p>
+        <KeyTerms topicKey="surds" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Tip: type √ using "sqrt" or copy-paste √</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
@@ -54345,6 +54338,7 @@ const loadQuestion = async () => {
       {/* ── Setup Phase ── */}
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice adding fractions!</p>
+        <KeyTerms topicKey="fractions" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -55049,6 +55043,7 @@ const fetchQuestion = async (step) => {
     <QuizLayout title="Square Root" subtitle="Floor or ceiling is accepted" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice square roots!</p>
+        <KeyTerms topicKey="square-roots" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -55345,6 +55340,7 @@ const loadQuestion = async () => {
     <QuizLayout title="Poly Multiply" subtitle="Multiply two polynomials and enter the coefficients" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice polynomial multiplication!</p>
+        <KeyTerms topicKey="polynomial-multiplication" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -55656,7 +55652,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Poly Factor" subtitle="Factor the quadratic into (px + q)(rx + s)" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Factor ax² + bx + c into (px + q)(rx + s).</p>
+          <p className="welcome-text">Factor ax² + bx + c into (px + q)(rx + s).</p>
+          <KeyTerms topicKey="polynomial-factorisation" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -55740,7 +55737,7 @@ const loadQuestion = async () => {
         {renderFeedback(feedback, isCorrect)}
         <div className="button-row">
           {!revealed && <button onClick={handleSolve} disabled={loading} style={{ background: 'transparent', border: '1px solid var(--clr-accent)', color: 'var(--clr-accent)' }}>Solve</button>}
-          <button onClick={revealed ? () => advanceRef.current() : handleSubmit} disabled={loading || (!revealed && (!userP || !userQ || !userR || !userS))}>
+          <button onClick={revealed ? () => advanceFnRef.current() : handleSubmit} disabled={loading || (!revealed && (!userP || !userQ || !userR || !userS))}>
             {revealed ? (questionNumber >= totalQ ? 'Finish' : 'Next') : 'Submit'}
           </button>
         </div>
@@ -55999,7 +55996,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Prime Factors" subtitle="Break the number into its prime factors" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Enter prime factors one at a time. Watch the remaining number shrink!</p>
+          <p className="welcome-text">Enter prime factors one at a time. Watch the remaining number shrink!</p>
+          <KeyTerms topicKey="prime-factors" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -56308,7 +56306,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Quadratic Formula" subtitle="Find the roots of ax² + bx + c = 0" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Use the quadratic formula to find roots of ax² + bx + c = 0</p>
+          <p className="welcome-text">Use the quadratic formula to find roots of ax² + bx + c = 0</p>
+          <KeyTerms topicKey="quadratic-formula" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -56646,7 +56645,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Simultaneous Eq." subtitle={`Solve ${isAdaptive ? 'adaptive' : (effectiveDiff() === 'easy' ? '2×2' : '3×3')} systems`} onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Solve systems of linear equations</p>
+          <p className="welcome-text">Solve systems of linear equations</p>
+          <KeyTerms topicKey="simultaneous-equations" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -56933,7 +56933,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Functions" subtitle="Evaluate the function at the given values" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Evaluate linear functions</p>
+          <p className="welcome-text">Evaluate linear functions</p>
+          <KeyTerms topicKey="functions" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -57006,7 +57007,6 @@ const loadQuestion = async () => {
             <div className="given">Given: {varStr}</div>
           </div>
           <div className="single-input-row">
-            <label className="coeff-label">f = </label>
             <input className="answer-input" type="text" value={answer} disabled={revealed}
               onChange={e => { const v = e.target.value; if (v === '' || v === '-' || v === '.' || /^-?\d*\.?\d*$/.test(v)) setAnswer(v) }}
               onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }} autoFocus />
@@ -57226,7 +57226,8 @@ const loadQuestion = async () => {
   return (
     <QuizLayout title="Line Equation" subtitle="Find m and c in y = mx + c from two points" onBack={onBack} timer={started && !finished && sessionGoal !== 'perfect' ? timer : null} sessionGoal={sessionGoal}>
       {!started && !finished && <div className="welcome-box">
-        <p className="welcome-text">Given two points, find the slope m and intercept c.</p>
+          <p className="welcome-text">Given two points, find the slope m and intercept c.</p>
+          <KeyTerms topicKey="line-equation" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -58488,7 +58489,7 @@ const startQuiz = async () => {
     // Default: use generic prompt from getPromptForType()
     return <>
       <div className="custom-type-badge">{typeName}</div>
-      <div className="question-box">{getPromptForType(curType, question)}</div>
+      <div className="question-box"><GlossaryText text={getPromptForType(curType, question) || ''} /></div>
     </>
   }
 
@@ -60137,7 +60138,7 @@ function Tatsavit1App({ onBack, isGoalMode = false }) {
         Score: {score} · Answered: {results.length}
       </div>
       <div className="question-box" style={{ whiteSpace: 'pre-wrap', textAlign: 'center', marginBottom: 16 }}>
-        {q.prompt}
+        <GlossaryText text={q.prompt || ''} />
       </div>
       <div className="options-list">
         {q.options.map((opt, i) => {
@@ -61112,7 +61113,7 @@ const startQuiz = () => {
         keyboard: ↑ ↓ to move · A–D or 1–4 to pick · Backspace back · Enter to {revealed ? 'continue' : 'submit'}
       </div>
       <div className="question-box" style={{ whiteSpace: 'pre-wrap', textAlign: 'center', marginBottom: 16 }}>
-        {q.prompt}
+        <GlossaryText text={q.prompt || ''} />
       </div>
       <div className="options-list">
         {optionOrder.map((origIdx, displayIdx) => {
