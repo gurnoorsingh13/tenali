@@ -41368,7 +41368,6 @@ function Home({ onSelect, isGoalSelection = false, onBack }) {
 
   // All regular quiz apps sorted alphabetically by name
   const regularApps = [
-    { key: 'comic-addition', name: 'Comic Addition', subtitle: 'Story Mode', color: 'purple' },
     { key: 'addition', name: 'Addition', subtitle: '20-question addition practice', color: 'blue' },
     { key: 'angles', name: 'Angles', subtitle: 'Lines, points, parallel lines', color: 'green' },
     { key: 'basicarith', name: 'Arithmetic', subtitle: '+, −, ×, ÷ with positive & negative', color: 'purple' },
@@ -41621,22 +41620,6 @@ function Home({ onSelect, isGoalSelection = false, onBack }) {
             </button>
           </div>
         </>
-      )}
-      {!search && !isGoalSelection && (
-        <div className="journey-banner-row">
-          <button className="journey-banner-btn" onClick={() => onSelect('learning_journey')}>
-            <div className="journey-banner-content">
-              <div className="journey-banner-header">
-                <span>⭐</span>
-                <h3 className="journey-banner-title">Guided Learning Journey</h3>
-              </div>
-              <p className="journey-banner-subtitle">
-                Embark on a structured, sequential math learning path with checkpoints.
-              </p>
-            </div>
-            <div className="journey-banner-arrow">➔</div>
-          </button>
-        </div>
       )}
       <div className="search-bar-row">
         <input
@@ -43601,6 +43584,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
       if (isAdaptive) {
         setAdaptScore(prev => { const next = data.correct ? Math.min(3, prev + 0.25) : Math.max(0, prev - 0.35); adaptScoreRef.current = next; return next })
       }
+      setRevealed(true)
       return
     }
 
@@ -43799,7 +43783,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
               {question && <NarrationButton text={question.prompt} />}
             </div>
             <input className="answer-input" type="text" value={answer} onChange={(e) => { if (!revealed) { const v = e.target.value; if (v === '' || v === '-' || /^-?\d+$/.test(v)) setAnswer(v) } }} disabled={revealed} placeholder="Type your answer" />
-            <NumPad value={answer} onChange={(v) => !revealed && setAnswer(v)} disabled={revealed} />
+            {!revealed && <NumPad value={answer} onChange={(v) => !revealed && setAnswer(v)} disabled={revealed} />}
           </>
         )}
 
