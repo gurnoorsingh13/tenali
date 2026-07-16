@@ -24,12 +24,13 @@ import ReactDOM from 'react-dom/client'
 import App, { AuthMenu } from './App.jsx?v=2'
 import './index.css';
 import './kid-zone.css';
+import { I18nProvider } from './lib/i18n.jsx';
 
 // Create React root and render the App component
 ReactDOM.createRoot(document.getElementById('root')).render(
   // StrictMode: Enables additional development checks and warnings
   <React.StrictMode>
-    <App />
+    <I18nProvider><App /></I18nProvider>
     {/* Hamburger menu (login/logout) — fixed top-right, visible on every page */}
     <AuthMenu />
   </React.StrictMode>,
