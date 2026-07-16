@@ -23,7 +23,6 @@ import React from 'react'; window.React = React;
 import ReactDOM from 'react-dom/client'
 import App, { AuthMenu } from './App.jsx?v=2'
 import { NarrationProvider } from './narration/NarrationContext'
-import NarrationSettings from './narration/NarrationSettings'
 import './index.css';
 import './kid-zone.css';
 
@@ -32,9 +31,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   // StrictMode: Enables additional development checks and warnings
   <React.StrictMode>
     <NarrationProvider>
-      <div style={{ position: 'fixed', top: '16px', right: '116px', zIndex: 100 }}>
-        <NarrationSettings />
-      </div>
       <App />
       {/* Hamburger menu (login/logout) — fixed top-right, visible on every page */}
       <AuthMenu />

@@ -4,13 +4,7 @@ import { getStaticAudioPath, getTokenAudioPath } from './AudioCatalog';
 const NarrationContext = createContext();
 
 export const NarrationProvider = ({ children }) => {
-  const [autoPlay, setAutoPlay] = useState(() => {
-    try {
-      return localStorage.getItem('tenali-autoplay') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [autoPlay, setAutoPlay] = useState(false);
 
   const [speed, setSpeed] = useState(() => {
     try {
@@ -209,17 +203,17 @@ export const NarrationProvider = ({ children }) => {
   };
 
   const playNarration = (text, contentId = '') => {
-    stopNarration();
-    if (!text && !contentId) return;
+    return;
 
     // Clean up feedback speech text: omit equation/solution steps from verbal feedback, only say the header word.
     let processedText = text;
     if (contentId && contentId.startsWith('fb_')) {
-      if (text.startsWith('Correct')) {
+      const normalizedText = text ? text.replace(/^[❌✅✗✓]\s*/, '').trim() : '';
+      if (normalizedText.toLowerCase().startsWith('correct') || contentId === 'fb_correct') {
         processedText = 'Correct!';
-      } else if (text.startsWith('Incorrect')) {
+      } else if (normalizedText.toLowerCase().startsWith('incorrect') || normalizedText.toLowerCase().startsWith('not quite') || contentId === 'fb_incorrect') {
         processedText = 'Incorrect.';
-      } else if (text.startsWith('Skipped')) {
+      } else if (normalizedText.toLowerCase().startsWith('skipped') || contentId === 'fb_skipped') {
         processedText = 'Skipped.';
       }
     }
@@ -240,7 +234,9 @@ export const NarrationProvider = ({ children }) => {
         .replace(/\//g, ' divided by ')
         .replace(/[−-]/g, ' minus ')
         .replace(/=/g, ' equals ')
-        .replace(/\?/g, ' what ');
+        .replace(/\?/g, ' what ')
+        .replace(/[❌✗✘]/g, '')
+        .replace(/[✅✓]/g, '');
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = rate;
@@ -294,7 +290,9 @@ export const NarrationProvider = ({ children }) => {
         .replace(/\//g, ' divided by ')
         .replace(/[−-]/g, ' minus ')
         .replace(/=/g, ' equals ')
-        .replace(/\?/g, ' what ');
+        .replace(/\?/g, ' what ')
+        .replace(/[❌✗✘]/g, '')
+        .replace(/[✅✓]/g, '');
 
       const utterance1 = new SpeechSynthesisUtterance(cleanText);
       utterance1.rate = rate;
