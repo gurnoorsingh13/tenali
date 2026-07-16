@@ -582,9 +582,9 @@ export default function NoiseFilter() {
                       const isStageActive = isActive && stageNum === noiseState.currentLevelIndex;
                       const isStageDone = isCertified || (isActive && stageNum < noiseState.currentLevelIndex);
 
-                      const label = stageNum === 1 ? 'Teach: Part 1' :
+                      const label = stageNum === 1 ? 'Tutorial: Part 1' :
                                     stageNum === 2 ? 'Practice: Part 1' :
-                                    stageNum === 3 ? 'Teach: Part 2' :
+                                    stageNum === 3 ? 'Tutorial: Part 2' :
                                     stageNum === 4 ? 'Practice: Part 2' :
                                     stageNum === 5 ? 'Review Level' : "Hero's Challenge";
 
