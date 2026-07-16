@@ -58,8 +58,6 @@ function useProgressSubmit(revealed, isCorrect, topic, questionId) {
 }
 import Vachana from './vachana'
 import './App.css'
-import NarrationButton from './narration/NarrationButton'
-import { useNarration } from './narration/NarrationContext'
 import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
 import VisualMathLabRedux, {
@@ -864,11 +862,9 @@ function renderFeedback(feedback, isCorrect) {
   if (!feedback) return null
   const isSolve = isCorrect === false && feedback.startsWith('Solution:')
   if (!isSolve) {
-    const feedbackId = feedback.startsWith('Skipped') ? 'fb_skipped' : (isCorrect ? 'fb_correct' : 'fb_incorrect');
     return (
       <div className={`feedback ${isCorrect ? 'correct' : 'wrong'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <span>{feedback}</span>
-        <NarrationButton text={feedback} contentId={feedbackId} />
       </div>
     )
   }
@@ -894,7 +890,6 @@ function renderFeedback(feedback, isCorrect) {
     <div className="feedback solve">
       <div className="solve-answer-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <span>{answerLine}</span>
-        <NarrationButton text={`Solution: ${answerLine}`} />
       </div>
       {steps.length > 0 && (
         <div className="solve-timeline">
@@ -906,7 +901,6 @@ function renderFeedback(feedback, isCorrect) {
               </div>
               <div className="solve-step-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%' }}>
                 <span>{step}</span>
-                <NarrationButton text={step} style={{ flexShrink: 0 }} />
               </div>
             </div>
           ))}
@@ -43346,7 +43340,6 @@ function AdditionApp({ onBack, initialMode, initialDifficulty, initialNumQuestio
   }, [isGoalMode]);
   // Timer for response timing
   const timer = useTimer()
-  const { playNarration, stopNarration, autoPlay } = useNarration()
   const advanceFnRef = useRef(null)
 
   // Drag & Drop Visual Counting state
@@ -43651,36 +43644,6 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
   advanceFnRef.current = handleSubmitOrNext
   useAutoAdvance(revealed, advanceFnRef, isCorrect)
 
-  // Auto-play welcome narration
-  useEffect(() => {
-    if (!started && !finished && autoPlay) {
-      playNarration("Practice addition!", "intro_addition")
-    }
-  }, [started, finished, autoPlay])
-
-  // Auto-play question prompts when they load
-  useEffect(() => {
-    if (started && !finished && question && question.prompt && autoPlay) {
-      const t = setTimeout(() => {
-        playNarration(question.prompt)
-      }, 150)
-      return () => clearTimeout(t)
-    }
-  }, [started, finished, question?.prompt, autoPlay])
-
-  // Auto-play feedback when answer is checked or solved
-  useEffect(() => {
-    if (started && !finished && feedback && autoPlay) {
-      const isCorrectFeedback = feedback.startsWith('Correct!');
-      const isIncorrectFeedback = feedback.startsWith('Incorrect.');
-      const isSkippedFeedback = feedback.startsWith('Skipped');
-      const feedbackId = isSkippedFeedback ? 'fb_skipped' : (isCorrectFeedback ? 'fb_correct' : (isIncorrectFeedback ? 'fb_incorrect' : ''));
-      playNarration(feedback, feedbackId);
-    } else {
-      stopNarration();
-    }
-  }, [started, finished, feedback, autoPlay]);
-
   useEffect(() => {
     if (!revealed || isCorrect) return
     const h = (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmitOrNext() } }
@@ -43710,7 +43673,6 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
           </h1>
           <p style={{ color: '#988D84', fontSize: '0.9rem', margin: '0 0 24px', fontFamily: 'Inter, sans-serif', fontWeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span>Practice addition!</span>
-            <NarrationButton text="Practice addition!" contentId="intro_addition" />
           </p>
 
           <div style={{ marginBottom: '24px' }}>
@@ -43780,7 +43742,6 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
           <>
             <div className="question-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span>{loading || !question ? 'Loading question…' : `${question.prompt} = ?`}</span>
-              {question && <NarrationButton text={question.prompt} />}
             </div>
             <input className="answer-input" type="text" value={answer} onChange={(e) => { if (!revealed) { const v = e.target.value; if (v === '' || v === '-' || /^-?\d+$/.test(v)) setAnswer(v) } }} disabled={revealed} placeholder="Type your answer" />
             {!revealed && <NumPad value={answer} onChange={(v) => !revealed && setAnswer(v)} disabled={revealed} />}
@@ -44933,7 +44894,6 @@ function BasicArithApp({ onBack, isGoalMode = false }) {
   }, [isGoalMode]);
   // Timer
   const timer = useTimer()
-  const { playNarration, stopNarration, autoPlay } = useNarration()
   const advanceFnRef = useRef(null)
 
   const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
@@ -45100,36 +45060,6 @@ const fetchQuestion = async () => {
   advanceFnRef.current = handleSubmitOrNext
   useAutoAdvance(revealed, advanceFnRef, isCorrect)
 
-  // Auto-play welcome narration
-  useEffect(() => {
-    if (!started && !finished && autoPlay) {
-      playNarration("Practice basic arithmetic!", "intro_basicarith")
-    }
-  }, [started, finished, autoPlay])
-
-  // Auto-play question prompts when they load
-  useEffect(() => {
-    if (started && !finished && question && question.prompt && autoPlay) {
-      const t = setTimeout(() => {
-        playNarration(question.prompt)
-      }, 150)
-      return () => clearTimeout(t)
-    }
-  }, [started, finished, question?.prompt, autoPlay])
-
-  // Auto-play feedback when answer is checked or solved
-  useEffect(() => {
-    if (started && !finished && feedback && autoPlay) {
-      const isCorrectFeedback = feedback.startsWith('Correct!');
-      const isIncorrectFeedback = feedback.startsWith('Incorrect.');
-      const isSkippedFeedback = feedback.startsWith('Skipped');
-      const feedbackId = isSkippedFeedback ? 'fb_skipped' : (isCorrectFeedback ? 'fb_correct' : (isIncorrectFeedback ? 'fb_incorrect' : ''));
-      playNarration(feedback, feedbackId);
-    } else {
-      stopNarration();
-    }
-  }, [started, finished, feedback, autoPlay]);
-
   useEffect(() => {
     if (!revealed || isCorrect) return
     const h = (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmitOrNext() } }
@@ -45145,7 +45075,6 @@ const fetchQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span>Practice basic arithmetic!</span>
-          <NarrationButton text="Practice basic arithmetic!" contentId="intro_basicarith" />
         </p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
@@ -45215,7 +45144,6 @@ const fetchQuestion = async () => {
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         <div className="question-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span>{loading || !question ? 'Loading question…' : `${question.prompt} = ?`}</span>
-          {question && <NarrationButton text={question.prompt} />}
         </div>
         <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) { const v = e.target.value; if (v === '' || v === '-' || /^-?\d+$/.test(v)) setAnswer(v) } }} disabled={revealed} placeholder="Type your answer" />
         <NumPad value={answer} onChange={v => !revealed && setAnswer(v)} disabled={revealed} />
@@ -47243,7 +47171,6 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
     const [results, setResults] = useState([])
     const [correctOption, setCorrectOption] = useState('')
     const timer = useTimer()
-    const { playNarration, stopNarration, autoPlay } = useNarration()
     const advanceFnRef = useRef(null)
     const adaptScoreRef = useRef(0)
     const submittedRef = useRef(false)
@@ -47304,36 +47231,6 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
     advanceFnRef.current = advance
     useAutoAdvance(revealed, advanceFnRef, isCorrect)
     useProgressSubmit(revealed, isCorrect, 'vocab', question?.id)
-
-    // Auto-play welcome narration
-    useEffect(() => {
-      if (!started && !finished && autoPlay) {
-        playNarration(`Practice ${title.toLowerCase()}!`, `intro_mc_${apiPath}`)
-      }
-    }, [started, finished, autoPlay])
-
-    // Auto-play question prompts when they load
-    useEffect(() => {
-      if (started && !finished && question && question.prompt && autoPlay) {
-        const t = setTimeout(() => {
-          playNarration(question.prompt)
-        }, 150)
-        return () => clearTimeout(t)
-      }
-    }, [started, finished, question?.prompt, autoPlay])
-
-    // Auto-play feedback when answer is checked or solved
-    useEffect(() => {
-      if (started && !finished && feedback && autoPlay) {
-        const isCorrectFeedback = feedback.startsWith('Correct!');
-        const isIncorrectFeedback = feedback.startsWith('Incorrect.');
-        const isSkippedFeedback = feedback.startsWith('Skipped');
-        const feedbackId = isSkippedFeedback ? 'fb_skipped' : (isCorrectFeedback ? 'fb_correct' : (isIncorrectFeedback ? 'fb_incorrect' : ''));
-        playNarration(feedback, feedbackId);
-      } else {
-        stopNarration();
-      }
-    }, [started, finished, feedback, autoPlay]);
 
     // Enter-to-advance after wrong answer
     useEffect(() => {
@@ -47448,7 +47345,6 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
         {!started && !finished && <div className="welcome-box">
           <p className="welcome-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span>Practice {title.toLowerCase()}!</span>
-            <NarrationButton text={`Practice ${title.toLowerCase()}!`} contentId={`intro_mc_${apiPath}`} />
           </p>
           {tip && <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>{tip}</p>}
           {/* Difficulty selector — hidden entirely for adaptive-only puzzles
@@ -47525,7 +47421,6 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
           {question && <div style={{ textAlign: 'center' }}>
             <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '8px 0 4px', lineHeight: '1.4', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span>{question.prompt}</span>
-              <NarrationButton text={question.prompt} />
             </div>
             <div className="options-grid" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
               {question.options.map(opt => {
@@ -47599,7 +47494,6 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
   }, [isGoalMode]);
     const [results, setResults] = useState([])
     const timer = useTimer()
-    const { playNarration, stopNarration, autoPlay } = useNarration()
     const advanceFnRef = useRef(null)
     // Keep a ref for adaptive score so loadQuestion always sees latest
     const adaptScoreRef = useRef(0)
@@ -47661,35 +47555,6 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
     advanceFnRef.current = advance
     useAutoAdvance(revealed, advanceFnRef, isCorrect)
 
-    // Auto-play narration when question prompt changes
-    useEffect(() => {
-      if (started && !finished && question && question.prompt && autoPlay) {
-        const t = setTimeout(() => {
-          playNarration(question.prompt);
-        }, 150);
-        return () => clearTimeout(t);
-      }
-    }, [started, finished, question?.prompt, autoPlay]);
-
-    // Auto-play feedback when answer is checked or solved
-    useEffect(() => {
-      if (started && !finished && feedback && autoPlay) {
-        const isCorrectFeedback = feedback.startsWith('Correct!');
-        const isIncorrectFeedback = feedback.startsWith('Incorrect.');
-        const isSkippedFeedback = feedback.startsWith('Skipped');
-        const feedbackId = isSkippedFeedback ? 'fb_skipped' : (isCorrectFeedback ? 'fb_correct' : (isIncorrectFeedback ? 'fb_incorrect' : ''));
-        playNarration(feedback, feedbackId);
-      } else {
-        stopNarration();
-      }
-    }, [started, finished, feedback, autoPlay]);
-
-    // Auto-play welcome narration on mount/reset
-    useEffect(() => {
-      if (!started && !finished && autoPlay) {
-        playNarration(`Practice ${title.toLowerCase()}!`, `intro_${apiPath.replace('-api', '')}`);
-      }
-    }, [started, finished, autoPlay]);
     useEffect(() => {
       if (!revealed || isCorrect) return
       const h = (e) => { if (e.key === 'Enter') { e.preventDefault(); advance() } }
@@ -47816,7 +47681,6 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
             </p>
             <p style={{ color: '#988D84', fontSize: '0.9rem', margin: '0 0 24px', fontFamily: 'Inter, sans-serif', fontWeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span>Practice {title.toLowerCase()}!</span>
-              <NarrationButton text={`Practice ${title.toLowerCase()}! ${tip || ''}`} contentId={`intro_${apiPath.replace('-api', '')}`} />
             </p>
             {tip && <p style={{ fontSize: '0.85rem', color: '#A89C93', marginBottom: '16px' }}>{tip}</p>}
 
@@ -47883,7 +47747,6 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
           {question && <div style={{ textAlign: 'center' }}>
             <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span>{question.prompt}</span>
-              <NarrationButton text={question.prompt} />
             </div>
             <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={getPlaceholder()} onKeyDown={handleKeyDown} autoFocus />
           </div>}
