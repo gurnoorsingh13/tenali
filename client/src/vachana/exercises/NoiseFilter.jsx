@@ -590,40 +590,6 @@ export default function NoiseFilter() {
                   {TIER_NAMES[tierNum]}
                 </h4>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '16px' }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`Are you sure you want to reset progress for Level ${tierNum}?`)) {
-                        const newState = {
-                          ...noiseState,
-                          currentTier: tierNum,
-                          currentLevelIndex: 1,
-                          failedLevelIndex: null,
-                          failedLevelType: null,
-                          reteachQuestionIds: []
-                        };
-                        newState.tierStates[String(tierNum)] = 'in_progress';
-                        saveNoiseState(newState);
-                      }
-                    }}
-                    style={{
-                      padding: '6px 12px', background: 'rgba(239,83,80,0.08)', border: '1px solid rgba(239,83,80,0.2)',
-                      color: '#ef5350', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem',
-                      fontWeight: '600', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: '4px'
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(239,83,80,0.15)';
-                      e.currentTarget.style.borderColor = '#ef5350';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'rgba(239,83,80,0.08)';
-                      e.currentTarget.style.borderColor = 'rgba(239,83,80,0.2)';
-                    }}
-                  >
-                    ↺ Reset Progress
-                  </button>
-                </div>
               </div>
             );
           })}
@@ -1015,18 +981,53 @@ export default function NoiseFilter() {
           </AnimatePresence>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <button
-              onClick={() => {
-                setSessionActive(false);
-                setSessionFinished(false);
-              }}
-              style={{
-                padding: '12px 24px', background: 'transparent', border: '1px solid var(--clr-border)', color: 'var(--clr-text-soft)',
-                borderRadius: '12px', cursor: 'pointer', fontWeight: '600'
-              }}
-            >
-              Exit Level
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setSessionActive(false);
+                  setSessionFinished(false);
+                }}
+                style={{
+                  padding: '12px 24px', background: 'transparent', border: '1px solid var(--clr-border)', color: 'var(--clr-text-soft)',
+                  borderRadius: '12px', cursor: 'pointer', fontWeight: '600'
+                }}
+              >
+                Exit Level
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to reset progress for this level?")) {
+                    const newState = {
+                      ...noiseState,
+                      currentTier: noiseState.currentTier,
+                      currentLevelIndex: 1,
+                      failedLevelIndex: null,
+                      failedLevelType: null,
+                      reteachQuestionIds: []
+                    };
+                    newState.tierStates[String(noiseState.currentTier)] = 'in_progress';
+                    saveNoiseState(newState);
+                    setSessionActive(false);
+                    setSessionFinished(false);
+                  }
+                }}
+                style={{
+                  padding: '12px 24px', background: 'transparent', border: '1px solid rgba(239, 83, 80, 0.3)', color: '#ef5350',
+                  borderRadius: '12px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(239, 83, 80, 0.05)';
+                  e.currentTarget.style.borderColor = '#ef5350';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = 'rgba(239, 83, 80, 0.3)';
+                }}
+              >
+                Reset Level
+              </button>
+            </div>
 
             {!hasAnswered ? (
               <button
