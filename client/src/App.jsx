@@ -78,6 +78,7 @@ import { VOCAB_CORPUS } from './vocabCorpus'
 import EquationSandboxApp from './lib/EquationSandboxApp.jsx';
 import QFormulaConceptApp from './lib/concept/QFormulaConceptApp.jsx';
 import SimulConceptApp from './lib/simul-concept/SimulConceptApp.jsx';
+import DiagnosticQuiz from './lib/DiagnosticQuiz.jsx';
 import PercentExplanationApp from './PercentExplanationApp';
 import { playSound } from './audioContext';
 
@@ -42233,6 +42234,8 @@ function PercentPage(props) {
 }
 
 function App() {
+  const [diagnosticState, setDiagnosticState] = useState({});
+
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
   const [mode, setMode] = useState(() => {
     try {
@@ -44130,7 +44133,7 @@ function App() {
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
       {mode === 'vachana' ? (
-        <Vachana onBack={() => setMode(null)} />
+        <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
       ) : (
         <div className="card">
           {renderContent()}
@@ -67860,4 +67863,5 @@ export default App
 export { AuthMenu }
 
 
-export const updateBKT = () => {};
+import { updateBKT } from './bkt.js';
+export { updateBKT };
