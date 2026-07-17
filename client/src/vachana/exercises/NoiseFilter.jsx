@@ -590,6 +590,41 @@ export default function NoiseFilter() {
               );
             })}
           </div>
+
+          {/* Reset Level Progress */}
+          <div style={{ marginTop: '24px' }}>
+            <button
+              onClick={() => {
+                if (window.confirm("Are you sure you want to reset progress for this level?")) {
+                  const newState = {
+                    ...noiseState,
+                    currentTier: tierNum,
+                    currentLevelIndex: 1,
+                    failedLevelIndex: null,
+                    failedLevelType: null,
+                    reteachQuestionIds: []
+                  };
+                  newState.tierStates[String(tierNum)] = 'in_progress';
+                  saveNoiseState(newState);
+                }
+              }}
+              style={{
+                padding: '12px 20px', background: 'transparent', border: '1px solid var(--clr-border)',
+                color: '#ef5350', borderRadius: '12px', cursor: 'pointer', fontSize: '0.92rem',
+                fontWeight: '600', width: '100%', transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(239, 83, 80, 0.05)';
+                e.currentTarget.style.borderColor = '#ef5350';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = 'var(--clr-border)';
+              }}
+            >
+              Reset Level Progress
+            </button>
+          </div>
         </div>
       );
     }
