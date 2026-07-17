@@ -477,13 +477,9 @@ export default function NoiseFilter() {
     if (teachIndex < 4 && tierProblems[chunkIdx + teachIndex + 1]) {
       setTeachIndex(prev => prev + 1);
     } else {
-      // finished teach stage, advance level state and show complete screen
-      const newState = {
-        ...noiseState,
-        currentLevelIndex: noiseState.currentLevelIndex + 1
-      };
-      saveNoiseState(newState);
-      setSessionFinished(true);
+      // finished teach stage, advance level state and directly start practice session (stage 2)
+      const nextLevelIndex = noiseState.currentLevelIndex + 1;
+      startSession(null, noiseState.currentTier, nextLevelIndex);
     }
   };
 
