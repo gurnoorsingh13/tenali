@@ -836,7 +836,7 @@ export default function NoiseFilter() {
             }
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {!noiseState.isPlacing && noiseState.currentTier > 1 && (
+            {!noiseState.isPlacing && noiseState.currentTier >= 1 && (
               <button
                 onClick={() => {
                   setModalTeachIndex(0);
