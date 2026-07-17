@@ -68,6 +68,22 @@ const getLevelType = (levelIndex) => {
   return 'standard';
 };
 
+const mapStageIndexToOriginal = (tier, stageIndex) => {
+  if (tier === 1) {
+    if (stageIndex === 1) return 1; // Tutorial
+    if (stageIndex === 2) return 2; // Practice: Part 1
+    if (stageIndex === 3) return 4; // Practice: Part 2
+    if (stageIndex === 4) return 5; // Review Level
+    if (stageIndex === 5) return 6; // Hero's Challenge
+  } else {
+    if (stageIndex === 1) return 2; // Practice: Part 1
+    if (stageIndex === 2) return 4; // Practice: Part 2
+    if (stageIndex === 3) return 5; // Review Level
+    if (stageIndex === 4) return 6; // Hero's Challenge
+  }
+  return stageIndex;
+};
+
 const TIER_NAMES = {
   1: "Reception Arithmetic",
   2: "Basic Operations",
@@ -167,14 +183,14 @@ export default function NoiseFilter() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sessionActive, sessionFinished, sessionQuestions, sessionQIndex, sessionSelections, hasAnswered]);
 
-  // --- Core Session Controllers ---
   const startSession = (customType = null, customTier = null, customLevelIndex = null) => {
     const targetTier = customTier || noiseState.currentTier;
     const targetLevelIndex = customLevelIndex || noiseState.currentLevelIndex;
+    const origLevelIndex = mapStageIndexToOriginal(targetTier, targetLevelIndex);
     const targetFailedLevelIndex = (customTier && customTier !== noiseState.currentTier && !customLevelIndex) ? null : noiseState.failedLevelIndex;
 
     const tierProblems = NOISE_CORPUS.filter(p => p.tier === targetTier);
-    let levelType = customType || (targetLevelIndex === 7 ? 'final_exam' : getLevelType(targetLevelIndex));
+    let levelType = customType || (origLevelIndex === 7 ? 'final_exam' : getLevelType(origLevelIndex));
     let targetProblems = [];
     let questions = [];
 
@@ -202,7 +218,7 @@ export default function NoiseFilter() {
     }
 
     if (levelType === 'standard') {
-      const startIdx = targetLevelIndex === 2 ? 0 : 5;
+      const startIdx = origLevelIndex === 2 ? 0 : 5;
       targetProblems = tierProblems.slice(startIdx, startIdx + 5);
       questions = [...targetProblems].sort(() => 0.5 - Math.random());
     } else if (levelType === 'review') {
@@ -400,7 +416,8 @@ export default function NoiseFilter() {
       const totalQ = sessionQuestions.length;
       const scorePct = (totalCorrect / totalQ) * 100;
 
-      let levelType = noiseState.failedLevelIndex !== null ? 'reteach' : (noiseState.currentLevelIndex === 7 ? 'final_exam' : getLevelType(noiseState.currentLevelIndex));
+      const origLevelIndex = mapStageIndexToOriginal(noiseState.currentTier, noiseState.currentLevelIndex);
+      let levelType = noiseState.failedLevelIndex !== null ? 'reteach' : (origLevelIndex === 7 ? 'final_exam' : getLevelType(origLevelIndex));
       let threshold = (levelType === 'boss' || levelType === 'final_exam') ? 90 : 80;
       const passed = scorePct >= threshold;
 
@@ -452,7 +469,8 @@ export default function NoiseFilter() {
   };
 
   const handleNextTeach = () => {
-    const chunkIdx = noiseState.currentLevelIndex === 1 ? 0 : 5;
+    const origLevelIndex = mapStageIndexToOriginal(noiseState.currentTier, noiseState.currentLevelIndex);
+    const chunkIdx = origLevelIndex === 1 ? 0 : 5;
     const tierProblems = NOISE_CORPUS.filter(p => p.tier === noiseState.currentTier);
     if (teachIndex < 4 && tierProblems[chunkIdx + teachIndex + 1]) {
       setTeachIndex(prev => prev + 1);
@@ -488,7 +506,8 @@ export default function NoiseFilter() {
   };
 
   // --- View Computations ---
-  const levelType = noiseState.failedLevelIndex !== null ? 'reteach' : (noiseState.currentLevelIndex === 7 ? 'final_exam' : getLevelType(noiseState.currentLevelIndex));
+  const origLevelIndex = mapStageIndexToOriginal(noiseState.currentTier, noiseState.currentLevelIndex);
+  const levelType = noiseState.failedLevelIndex !== null ? 'reteach' : (origLevelIndex === 7 ? 'final_exam' : getLevelType(origLevelIndex));
   const currentQ = sessionQuestions[sessionQIndex];
 
   const totalNoiseCount = currentQ ? currentQ.tokens.filter(tok => tok.isNoise).length : 0;
@@ -536,15 +555,15 @@ export default function NoiseFilter() {
 
           {/* Stages List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[1, 2, 3, 4, 5, 6].map(stageNum => {
+            {(tierNum === 1 ? [1, 2, 3, 4, 5] : [1, 2, 3, 4]).map(stageNum => {
               const isStageActive = isActive && stageNum === noiseState.currentLevelIndex;
               const isStageDone = isCertified || (isActive && stageNum < noiseState.currentLevelIndex);
 
-              const label = stageNum === 1 ? 'Tutorial: Part 1' :
-                            stageNum === 2 ? 'Practice: Part 1' :
-                            stageNum === 3 ? 'Tutorial: Part 2' :
-                            stageNum === 4 ? 'Practice: Part 2' :
-                            stageNum === 5 ? 'Review Level' : "Hero's Challenge";
+              const origStageIndex = mapStageIndexToOriginal(tierNum, stageNum);
+              const label = tierNum === 1 && stageNum === 1 ? 'Tutorial' :
+                            (origStageIndex === 2 ? 'Practice: Part 1' :
+                             origStageIndex === 4 ? 'Practice: Part 2' :
+                             origStageIndex === 5 ? 'Review Level' : "Hero's Challenge");
 
               return (
                 <button
@@ -735,7 +754,7 @@ export default function NoiseFilter() {
   // ==========================================
   const teachMode = levelType === 'teach';
   if (teachMode) {
-    const chunkIdx = noiseState.currentLevelIndex === 1 ? 0 : 5;
+    const chunkIdx = origLevelIndex === 1 ? 0 : 5;
     const tierProblems = NOISE_CORPUS.filter(p => p.tier === noiseState.currentTier);
     const activeProblem = tierProblems[chunkIdx + teachIndex];
 
@@ -746,7 +765,7 @@ export default function NoiseFilter() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', color: 'var(--clr-text-soft)', marginBottom: '20px'
         }}>
           <span style={{ fontWeight: '600' }}>
-            Level {noiseState.currentTier} · Example Lesson {noiseState.currentLevelIndex === 1 ? 'Part 1' : 'Part 2'}
+            Level {noiseState.currentTier} · Tutorial
           </span>
           <span style={{ fontSize: '0.78rem', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: '6px' }}>
             Example {teachIndex + 1} of 5
