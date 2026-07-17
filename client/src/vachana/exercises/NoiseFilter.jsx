@@ -987,12 +987,7 @@ export default function NoiseFilter() {
           background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '24px', padding: '32px',
           boxShadow: '0 12px 40px rgba(0,0,0,0.3)', marginBottom: '24px', position: 'relative'
         }}>
-          {/* Top row strand info */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--clr-accent)', background: 'rgba(232,134,74,0.1)', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.05em' }}>
-              {currentQ.strand}
-            </span>
-          </div>
+
 
           <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0 0 12px', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
             Filter out the noise:
