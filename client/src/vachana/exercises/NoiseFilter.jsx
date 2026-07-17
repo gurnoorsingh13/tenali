@@ -532,23 +532,7 @@ export default function NoiseFilter() {
             ← Back to Levels
           </button>
 
-          {/* Level Header Card */}
-          <div style={{
-            background: 'var(--clr-surface)', border: '1px solid var(--clr-border)',
-            borderRadius: '20px', padding: '32px', marginBottom: '24px'
-          }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: isCertified ? '#2ea043' : (isActive ? 'var(--clr-accent)' : 'var(--clr-text-soft)'), textTransform: 'uppercase' }}>
-              Level {tierNum}
-            </span>
-            <h3 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '8px 0 16px', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
-              {TIER_NAMES[tierNum]}
-            </h3>
-            {isCertified && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: '#2ea043', fontWeight: '700', background: 'rgba(46,160,67,0.1)', padding: '6px 12px', borderRadius: '20px' }}>
-                <CheckIcon /> Certified Complete
-              </span>
-            )}
-          </div>
+
 
           {/* Stages List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
