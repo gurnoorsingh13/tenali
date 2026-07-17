@@ -1001,37 +1001,11 @@ export default function NoiseFilter() {
             Click words to toggle between useful math info (normal) and noise (dimmed).
           </p>
 
-          {/* Noise filter status tracker & Hint button */}
+          {/* Noise filter status tracker */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
             <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', fontWeight: '600' }}>
               Noise elements: {currentSelectedCount} of {totalNoiseCount} selected
             </span>
-            {!hasAnswered && totalNoiseCount > 0 && (
-              <button
-                onClick={showHint}
-                disabled={currentSelectedCount >= totalNoiseCount}
-                style={{
-                  padding: '6px 12px',
-                  background: 'rgba(232, 134, 74, 0.1)',
-                  border: '1px solid rgba(232, 134, 74, 0.3)',
-                  color: 'var(--clr-accent)',
-                  borderRadius: '8px',
-                  cursor: currentSelectedCount >= totalNoiseCount ? 'default' : 'pointer',
-                  fontSize: '0.8rem',
-                  fontWeight: '600',
-                  opacity: currentSelectedCount >= totalNoiseCount ? 0.5 : 1,
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => {
-                  if (currentSelectedCount < totalNoiseCount) e.currentTarget.style.background = 'rgba(232, 134, 74, 0.2)';
-                }}
-                onMouseLeave={e => {
-                  if (currentSelectedCount < totalNoiseCount) e.currentTarget.style.background = 'rgba(232, 134, 74, 0.1)';
-                }}
-              >
-                Reveal 1 Noise Phrase
-              </button>
-            )}
           </div>
 
           {/* Tokens Box */}
