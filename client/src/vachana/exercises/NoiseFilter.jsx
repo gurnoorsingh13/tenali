@@ -554,50 +554,62 @@ export default function NoiseFilter() {
                 boxShadow: isActive ? '0 8px 30px rgba(232,134,74,0.15)' : 'none', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
               }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: isCertified ? '#2ea043' : (isActive ? 'var(--clr-accent)' : 'var(--clr-text-soft)'), textTransform: 'uppercase' }}>
-                      LEVEL {tierNum}
-                    </span>
-                    <div>
-                      {isCertified && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#2ea043', fontWeight: '700' }}><CheckIcon /> Certified</span>}
-                      {isActive && <span style={{ fontSize: '0.78rem', color: 'var(--clr-accent)', fontWeight: '700' }}>Active</span>}
+                  <div 
+                    onClick={() => toggleTierExpand(tierNum)} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: isCertified ? '#2ea043' : (isActive ? 'var(--clr-accent)' : 'var(--clr-text-soft)'), textTransform: 'uppercase' }}>
+                        LEVEL {tierNum}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {isCertified && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#2ea043', fontWeight: '700' }}><CheckIcon /> Certified</span>}
+                        {isActive && <span style={{ fontSize: '0.78rem', color: 'var(--clr-accent)', fontWeight: '700' }}>Active</span>}
+                        <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-soft)' }}>
+                          {expandedTiers[tierNum] ? '▲' : '▼'}
+                        </span>
+                      </div>
                     </div>
+
+                    <h4 style={{ margin: '0 0 8px', fontSize: '1.1rem', fontWeight: '700', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
+                      {TIER_NAMES[tierNum]}
+                    </h4>
                   </div>
 
-                  <h4 style={{ margin: '0 0 8px', fontSize: '1.1rem', fontWeight: '700', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
-                    {TIER_NAMES[tierNum]}
-                  </h4>
+                  {expandedTiers[tierNum] && (
+                    <div style={{ margin: '18px 0 0 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[1, 2, 3, 4, 5, 6].map(stageNum => {
+                        const isStageActive = isActive && stageNum === noiseState.currentLevelIndex;
+                        const isStageDone = isCertified || (isActive && stageNum < noiseState.currentLevelIndex);
 
-                  {/* Stage flow layout for all tiers */}
-                  <div style={{ margin: '18px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {[1, 2, 3, 4, 5, 6].map(stageNum => {
-                      const isStageActive = isActive && stageNum === noiseState.currentLevelIndex;
-                      const isStageDone = isCertified || (isActive && stageNum < noiseState.currentLevelIndex);
+                        const label = stageNum === 1 ? 'Tutorial: Part 1' :
+                                      stageNum === 2 ? 'Practice: Part 1' :
+                                      stageNum === 3 ? 'Tutorial: Part 2' :
+                                      stageNum === 4 ? 'Practice: Part 2' :
+                                      stageNum === 5 ? 'Review Level' : "Hero's Challenge";
 
-                      const label = stageNum === 1 ? 'Tutorial: Part 1' :
-                                    stageNum === 2 ? 'Practice: Part 1' :
-                                    stageNum === 3 ? 'Tutorial: Part 2' :
-                                    stageNum === 4 ? 'Practice: Part 2' :
-                                    stageNum === 5 ? 'Review Level' : "Hero's Challenge";
-
-                      return (
-                        <button
-                          key={stageNum}
-                          onClick={() => startSession(null, tierNum, stageNum)}
-                          style={{
-                            padding: '8px 12px', width: '100%', borderRadius: '10px',
-                            background: isStageActive ? 'var(--clr-accent)' : (isStageDone ? 'rgba(46,160,67,0.12)' : 'rgba(255,255,255,0.02)'),
-                            color: isStageActive ? '#fff' : (isStageDone ? '#2ea043' : 'var(--clr-text-soft)'),
-                            border: isStageActive ? 'none' : `1px solid ${isStageDone ? 'rgba(46,160,67,0.3)' : 'var(--clr-border)'}`,
-                            cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                          }}
-                        >
-                          <span>{label}</span>
-                          {isStageDone && <CheckIcon />}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <button
+                            key={stageNum}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startSession(null, tierNum, stageNum);
+                            }}
+                            style={{
+                              padding: '8px 12px', width: '100%', borderRadius: '10px',
+                              background: isStageActive ? 'var(--clr-accent)' : (isStageDone ? 'rgba(46,160,67,0.12)' : 'rgba(255,255,255,0.02)'),
+                              color: isStageActive ? '#fff' : (isStageDone ? '#2ea043' : 'var(--clr-text-soft)'),
+                              border: isStageActive ? 'none' : `1px solid ${isStageDone ? 'rgba(46,160,67,0.3)' : 'var(--clr-border)'}`,
+                              cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                            }}
+                          >
+                            <span>{label}</span>
+                            {isStageDone && <CheckIcon />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             );
