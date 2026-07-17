@@ -125,8 +125,18 @@ export default function NoiseFilter() {
   const [sessionFinished, setSessionFinished] = useState(false);
   const [isLoadingPlacement, setIsLoadingPlacement] = useState(false);
   const [teachIndex, setTeachIndex] = useState(0); // for teach stage slideshows
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [expandedTiers, setExpandedTiers] = useState({});
+
+  const toggleTierExpand = (tierNum) => {
+    setExpandedTiers(prev => ({ ...prev, [tierNum]: !prev[tierNum] }));
+  };
 
   // Keypress event handler hook
+  useEffect(() => {
+    setHintsUsed(0);
+  }, [sessionQIndex]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!sessionActive || sessionFinished) return;
@@ -485,6 +495,21 @@ export default function NoiseFilter() {
   const levelType = noiseState.failedLevelIndex !== null ? 'reteach' : (noiseState.currentLevelIndex === 7 ? 'final_exam' : getLevelType(noiseState.currentLevelIndex));
   const currentQ = sessionQuestions[sessionQIndex];
 
+  const totalNoiseCount = currentQ ? currentQ.tokens.filter(tok => tok.isNoise).length : 0;
+  const currentSelectedCount = Object.values(sessionSelections).filter(val => val === 'noise').length;
+
+  const showHint = () => {
+    if (!currentQ) return;
+    const unfoundIdx = currentQ.tokens.findIndex((tok, idx) => tok.isNoise && sessionSelections[idx] !== 'noise');
+    if (unfoundIdx !== -1) {
+      setSessionSelections(prev => ({
+        ...prev,
+        [unfoundIdx]: 'noise'
+      }));
+      setHintsUsed(prev => prev + 1);
+    }
+  };
+
   // ==========================================
   // VIEW: 1. DASHBOARD VIEW (Tier Selection)
   // ==========================================
@@ -506,17 +531,17 @@ export default function NoiseFilter() {
         }}>
           <div>
             <h3 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '0 0 10px', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
-              Logical Noise Filter
+              Noise Filter
             </h3>
             <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.96rem', lineHeight: '1.6', margin: 0, maxWidth: '640px' }}>
-              Train your cognitive focus to extract the core mathematical data elements and formulas from word problems while filtering out irrelevant fluff, descriptive side-stories, and decorative adjectives.
+              Learn to extract key numbers and math facts from word problems by filtering out unnecessary details and story fluff.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
             {!noiseState.placementCompleted && (
               <button onClick={() => setIsLoadingPlacement(true)} className="submit-btn" style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.92rem', fontWeight: '600' }}>
-                Test Your Might <RocketIcon />
+                Level Test <RocketIcon />
               </button>
             )}
             <button onClick={resetAllProgress} style={{ padding: '12px 20px', background: 'transparent', border: '1px solid var(--clr-border)', color: '#ef5350', borderRadius: '12px', cursor: 'pointer', fontSize: '0.92rem', fontWeight: '600' }}>
@@ -533,10 +558,10 @@ export default function NoiseFilter() {
           }}>
             <div style={{ marginBottom: '16px', transform: 'scale(1.8)', color: 'var(--clr-accent)' }}><ShieldIcon /></div>
             <h4 style={{ fontSize: '1.6rem', fontWeight: '700', marginBottom: '8px', fontFamily: 'var(--font-display)', color: 'var(--clr-accent)' }}>
-              Placement Test: Calibrate Your Focus
+              Find Your Level
             </h4>
             <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.98rem', lineHeight: '1.6', marginBottom: '32px', maxWidth: '540px', margin: '0 auto 32px' }}>
-              This test dynamically adjusts difficulty to match you with the right starting Tier. You will be presented with 15 questions and must filter the word problems.
+              Find your starting level. You will get 15 questions to filter out the noise.
             </p>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
               <button onClick={() => setIsLoadingPlacement(false)} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--clr-border)', color: 'var(--clr-text-soft)', borderRadius: '12px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
@@ -662,7 +687,7 @@ export default function NoiseFilter() {
 
           {noiseState.isPlacing && (
             <p style={{ fontSize: '1.05rem', color: 'var(--clr-text-soft)', margin: '0 0 32px' }}>
-              Excellent job! Based on your performance in the placement test, we have calibrated your entry point to: <br/>
+              Excellent job! Based on your performance in the Level Finder, we have calibrated your entry point to: <br/>
               <strong style={{ color: 'var(--clr-accent)', fontSize: '1.2rem', display: 'block', marginTop: '12px' }}>
                 Level {noiseState.currentTier}: {TIER_NAMES[noiseState.currentTier]}
               </strong>
@@ -741,14 +766,14 @@ export default function NoiseFilter() {
             </div>
 
             <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.9rem', marginBottom: '20px', lineHeight: '1.5' }}>
-              See how the <strong>Noise Filter</strong> works by comparing the original story with the filtered version below.
+              Compare the original story with the filtered version below to see what to keep.
             </p>
 
             {/* Structured example comparison */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
               <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--clr-border)' }}>
                 <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--clr-text-soft)', fontWeight: 700, display: 'block', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                  Original Math Story
+                  Original Story
                 </span>
                 <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--clr-text-soft)' }}>
                   {activeProblem.question_text}
@@ -761,7 +786,7 @@ export default function NoiseFilter() {
 
               <div style={{ padding: '16px', background: 'rgba(46,160,67,0.03)', borderRadius: '12px', border: '1px solid rgba(46,160,67,0.2)' }}>
                 <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#2ea043', fontWeight: 700, display: 'block', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                  Filtered (Ready to Solve)
+                  Core Math Info
                 </span>
                 <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.7', color: '#fff', display: 'flex', flexWrap: 'wrap', gap: '4px 6px', alignItems: 'center' }}>
                   {activeProblem.tokens.map((tok, idx) => (
@@ -790,7 +815,7 @@ export default function NoiseFilter() {
               padding: '16px', background: 'rgba(232, 134, 74, 0.05)', border: '1px solid rgba(232, 134, 74, 0.15)', borderRadius: '12px',
               fontSize: '0.9rem', color: 'var(--clr-text)', lineHeight: '1.6'
             }}>
-              <strong style={{ color: 'var(--clr-accent)', display: 'block', marginBottom: '6px' }}>Why is the noise filtered?</strong>
+              <strong style={{ color: 'var(--clr-accent)', display: 'block', marginBottom: '6px' }}>Why?</strong>
               {activeProblem.explanation}
             </div>
           </div>
@@ -845,7 +870,7 @@ export default function NoiseFilter() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.88rem', color: 'var(--clr-text-soft)', marginBottom: '10px' }}>
           <span style={{ fontWeight: '600' }}>
             {noiseState.isPlacing
-              ? `Placement Test — Question ${noiseState.placementStep} of 15`
+              ? `Level Finder — Question ${noiseState.placementStep} of 15`
               : levelType === 'reteach'
                 ? `Reteach Corrective Level — Question ${sessionQIndex + 1} of ${sessionQuestions.length}`
                 : levelType === 'final_exam'
@@ -885,8 +910,41 @@ export default function NoiseFilter() {
             Filter out the noise:
           </h3>
           <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.9rem', marginBottom: '20px' }}>
-            Click on words/phrases to toggle them between <strong>Relevant (normal)</strong> and <strong>Noise (dimmed/line-through)</strong>.
+            Click words to toggle between useful math info (normal) and noise (dimmed).
           </p>
+
+          {/* Noise filter status tracker & Hint button */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', fontWeight: '600' }}>
+              Noise elements: {currentSelectedCount} of {totalNoiseCount} selected
+            </span>
+            {!hasAnswered && totalNoiseCount > 0 && (
+              <button
+                onClick={showHint}
+                disabled={currentSelectedCount >= totalNoiseCount}
+                style={{
+                  padding: '6px 12px',
+                  background: 'rgba(232, 134, 74, 0.1)',
+                  border: '1px solid rgba(232, 134, 74, 0.3)',
+                  color: 'var(--clr-accent)',
+                  borderRadius: '8px',
+                  cursor: currentSelectedCount >= totalNoiseCount ? 'default' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  opacity: currentSelectedCount >= totalNoiseCount ? 0.5 : 1,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => {
+                  if (currentSelectedCount < totalNoiseCount) e.currentTarget.style.background = 'rgba(232, 134, 74, 0.2)';
+                }}
+                onMouseLeave={e => {
+                  if (currentSelectedCount < totalNoiseCount) e.currentTarget.style.background = 'rgba(232, 134, 74, 0.1)';
+                }}
+              >
+                Reveal 1 Noise Phrase
+              </button>
+            )}
+          </div>
 
           {/* Tokens Box */}
           <div style={{
