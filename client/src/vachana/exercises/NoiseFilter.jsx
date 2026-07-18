@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { NOISE_CORPUS } from '../noiseCorpus';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -108,7 +109,7 @@ export default function NoiseFilter() {
     }
     return {
       currentTier: 1,
-      currentLevelIndex: 1,
+      currentLevelIndex: 2,
       questionStates: {}, // key: questionId, value: { status: 'mastered' | 'unseen', correctCount, seenCount }
       tierStates: { '1': 'in_progress' }, // 'locked' | 'in_progress' | 'certified'
       placementCompleted: false,
@@ -145,6 +146,11 @@ export default function NoiseFilter() {
   const [selectedTier, setSelectedTier] = useState(null);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [modalTeachIndex, setModalTeachIndex] = useState(0);
+  const [portalTarget, setPortalTarget] = useState(null);
+
+  useEffect(() => {
+    setPortalTarget(document.getElementById('vachana-header-right'));
+  }, []);
 
   // Keypress event handler hook
   useEffect(() => {
@@ -185,11 +191,12 @@ export default function NoiseFilter() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sessionActive, sessionFinished, sessionQuestions, sessionQIndex, sessionSelections, hasAnswered]);
 
-  const startSession = (customType = null, customTier = null, customLevelIndex = null) => {
-    const targetTier = customTier || noiseState.currentTier;
-    const targetLevelIndex = customLevelIndex || noiseState.currentLevelIndex;
+  const startSession = (customType = null, customTier = null, customLevelIndex = null, stateOverride = null) => {
+    const baseState = stateOverride || noiseState;
+    const targetTier = customTier || baseState.currentTier;
+    const targetLevelIndex = customLevelIndex || baseState.currentLevelIndex;
     const origLevelIndex = mapStageIndexToOriginal(targetTier, targetLevelIndex);
-    const targetFailedLevelIndex = (customTier && customTier !== noiseState.currentTier && !customLevelIndex) ? null : noiseState.failedLevelIndex;
+    const targetFailedLevelIndex = (customTier && customTier !== baseState.currentTier && !customLevelIndex) ? null : baseState.failedLevelIndex;
 
     const tierProblems = NOISE_CORPUS.filter(p => p.tier === targetTier);
     let levelType = customType || (origLevelIndex === 7 ? 'final_exam' : getLevelType(origLevelIndex));
@@ -201,11 +208,11 @@ export default function NoiseFilter() {
     }
 
     saveNoiseState({
-      ...noiseState,
+      ...baseState,
       currentTier: targetTier,
       currentLevelIndex: targetLevelIndex,
-      failedLevelIndex: customLevelIndex ? null : noiseState.failedLevelIndex,
-      failedLevelType: customLevelIndex ? null : noiseState.failedLevelType
+      failedLevelIndex: customLevelIndex ? null : baseState.failedLevelIndex,
+      failedLevelType: customLevelIndex ? null : baseState.failedLevelType
     });
 
     if (levelType === 'teach') {
@@ -231,7 +238,7 @@ export default function NoiseFilter() {
       // all 10 problems in this tier
       questions = [...tierProblems].sort(() => 0.5 - Math.random());
     } else if (levelType === 'reteach') {
-      const reteachProblems = NOISE_CORPUS.filter(p => noiseState.reteachQuestionIds.includes(p.id));
+      const reteachProblems = NOISE_CORPUS.filter(p => baseState.reteachQuestionIds.includes(p.id));
       questions = [...reteachProblems].sort(() => 0.5 - Math.random());
       // fallback in case empty
       if (questions.length === 0) {
@@ -350,10 +357,22 @@ export default function NoiseFilter() {
   // --- Active Session Quiz Operations ---
   const toggleToken = (idx) => {
     if (hasAnswered) return;
-    setSessionSelections(prev => ({
-      ...prev,
-      [idx]: prev[idx] === 'noise' ? 'relevant' : 'noise'
-    }));
+    const currentQ = sessionQuestions[sessionQIndex];
+    const totalNoise = currentQ ? currentQ.tokens.filter(tok => tok.isNoise).length : 0;
+
+    setSessionSelections(prev => {
+      const isSelectingNoise = prev[idx] !== 'noise';
+      if (isSelectingNoise && noiseState.currentTier === 1) {
+        const currentSelectedCount = Object.values(prev).filter(val => val === 'noise').length;
+        if (currentSelectedCount >= totalNoise) {
+          return prev;
+        }
+      }
+      return {
+        ...prev,
+        [idx]: prev[idx] === 'noise' ? 'relevant' : 'noise'
+      };
+    });
   };
 
   const checkAnswer = () => {
@@ -477,16 +496,16 @@ export default function NoiseFilter() {
     if (teachIndex < 4 && tierProblems[chunkIdx + teachIndex + 1]) {
       setTeachIndex(prev => prev + 1);
     } else {
-      // finished teach stage, advance level state and directly start practice session (stage 2)
-      const nextLevelIndex = noiseState.currentLevelIndex + 1;
-      startSession(null, noiseState.currentTier, nextLevelIndex);
+      // finished teach stage, return to dashboard
+      setSessionActive(false);
+      setSessionFinished(false);
     }
   };
 
   const resetAllProgress = () => {
     const cleanState = {
       currentTier: 1,
-      currentLevelIndex: 1,
+      currentLevelIndex: 2,
       questionStates: {},
       tierStates: { '1': 'in_progress' },
       placementCompleted: false,
@@ -531,6 +550,34 @@ export default function NoiseFilter() {
 
     return (
       <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+        {portalTarget && createPortal(
+          <button
+            onClick={() => startSession(null, 1, 1)}
+            style={{
+              padding: '6px 12px',
+              background: 'transparent',
+              border: '1.5px solid var(--clr-accent)',
+              color: 'var(--clr-accent)',
+              borderRadius: '8px',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(232, 134, 74, 0.08)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            📖 View Tutorial
+          </button>,
+          portalTarget
+        )}
         {/* Categories Placement Welcome Screen */}
         {isLoadingPlacement && (
           <div style={{
@@ -564,7 +611,10 @@ export default function NoiseFilter() {
               <div 
                 key={tierNum} 
                 onClick={() => {
-                  const startStage = (tierNum === noiseState.currentTier) ? noiseState.currentLevelIndex : 1;
+                  let startStage = (tierNum === noiseState.currentTier) ? noiseState.currentLevelIndex : 1;
+                  if (tierNum === 1 && startStage === 1) {
+                    startStage = 2;
+                  }
                   startSession(null, tierNum, startStage);
                 }}
                 style={{
@@ -589,6 +639,8 @@ export default function NoiseFilter() {
                 <h4 style={{ margin: '0', fontSize: '1.1rem', fontWeight: '700', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
                   {TIER_NAMES[tierNum]}
                 </h4>
+
+
 
               </div>
             );
@@ -884,19 +936,16 @@ export default function NoiseFilter() {
         }}>
 
 
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0 0 12px', color: 'var(--clr-text)', fontFamily: 'var(--font-display)' }}>
-            Filter out the noise:
-          </h3>
-          <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.9rem', marginBottom: '20px' }}>
-            Click words to toggle between useful math info (normal) and noise (dimmed).
-          </p>
+
 
           {/* Noise filter status tracker */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', fontWeight: '600' }}>
-              Noise elements: {currentSelectedCount} of {totalNoiseCount} selected
-            </span>
-          </div>
+          {noiseState.currentTier === 1 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', fontWeight: '600' }}>
+                Noise elements: {currentSelectedCount} of {totalNoiseCount} selected
+              </span>
+            </div>
+          )}
 
           {/* Tokens Box */}
           <div style={{
@@ -997,20 +1046,17 @@ export default function NoiseFilter() {
 
               <button
                 onClick={() => {
-                  if (window.confirm("Are you sure you want to reset progress for this level?")) {
-                    const newState = {
-                      ...noiseState,
-                      currentTier: noiseState.currentTier,
-                      currentLevelIndex: 1,
-                      failedLevelIndex: null,
-                      failedLevelType: null,
-                      reteachQuestionIds: []
-                    };
-                    newState.tierStates[String(noiseState.currentTier)] = 'in_progress';
-                    saveNoiseState(newState);
-                    setSessionActive(false);
-                    setSessionFinished(false);
-                  }
+                  const startLevelIndex = noiseState.currentTier === 1 ? 2 : 1;
+                  const newState = {
+                    ...noiseState,
+                    currentTier: noiseState.currentTier,
+                    currentLevelIndex: startLevelIndex,
+                    failedLevelIndex: null,
+                    failedLevelType: null,
+                    reteachQuestionIds: []
+                  };
+                  newState.tierStates[String(noiseState.currentTier)] = 'in_progress';
+                  startSession(null, noiseState.currentTier, startLevelIndex, newState);
                 }}
                 style={{
                   padding: '12px 24px', background: 'transparent', border: '1px solid rgba(239, 83, 80, 0.3)', color: '#ef5350',
