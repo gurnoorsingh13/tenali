@@ -1,0 +1,349 @@
+/**
+ * StudyMode.css — Explore/Focus toggle + the Focus Mode home screen.
+ *
+ * Uses the same `--clr-*` tokens as the rest of the app so both themes are
+ * handled by the existing light/dark switch. The one deliberate constant is
+ * the amber accent (#ffb300 family) already used by the mastery toast —
+ * Focus Mode reuses it rather than introducing a fourth accent colour.
+ */
+
+/* ── Toggle (app shell, top bar) ─────────────────────────────────────── */
+
+.study-mode-toggle {
+  position: fixed;
+  top: 16px;
+  /* The top-right is an existing stack of three 40px circles on a 48px
+     pitch: theme toggle (right:16), the global Home/Profile/Log-out menu
+     rendered from main.jsx (right:64), and the accessibility gear
+     (right:112). 160 is the next free slot — anything less lands on top of
+     the menu, and the gear's z-index of 9999 then paints over it. */
+  right: 160px;
+  z-index: 9998;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--clr-border);
+  background: var(--clr-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.study-mode-toggle.is-focus {
+  border-color: #ffb300;
+  box-shadow: 0 2px 12px rgba(255, 179, 0, 0.28);
+}
+
+.study-mode-option {
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--clr-text-soft);
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+}
+
+.study-mode-option:hover {
+  color: var(--clr-text);
+}
+
+.study-mode-option.is-active {
+  background: var(--clr-hover-strong);
+  color: var(--clr-text);
+}
+
+.study-mode-toggle.is-focus .study-mode-option.is-active {
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  color: #2b1d00;
+}
+
+@media (max-width: 820px) {
+  /* Guide button on the left plus three circles on the right leaves no
+     room for a pill between them, so the switch drops to its own centred
+     row underneath. 820px, not 700: the right-hand cluster now runs out to
+     ~340px and the Guide button takes ~126px on the left. */
+  .study-mode-toggle {
+    top: 60px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .study-mode-option {
+    font-size: 0.74rem;
+    padding: 5px 10px;
+  }
+}
+
+/* ── Focus home — shared shell ───────────────────────────────────────── */
+
+.focus-home {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: focus-home-in 260ms ease both;
+}
+
+@keyframes focus-home-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.focus-home-head {
+  text-align: center;
+}
+
+.focus-home-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  color: #2b1d00;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.focus-home-title {
+  margin: 12px 0 6px;
+  font-size: 1.5rem;
+  color: var(--clr-text);
+}
+
+.focus-home-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--clr-text-soft);
+}
+
+.focus-progress-track {
+  margin: 14px auto 0;
+  width: min(420px, 100%);
+  height: 8px;
+  border-radius: 999px;
+  background: var(--clr-hover-strong);
+  overflow: hidden;
+}
+
+.focus-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd54f, #ffb300);
+  transition: width 400ms ease;
+}
+
+/* ── Picker ──────────────────────────────────────────────────────────── */
+
+.focus-picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--clr-border);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+
+.focus-picker-search:focus {
+  outline: none;
+  border-color: #ffb300;
+}
+
+.focus-picker-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed #ffb300;
+  background: var(--clr-hover-strong);
+}
+
+.focus-picker-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.focus-picker-group-title {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--clr-text-soft);
+}
+
+.focus-picker-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.focus-chip {
+  border: 1px solid var(--clr-border);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.focus-chip:hover {
+  border-color: #ffb300;
+  transform: translateY(-1px);
+}
+
+.focus-chip.is-chosen {
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  border-color: #ffb300;
+  color: #2b1d00;
+  font-weight: 700;
+}
+
+.focus-empty {
+  color: var(--clr-text-soft);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* ── Board ───────────────────────────────────────────────────────────── */
+
+.focus-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.focus-topic-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 92px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--clr-border);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.focus-topic-card:hover {
+  border-color: #ffb300;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+}
+
+.focus-topic-card.is-done {
+  border-color: #4caf50;
+}
+
+.focus-topic-name {
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.focus-topic-state {
+  margin-top: auto;
+  font-size: 0.78rem;
+  color: var(--clr-text-soft);
+}
+
+.focus-topic-card.is-done .focus-topic-state {
+  color: #4caf50;
+}
+
+/* ── Prerequisite ladder ─────────────────────────────────────────────── */
+
+.focus-ladder {
+  border-top: 1px solid var(--clr-border);
+  padding-top: 14px;
+}
+
+.focus-ladder-toggle {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--clr-text-soft);
+}
+
+.focus-ladder-toggle:hover {
+  color: var(--clr-text);
+}
+
+.focus-ladder-note {
+  margin: 6px 0 10px;
+  font-size: 0.78rem;
+  color: var(--clr-text-soft);
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────── */
+
+.focus-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.focus-btn-primary {
+  flex: 1 1 240px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  color: #2b1d00;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+.focus-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.focus-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.focus-btn-quiet {
+  padding: 11px 18px;
+  border: 1px solid var(--clr-border);
+  border-radius: 12px;
+  background: none;
+  color: var(--clr-text-soft);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.focus-btn-quiet:hover {
+  color: var(--clr-text);
+  border-color: var(--clr-text-soft);
+}

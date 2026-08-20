@@ -1,0 +1,227 @@
+/* ─── WhyMathApp — flagship "Why Mathematics?" comic sequence ───────────── */
+
+.why-math-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: why-math-overlay-in 200ms ease both;
+}
+
+.why-math-card {
+  width: min(100%, 680px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--clr-card, #1c1c1f);
+  border: 1.5px solid var(--clr-border, #444);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  padding: 28px 26px 22px;
+  animation: why-math-card-in 260ms ease both;
+}
+
+.why-math-progress {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.why-math-progress span {
+  width: 30px;
+  height: 5px;
+  border: 1px solid var(--clr-border, #444);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.why-math-progress .is-current {
+  border-color: #8b7cf6;
+  box-shadow: inset 30px 0 0 #8b7cf6;
+}
+
+.why-math-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-height: 260px;
+}
+
+/* Comic speech panel — mirrors PercentExplanationApp's percent-story-* pattern */
+.why-math-comic-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 2px solid var(--clr-border, #444);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--clr-border, #444);
+  animation: why-math-panel-in 360ms ease both;
+}
+.why-math-avatar {
+  width: 64px;
+  height: auto;
+  flex: 0 0 auto;
+  animation: why-math-avatar-bob 2.4s ease-in-out infinite;
+}
+.why-math-speech-group { display: flex; flex-direction: column; gap: 6px; }
+.why-math-speech {
+  position: relative;
+  margin: 0;
+  color: var(--clr-text);
+  font-weight: 700;
+  line-height: 1.45;
+  font-size: 1.12rem;
+}
+.why-math-speech:first-child::before {
+  content: '';
+  position: absolute;
+  left: -19px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid var(--clr-border, #444);
+  border-bottom: 2px solid var(--clr-border, #444);
+  transform: rotate(45deg);
+}
+.why-math-speech-sub { color: var(--clr-text-soft); font-weight: 600; font-size: 1rem; }
+
+/* An interactive beat: question, visual, slider, answer, explanation.
+   Reuses .why-demo-slider and .why-demo-svg from App.css so this feels
+   like the 66 topic demos rather than a separate microsite. */
+.why-math-beat {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: why-math-panel-in 360ms ease both;
+}
+.why-math-ask {
+  margin: 0 0 6px;
+  color: var(--clr-text);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+}
+.why-math-slider-label {
+  align-self: stretch;
+  margin-top: 6px;
+  color: var(--clr-text-soft);
+  font-size: 0.8rem;
+}
+.why-math-slider-label strong { color: var(--clr-accent); }
+.why-math-answer {
+  margin: 12px 0 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--clr-text);
+  transition: color 200ms ease, transform 200ms ease;
+}
+/* Fires when the student drags far enough to reach the point of the beat. */
+.why-math-answer.is-reached {
+  color: var(--clr-accent);
+  transform: scale(1.04);
+}
+.why-math-because {
+  margin: 8px 0 0;
+  max-width: 460px;
+  color: var(--clr-text-soft);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  text-align: center;
+}
+.why-math-hook-visual {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Beat: closing actions */
+.why-math-close-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 360px);
+}
+.why-math-cta {
+  padding: 12px 18px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+.why-math-cta-primary {
+  background: linear-gradient(90deg, #6d8cff, #8b7cf6);
+  color: #fff;
+}
+.why-math-cta-primary:hover { filter: brightness(1.08); }
+.why-math-cta-ghost {
+  background: transparent;
+  border: 1.5px solid var(--clr-border, #444);
+  color: var(--clr-text-soft);
+}
+
+/* Nav row */
+.why-math-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--clr-border, #444);
+}
+.why-math-skip {
+  background: transparent;
+  border: none;
+  color: var(--clr-text-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+}
+.why-math-nav-controls { display: flex; gap: 10px; }
+.why-math-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(90deg, #6d8cff, #8b7cf6);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.why-math-btn-secondary {
+  background: transparent;
+  border: 1.5px solid var(--clr-border, #444);
+  color: var(--clr-text-soft);
+}
+
+@keyframes why-math-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes why-math-card-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes why-math-panel-in { from { opacity: 0; transform: translateY(10px) rotate(-1deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
+@keyframes why-math-avatar-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .why-math-overlay,
+  .why-math-card,
+  .why-math-comic-panel,
+  .why-math-avatar,
+  .why-math-beat {
+    animation: none;
+  }
+  .why-math-answer { transition: none; }
+}
+
+@media (max-width: 560px) {
+  .why-math-comic-panel { flex-direction: column; text-align: center; }
+  .why-math-speech:first-child::before { display: none; }
+}

@@ -1,0 +1,464 @@
+/* ─── LearningMapApp — "Topic Connections" live dependency graph ────────── */
+
+.learning-map-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  background: var(--clr-bg, #16130f);
+  display: flex;
+  flex-direction: column;
+}
+
+.learning-map-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.learning-map-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  /* Extra right padding: the app's global theme/menu/accessibility icons
+     are fixed at z-index 9999 in this corner on every screen — clear of
+     them rather than fighting z-index, so they stay reachable and nothing
+     visually collides. */
+  padding: 14px 160px 14px 20px;
+  border-bottom: 1px solid var(--clr-border, #444);
+  flex-wrap: wrap;
+}
+
+.learning-map-back {
+  background: transparent;
+  border: 1.5px solid var(--clr-border, #444);
+  color: var(--clr-text-soft);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.learning-map-title-block { flex: 1 1 auto; min-width: 200px; }
+.learning-map-title-block h2 { margin: 0 0 2px; font-size: 1.15rem; color: var(--clr-text); }
+.learning-map-title-block p { margin: 0; font-size: 0.82rem; color: var(--clr-text-soft); }
+
+/* Shown only when ?mockMastery= is active — a dev-only build-time gated
+   feature (see lib/masteryClient.js) — so nobody mistakes fake data for a
+   real student's progress mid-review. */
+.dev-mock-badge {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 152, 0, 0.16);
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  white-space: nowrap;
+}
+
+.learning-map-progress-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #ffd54f;
+  white-space: nowrap;
+}
+.learning-map-progress-bar {
+  width: 70px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--clr-surface, #232323);
+  border: 1px solid var(--clr-border, #444);
+  overflow: hidden;
+}
+.learning-map-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffb300, #ffd54f);
+  border-radius: 999px;
+  transition: width 600ms ease;
+}
+
+.learning-map-zoom { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
+.learning-map-zoom button {
+  background: var(--clr-surface, #232323);
+  border: 1px solid var(--clr-border, #444);
+  color: var(--clr-text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  min-width: 40px;
+}
+
+.learning-map-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--clr-border, #444);
+}
+.learning-map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--clr-text-soft);
+}
+.learning-map-legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.learning-map-legend-glow {
+  width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+  background: #ffd54f;
+  box-shadow: 0 0 6px 2px rgba(255, 213, 79, 0.7);
+}
+
+.learning-map-viewport {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 24px;
+}
+
+.learning-map-canvas { position: relative; }
+
+/* ─── Edges ─── */
+.learning-map-edge {
+  fill: none;
+  stroke: var(--clr-border, #4a4d5a);
+  stroke-width: 1.6;
+  opacity: 0.55;
+  transition: opacity 220ms ease, stroke 220ms ease, stroke-width 220ms ease;
+}
+.learning-map-edge.is-drawn {
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: learning-map-edge-draw 900ms ease var(--edge-delay, 0ms) forwards;
+}
+.learning-map-edge.is-ancestor { stroke: #ffb300; stroke-width: 2.4; opacity: 0.95; }
+.learning-map-edge.is-descendant { stroke: #42a5f5; stroke-width: 2.4; opacity: 0.95; }
+.learning-map-edge.is-dimmed { opacity: 0.08; }
+
+/* ─── Nodes ─── */
+.learning-map-node {
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(-6px) scale(0.94);
+}
+.learning-map-node.is-in {
+  animation: learning-map-node-in 420ms cubic-bezier(0.22, 1, 0.36, 1) var(--node-delay, 0ms) forwards;
+}
+.learning-map-node.is-dimmed { opacity: 0.22 !important; }
+.learning-map-node.is-dimmed.is-in { animation: none; opacity: 0.22; transform: none; }
+
+.learning-map-node-rect {
+  fill: var(--clr-card, #1c1c1f);
+  stroke: var(--cat-color, #666);
+  stroke-width: 1.6;
+  transition: filter 200ms ease, stroke-width 200ms ease, fill 200ms ease;
+}
+.learning-map-node-label {
+  fill: var(--clr-text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.learning-map-node-sub {
+  fill: var(--clr-text-soft);
+  font-family: inherit;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.learning-map-node.is-hovered .learning-map-node-rect {
+  stroke-width: 2.6;
+  filter: drop-shadow(0 0 6px var(--cat-color));
+}
+
+/* Mastery states */
+.learning-map-node.is-mastered .learning-map-node-rect {
+  fill: color-mix(in srgb, var(--cat-color) 16%, var(--clr-card, #1c1c1f));
+  filter: drop-shadow(0 0 7px var(--cat-color)) drop-shadow(0 0 2px var(--cat-color));
+  animation: learning-map-mastered-pulse 2.6s ease-in-out infinite;
+}
+.learning-map-node.is-mastered .learning-map-node-sub { fill: #ffd54f; font-weight: 700; }
+
+.learning-map-node.is-building .learning-map-node-rect { opacity: 0.6; stroke-dasharray: 4 3; }
+.learning-map-node.is-building .learning-map-node-sub { fill: var(--clr-text-faint, #7d7168); }
+
+@keyframes learning-map-node-in {
+  from { opacity: 0; transform: translateX(-6px) scale(0.94); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes learning-map-edge-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes learning-map-mastered-pulse {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--cat-color)) drop-shadow(0 0 1px var(--cat-color)); }
+  50% { filter: drop-shadow(0 0 11px var(--cat-color)) drop-shadow(0 0 4px var(--cat-color)); }
+}
+
+/* ─── Goal-directed Path Finder ──────────────────────────────────────── */
+
+.learning-map-goal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--clr-border, #444);
+  flex-wrap: wrap;
+}
+.learning-map-goal-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  white-space: nowrap;
+}
+.learning-map-goal-select {
+  background: var(--clr-surface, #232323);
+  border: 1px solid var(--clr-border, #444);
+  color: var(--clr-text);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-width: 220px;
+}
+.learning-map-goal-clear {
+  background: transparent;
+  border: 1px solid var(--clr-border, #444);
+  color: var(--clr-text-soft);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.learning-map-goal-clear:hover { color: var(--clr-text); border-color: var(--clr-text-soft); }
+
+/* Path highlighting on the graph itself — a third distinct treatment,
+   separate from mastery glow (category-colored) and hover-explore
+   (gold/blue), so goal mode reads as its own clear mode. */
+.learning-map-edge.is-onpath { stroke: #00e5ff; stroke-width: 2.6; opacity: 0.95; }
+.learning-map-node.is-on-path .learning-map-node-rect {
+  stroke: #00e5ff;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.6));
+}
+.learning-map-node.is-current-step .learning-map-node-rect {
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 9px #00e5ff) drop-shadow(0 0 3px #00e5ff);
+  animation: learning-map-current-step-pulse 1.8s ease-in-out infinite;
+}
+.learning-map-node.is-goal-node .learning-map-node-rect {
+  stroke: #ffd54f;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 9px rgba(255, 213, 79, 0.7));
+}
+@keyframes learning-map-current-step-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px #00e5ff) drop-shadow(0 0 2px #00e5ff); }
+  50% { filter: drop-shadow(0 0 13px #00e5ff) drop-shadow(0 0 5px #00e5ff); }
+}
+
+/* Floating checklist panel */
+.learning-map-path-panel {
+  position: absolute;
+  top: 128px;
+  right: 20px;
+  width: 300px;
+  max-height: calc(100% - 160px);
+  overflow-y: auto;
+  background: var(--clr-card, #1c1c1f);
+  border: 1.5px solid #00e5ff;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 16px 18px;
+  animation: learning-map-panel-in 260ms ease both;
+  z-index: 5;
+}
+.learning-map-path-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.learning-map-path-panel-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  color: var(--clr-text);
+}
+.learning-map-path-panel-header button {
+  background: transparent;
+  border: none;
+  color: var(--clr-text-soft);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+}
+.learning-map-path-count {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: #00e5ff;
+  font-weight: 600;
+}
+.learning-map-path-done {
+  margin: 8px 0 4px;
+  font-size: 0.9rem;
+  color: #ffd54f;
+  font-weight: 600;
+}
+.learning-map-path-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.learning-map-path-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--clr-text-soft);
+  transition: background 150ms ease;
+}
+.learning-map-path-step:hover { background: var(--clr-hover, rgba(255,255,255,0.06)); }
+.learning-map-path-step-icon {
+  width: 18px;
+  text-align: center;
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+.learning-map-path-step.is-mastered { color: var(--clr-text-faint, #7d7168); text-decoration: line-through; }
+.learning-map-path-step.is-mastered .learning-map-path-step-icon { color: #ffd54f; }
+.learning-map-path-step.is-current {
+  color: var(--clr-text);
+  font-weight: 700;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid #00e5ff;
+}
+.learning-map-path-step.is-current .learning-map-path-step-icon { color: #00e5ff; }
+.learning-map-path-step.is-goal { color: var(--clr-text); font-weight: 700; }
+.learning-map-path-step-goal-tag {
+  margin-left: auto;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffd54f;
+  border: 1px solid #ffd54f;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+@keyframes learning-map-panel-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* First-visit nudge — points brand-new users at the root node instead of
+   dropping them into 63 unlabeled choices with no obvious starting point. */
+.learning-map-node.is-tour-target .learning-map-node-rect {
+  stroke: #69f0ae;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 10px rgba(105, 240, 174, 0.85)) drop-shadow(0 0 3px #69f0ae);
+  animation: learning-map-tour-target-pulse 1.4s ease-in-out infinite;
+}
+@keyframes learning-map-tour-target-pulse {
+  0%, 100% { filter: drop-shadow(0 0 7px rgba(105, 240, 174, 0.7)) drop-shadow(0 0 2px #69f0ae); }
+  50% { filter: drop-shadow(0 0 16px rgba(105, 240, 174, 0.95)) drop-shadow(0 0 5px #69f0ae); }
+}
+.learning-map-tour-nudge {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--clr-card, #1c1c1f);
+  border: 1.5px solid #69f0ae;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 14px 16px;
+  animation: learning-map-panel-in 260ms ease both;
+  z-index: 5;
+}
+.learning-map-tour-nudge p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--clr-text);
+}
+.learning-map-tour-nudge strong { color: #69f0ae; }
+.learning-map-tour-dismiss {
+  align-self: flex-end;
+  background: #69f0ae;
+  color: #08301b;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.learning-map-tour-dismiss:hover { filter: brightness(1.08); }
+
+/* One-shot burst for a node that was just mastered/unlocked in real time
+   (arriving via the mastery-celebration toast) — a pop + a ring that
+   expands and fades, distinct from the looping glows used elsewhere so it
+   reads as a moment, not a steady state. */
+.learning-map-node.is-just-unlocked {
+  transform-origin: 84px 29px;
+}
+.learning-map-node.is-just-unlocked .learning-map-node-rect {
+  animation: learning-map-unlock-pop 1.3s ease-out;
+}
+@keyframes learning-map-unlock-pop {
+  0% { filter: drop-shadow(0 0 0 rgba(255, 213, 79, 0)); }
+  25% { filter: drop-shadow(0 0 20px #ffd54f) drop-shadow(0 0 6px #fff176); }
+  100% { filter: drop-shadow(0 0 6px rgba(255, 213, 79, 0.55)); }
+}
+.learning-map-unlock-ring {
+  fill: none;
+  stroke: #ffd54f;
+  stroke-width: 4;
+  opacity: 0.9;
+  pointer-events: none;
+  animation: learning-map-unlock-ring 1.3s ease-out forwards;
+}
+@keyframes learning-map-unlock-ring {
+  0% { r: 8; opacity: 0.9; stroke-width: 4; }
+  100% { r: 74; opacity: 0; stroke-width: 0.5; }
+}
+
+@media (max-width: 900px) {
+  .learning-map-path-panel { position: static; width: auto; max-height: none; margin: 12px 20px; }
+  .learning-map-tour-nudge { position: static; max-width: none; margin: 12px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learning-map-node, .learning-map-edge.is-drawn, .learning-map-node.is-mastered .learning-map-node-rect,
+  .learning-map-node.is-current-step .learning-map-node-rect, .learning-map-node.is-tour-target .learning-map-node-rect,
+  .learning-map-node.is-just-unlocked .learning-map-node-rect, .learning-map-unlock-ring, .learning-map-path-panel {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .learning-map-header { gap: 10px; }
+  .learning-map-title-block p { display: none; }
+}

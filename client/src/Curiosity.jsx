@@ -492,7 +492,7 @@ export default function CuriosityApp({ onBack }) {
         <button className="back-button" onClick={onBack}>Back</button>
         <div>
           <p className="curiosity-eyebrow">What-if lab</p>
-          <h2>Curiosity Mode</h2>
+          <h2>What If</h2>
         </div>
       </div>
 

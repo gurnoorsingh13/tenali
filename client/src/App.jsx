@@ -68,6 +68,12 @@ import './App.css'
 import EnhancedMathDetectiveApp from './detective-app'
 import GlossaryText from './components/GlossaryText'
 import KeyTerms from './components/KeyTerms'
+import WhyLearnThis from './components/WhyLearnThis'
+import topicMotivation from './data/topicMotivation.json'
+import { getUnlocks, getTopicLabel, getPrerequisites, computeGoalPath, getTopicIdFromApiPath } from './lib/prerequisiteGraph'
+import { fetchMasterySet, unlockReadiness, isMockMasteryActive, logEvent, getSavedGoal, clearSavedGoal } from './lib/masteryClient'
+import { installMasteryWatcher } from './lib/masteryCelebration'
+import MasteryUnlockToast from './components/MasteryUnlockToast'
 import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
 import VisualMathLabRedux, {
@@ -89,6 +95,11 @@ import DiagnosticQuiz from './lib/DiagnosticQuiz.jsx';
 import { useI18n } from './lib/i18n.jsx';
 import CuriosityApp from './Curiosity.jsx';
 import PercentExplanationApp from './PercentExplanationApp';
+import WhyMathApp from './WhyMathApp';
+import LearningMapApp from './LearningMapApp';
+import StudyModeToggle from './components/StudyModeToggle';
+import FocusHome from './components/FocusHome';
+import { useStudyMode } from './lib/studyMode';
 import { playSound } from './audioContext';
 import GeometryApp from './GeometryApp';
 
@@ -42347,6 +42358,11 @@ function App() {
   const [diagnosticState, setDiagnosticState] = useState({});
   const { t } = useI18n();
 
+  // Focus Mode (see lib/studyMode.js) — a self-serve switch that strips the
+  // shell down to the topics a student said they're revising. Read here so
+  // the app-shell chrome can hide the onboarding tour alongside it.
+  const { isFocusActive: focusActive } = useStudyMode();
+
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
   const [mode, setMode] = useState(() => {
     try {
@@ -42400,6 +42416,17 @@ function App() {
   const [isGoalMode, setIsGoalMode] = useState(false)
   const [journeyContext, setJourneyContext] = useState(null)
   const [activeTopicId, setActiveTopicId] = useState('arithmetic_basics')
+  const [mapFocusTopicId, setMapFocusTopicId] = useState(null)
+  const [mapCelebrateId, setMapCelebrateId] = useState(null)
+
+  // Install the real-time mastery watcher once — it wraps window.fetch to
+  // catch "correct: true" replies from any *-api/check call and fires a
+  // celebration event when that answer just mastered a topic for the first
+  // time. See lib/masteryCelebration.js for why this can't just read the
+  // check response directly.
+  useEffect(() => {
+    installMasteryWatcher()
+  }, [])
   const [progressData, setProgressData] = useState(null)
   const [showTour, setShowTour] = useState(() => localStorage.getItem('tenali_tour_seen') !== 'true')
 
@@ -44117,7 +44144,7 @@ function App() {
     randommix: RandomMixApp,       // Random Mix (adaptive)
     custom: CustomApp,             // Custom lesson builder
     gym: GymApp,                   // Unified adaptive Gym — bundles all 7 below
-    curiosity: CuriosityApp,       // Curiosity Mode — experiment with "what if" variations
+    curiosity: CuriosityApp,       // What If — experiment with "what if" variations
     guess: GuessNumberApp,         // Binary magic — guess a number 0–31
     detective: EnhancedMathDetectiveApp, // Math Detective Agency — story-based mystery cases
     gymdecimals: GymDecimalsApp,   // Gym Decimals — signed decimal multiplication (MCQ)
@@ -44147,6 +44174,28 @@ function App() {
       );
     }
 
+    if (mode === 'why_math') {
+      return (
+        <WhyMathApp
+          onBack={() => setMode(null)}
+          onNavigate={(nextMode) => setMode(nextMode)}
+        />
+      );
+    }
+
+    if (mode === 'topic_map') {
+      return (
+        <AuthGate>
+          <LearningMapApp
+            focusTopicId={mapFocusTopicId}
+            celebrateTopicId={mapCelebrateId}
+            onBack={() => { setMapFocusTopicId(null); setMapCelebrateId(null); setMode(null); }}
+            onNavigate={(nextMode) => { setMapFocusTopicId(null); setMapCelebrateId(null); setMode(nextMode); }}
+          />
+        </AuthGate>
+      );
+    }
+
     if (mode === 'learning_journey') {
       return (
         <AuthGate>
@@ -44173,6 +44222,8 @@ function App() {
             onStartCheckpoint={() => {
               setMode('learning_journey_checkpoint');
             }}
+            onNavigateTopic={(topicKey) => setMode(topicKey)}
+            onOpenMap={(focusId) => { setMapFocusTopicId(focusId); setMode('topic_map'); }}
             onBack={() => setMode('learning_journey')}
           />
         </AuthGate>
@@ -44266,10 +44317,15 @@ function App() {
 
   return (
     <div className="app-shell">
-      {showTour && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
-      <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
-        🧭 Guide
-      </button>
+      {showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
+      {/* The guided tour walks the student around the very features Focus
+          Mode is hiding, so it comes down with them. */}
+      {!focusActive && (
+        <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
+          🧭 Guide
+        </button>
+      )}
+      <StudyModeToggle />
       <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -44281,6 +44337,7 @@ function App() {
         </div>
       )}
       {renderCelebrationModal()}
+      <MasteryUnlockToast onOpenMap={(id) => { setMapFocusTopicId(id); setMapCelebrateId(id); setMode('topic_map') }} />
     </div>
   )
 }
@@ -44297,6 +44354,30 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   const [showAbout, setShowAbout] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [pathGoal, setPathGoal] = useState(null) // { label, remaining, reached } — resumed Path Finder goal, if any
+  const { isFocus } = useStudyMode()
+
+  // Goal Practice reuses <Home/> as a topic picker with its own back button;
+  // handing it the Focus board instead would break that flow, so Focus Mode
+  // only takes over the real home screen.
+  const focusHome = isFocus && !isGoalSelection
+
+  useEffect(() => {
+    const goalId = getSavedGoal()
+    if (!goalId) return
+    let cancelled = false
+    fetchMasterySet().then((mastery) => {
+      if (cancelled) return
+      const path = computeGoalPath(goalId, mastery)
+      if (path.alreadyThere) {
+        clearSavedGoal()
+        setPathGoal({ label: getTopicLabel(goalId), remaining: 0, reached: true })
+      } else {
+        setPathGoal({ label: getTopicLabel(goalId), remaining: path.remaining, reached: false })
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
   const featuredApps = [
     { key: 'randommix', name: 'Random Mix', subtitle: 'Adaptive cross-topic quiz', color: 'featured' },
     { key: 'custom', name: 'Custom Lesson', subtitle: 'Build your own mixed quiz', color: 'featured' },
@@ -44309,7 +44390,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
 
   const hamburgerApps = [
     ...featuredApps,
-    { key: 'curiosity', name: 'Curiosity Mode', subtitle: 'Explore "What if" variations', color: 'pink' },
+    { key: 'curiosity', name: 'What If', subtitle: 'Explore "What if" variations', color: 'pink' },
   ]
 
   // All regular quiz apps sorted alphabetically by name
@@ -44480,8 +44561,11 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
             </p>
           </div>
         </div>
-        {/* Hamburger menu — top right */}
-        <div ref={menuRef} style={{ position: 'absolute', top: '8px', right: '0' }}>
+        {/* Hamburger menu — top right. Hidden in Focus Mode: every item in
+            it (Random Mix, Custom Lesson, Gym, Vachana, What If, Visual
+            Learning Universe, GeoCraft, Goal Practice, Language Puzzles) is
+            a side quest, so there's nothing left worth keeping open. */}
+        {!focusHome && <div ref={menuRef} style={{ position: 'absolute', top: '8px', right: '0' }}>
           <button onClick={() => setMenuOpen(o => !o)} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '8px',
             display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center'
@@ -44560,7 +44644,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
               <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Fill in the blanks to create new words</span>
             </button>
             </div>}
-          </div>
+          </div>}
       </div>
 
       {showAbout && (
@@ -44580,7 +44664,43 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
           </div>
         </>
       )}
-      {!search && !isGoalSelection && (
+      {!search && !isGoalSelection && !focusHome && (
+        <div className="why-math-banner-row">
+          <button className="why-math-banner-btn" onClick={() => onSelect('why_math')}>
+            <div className="journey-banner-content">
+              <div className="journey-banner-header">
+                <span>🧭</span>
+                <h3 className="journey-banner-title">Why Mathematics?</h3>
+              </div>
+              <p className="journey-banner-subtitle">
+                Before you pick a topic — see why this subject is worth building at all.
+              </p>
+            </div>
+            <div className="journey-banner-arrow">➔</div>
+          </button>
+        </div>
+      )}
+      {!search && !isGoalSelection && !focusHome && (
+        <div className="topic-map-banner-row">
+          <button className="topic-map-banner-btn" onClick={() => onSelect('topic_map')}>
+            <div className="journey-banner-content">
+              <div className="journey-banner-header">
+                <span>🔗</span>
+                <h3 className="journey-banner-title">Topic Connections</h3>
+              </div>
+              <p className="journey-banner-subtitle">
+                {pathGoal
+                  ? (pathGoal.reached
+                      ? `🎯 You reached ${pathGoal.label}! See what opens up next.`
+                      : `🎯 Continue toward ${pathGoal.label} — ${pathGoal.remaining} topic${pathGoal.remaining === 1 ? '' : 's'} to go.`)
+                  : 'See every topic on one live map — how they connect, and what each one unlocks.'}
+              </p>
+            </div>
+            <div className="journey-banner-arrow">➔</div>
+          </button>
+        </div>
+      )}
+      {!search && !isGoalSelection && !focusHome && (
         <div className="journey-banner-row">
           <button className="journey-banner-btn" onClick={() => onSelect('learning_journey')}>
             <div className="journey-banner-content">
@@ -44596,6 +44716,8 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
           </button>
         </div>
       )}
+      {focusHome && <FocusHome onSelect={onSelect} />}
+      {!focusHome && <>
       <div className="search-bar-row">
         <input
           id="tour-search-bar"
@@ -44623,6 +44745,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
         })}
       </div>
       <div className="grid-dimension">{rows} × {cols}</div>
+      </>}
     </>
   )
 }
@@ -49008,6 +49131,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
             <span>Practice addition!</span>
           </p>
           <KeyTerms topicKey="addition" />
+        <WhyLearnThis topicId="addition" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
 
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ color: '#F4F1ED', fontSize: '0.9rem', margin: '0 0 16px', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
@@ -50445,6 +50569,7 @@ const fetchQuestion = async () => {
           <span>Practice basic arithmetic!</span>
         </p>
         <KeyTerms topicKey="basic-arithmetic" />
+        <WhyLearnThis topicId="basicarith" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -50770,6 +50895,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice quadratic substitution!</p>
         <KeyTerms topicKey="quadratics" />
+        <WhyLearnThis topicId="quadratic" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -51969,6 +52095,7 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
         <div className="welcome-box">
           <p className="welcome-text">Choose your level</p>
           <KeyTerms topicKey="multiplication" />
+        <WhyLearnThis topicId="multiply" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
 
         {isGoalMode && (
         <>
@@ -52755,6 +52882,7 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
           </p>
           {tip && <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>{tip}</p>}
           {topicKey && <KeyTerms topicKey={topicKey} />}
+          <WhyLearnThis topicId={getTopicIdFromApiPath(apiPath)} />
           {/* Difficulty selector — hidden entirely for adaptive-only puzzles
               (the gym puzzles), which always run in adaptive mode. */}
           {!adaptiveOnly && isGoalMode && (
@@ -53446,6 +53574,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
             </p>
             {tip && <p style={{ fontSize: '0.85rem', color: '#A89C93', marginBottom: '16px' }}>{tip}</p>}
             {topicKey && <KeyTerms topicKey={topicKey} />}
+            <WhyLearnThis topicId={getTopicIdFromApiPath(apiPath)} onNavigate={typeof setMode === 'function' ? setMode : undefined} />
 
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ color: '#F4F1ED', fontSize: '0.9rem', margin: '0 0 16px', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
@@ -53938,6 +54067,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice dot products & matrix multiplication!</p>
         <KeyTerms topicKey="dot-products" />
+        <WhyLearnThis topicId="dotprod" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Easy/Medium: dot product of vectors. Hard: matrix multiply. Extra Hard: fill missing values.</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {DIFFS.map(d => (
@@ -55826,6 +55956,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Square numbers quickly using the identity (a + b)² = a² + 2ab + b²</p>
         <KeyTerms topicKey="squaring" />
+        <WhyLearnThis topicId="squaring" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Split any number into a round part (a) and remainder (b), then fill in all four boxes.</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {DIFFS.map(d => (
@@ -56811,6 +56942,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice sets and Venn diagrams!</p>
         <KeyTerms topicKey="sets" />
+        <WhyLearnThis topicId="sets" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>For listing elements, type like: 1, 3, 5 or {'{'}1, 3, 5{'}'}</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
@@ -57039,6 +57171,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice sequences and series!</p>
         <KeyTerms topicKey="sequences" />
+        <WhyLearnThis topicId="sequences" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -57292,6 +57425,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice ratio and proportion!</p>
         <KeyTerms topicKey="ratios" />
+        <WhyLearnThis topicId="ratio" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -58589,6 +58723,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice laws of indices!</p>
         <KeyTerms topicKey="indices" />
+        <WhyLearnThis topicId="indices" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -58912,6 +59047,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice working with surds!</p>
         <KeyTerms topicKey="surds" />
+        <WhyLearnThis topicId="surds" />
         <p style={{ fontSize: '0.85rem', color: 'var(--clr-dim)', marginBottom: '8px' }}>Tip: type √ using "sqrt" or copy-paste √</p>
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
@@ -59312,6 +59448,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice adding fractions!</p>
         <KeyTerms topicKey="fractions" />
+        <WhyLearnThis topicId="fractionadd" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -60042,6 +60179,7 @@ const fetchQuestion = async (step) => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice square roots!</p>
         <KeyTerms topicKey="square-roots" />
+        <WhyLearnThis topicId="sqrt" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -60339,6 +60477,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
         <p className="welcome-text">Practice polynomial multiplication!</p>
         <KeyTerms topicKey="polynomial-multiplication" />
+        <WhyLearnThis topicId="polymul" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -60652,6 +60791,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Factor ax² + bx + c into (px + q)(rx + s).</p>
           <KeyTerms topicKey="polynomial-factorisation" />
+          <WhyLearnThis topicId="polyfactor" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -60996,6 +61136,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Enter prime factors one at a time. Watch the remaining number shrink!</p>
           <KeyTerms topicKey="prime-factors" />
+          <WhyLearnThis topicId="primefactor" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -61306,6 +61447,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Use the quadratic formula to find roots of ax² + bx + c = 0</p>
           <KeyTerms topicKey="quadratic-formula" />
+          <WhyLearnThis topicId="qformula" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -61645,6 +61787,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Solve systems of linear equations</p>
           <KeyTerms topicKey="simultaneous-equations" />
+          <WhyLearnThis topicId="simul" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -61933,6 +62076,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Evaluate linear functions</p>
           <KeyTerms topicKey="functions" />
+          <WhyLearnThis topicId="funceval" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -62226,6 +62370,7 @@ const loadQuestion = async () => {
       {!started && !finished && <div className="welcome-box">
           <p className="welcome-text">Given two points, find the slope m and intercept c.</p>
           <KeyTerms topicKey="line-equation" />
+          <WhyLearnThis topicId="lineq" />
         <div className="checkbox-group" style={{ marginBottom: '12px' }}>
           {['easy', 'medium', 'hard', 'extrahard'].map(d => (
             <label key={d} className={`checkbox-pill${!isAdaptive && difficulty === d ? ' active' : ''}`}>
@@ -66872,18 +67017,25 @@ function LearningJourneyHome({ onSelectTopic, onBack }) {
   );
 }
 
-function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, onBack }) {
+function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, onNavigateTopic, onOpenMap, onBack }) {
   const [progression, setProgression] = useState(null);
+  const [nextTopicId, setNextTopicId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // ConceptMastery — a second, independent signal from the Journey's own
+  // completed/playable/locked state (see the note rendered near the header).
+  // null while loading so we don't flash "nothing mastered" before it's in.
+  const [mastered, setMastered] = useState(null);
 
   const loadProgression = async () => {
     try {
       setLoading(true);
       const res = await journeyFetch('/api/learning-journey/progress');
-      const topicProg = res.topics.find(t => t && t.topicId === topicId);
+      const idx = res.topics.findIndex(t => t && t.topicId === topicId);
+      const topicProg = idx >= 0 ? res.topics[idx] : null;
       if (!topicProg) throw new Error('Topic progression not found');
       setProgression(topicProg);
+      setNextTopicId(res.topics[idx + 1]?.topicId || null);
       setError('');
     } catch (err) {
       setError(err.message || 'Failed to load progression');
@@ -66894,6 +67046,7 @@ function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, o
 
   useEffect(() => {
     loadProgression();
+    fetchMasterySet().then(setMastered);
   }, [topicId]);
 
   if (loading) return <div style={{ textAlign: 'center', padding: '40px' }}><p>Loading topic concepts...</p></div>;
@@ -66901,17 +67054,69 @@ function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, o
   if (!progression) return null;
 
   const displayName = topicId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const nextTopicName = nextTopicId
+    ? nextTopicId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : null;
+
+  // Structural "what does finishing something here unlock" — computed from
+  // the prerequisite graph, not hand-authored copy, so it works for every
+  // unit, not just the pilot topics that have topicMotivation.json entries.
+  // Progress-aware: each target shows how many of ITS prerequisites are
+  // already mastered, so this reads as a countdown, not a flat fact.
+  const conceptKeys = new Set(progression.concepts.map(c => c.key));
+  const unlockTargets = [...new Set(progression.concepts.flatMap(c => getUnlocks(c.key)))]
+    .filter(id => !conceptKeys.has(id))
+    .map(id => ({ id, label: getTopicLabel(id), ...unlockReadiness(id, mastered) }))
+    .sort((a, b) => (b.ready / b.total) - (a.ready / a.total))
+    .slice(0, 4);
 
   return (
     <div style={{ padding: '16px' }}>
-      <div className="header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '8px' }}>
         <button className="back-button" onClick={onBack}>← Back to Journey</button>
-        <span style={{ fontWeight: 'bold', color: 'var(--clr-accent)' }}>Topic Path</span>
+        {isMockMasteryActive() && <span className="dev-mock-badge">🧪 mock mastery</span>}
+        <button
+          className="back-button"
+          onClick={() => {
+            const focusId = progression.concepts[0]?.key || topicId;
+            logEvent('map_opened_from_journey', focusId, { fromTopicId: topicId });
+            onOpenMap && onOpenMap(focusId);
+          }}
+          style={{ color: '#26c6da', borderColor: '#26c6da' }}
+        >
+          🔗 See this on the map
+        </button>
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <h2 style={{ margin: 0 }}>{displayName}</h2>
         <p className="subtitle">Complete each concept sequentially to unlock the Checkpoint gate.</p>
+        <p style={{ fontSize: '0.72rem', color: 'var(--clr-text-faint, #7d7168)', margin: '4px 0 0', fontStyle: 'italic' }}>
+          "Completed" means you've been through it here. "✨ Mastered" means you've proven it consistently, anywhere in Tenali.
+        </p>
+        {unlockTargets.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', margin: '12px 0 0' }}>
+            {unlockTargets.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  logEvent('unlock_chip_clicked', t.id, { ready: t.ready, total: t.total, fromTopicId: topicId });
+                  onNavigateTopic && onNavigateTopic(t.id);
+                }}
+                title={`${t.ready} of ${t.total} prerequisites mastered`}
+                style={{
+                  fontSize: '0.78rem', fontWeight: 600, padding: '5px 12px', borderRadius: '999px',
+                  cursor: 'pointer', font: 'inherit',
+                  background: t.ready >= t.total ? 'rgba(255, 213, 79, 0.14)' : 'var(--clr-accent-soft)',
+                  border: '1px solid ' + (t.ready >= t.total ? '#ffd54f' : 'var(--clr-accent)'),
+                  color: t.ready >= t.total ? '#ffd54f' : 'var(--clr-accent)',
+                }}
+              >
+                {t.label} · {t.ready}/{t.total} ready
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Timeline Layout */}
@@ -66980,12 +67185,32 @@ function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, o
                 }}
               >
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '1.05rem' }}>{concept.name}</h4>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {concept.name}
+                    {mastered && mastered.has(concept.key) && (
+                      <span
+                        title="Mastered — proven consistently, anywhere in Tenali"
+                        style={{
+                          fontSize: '0.7rem', fontWeight: 700, color: '#ffd54f',
+                          background: 'rgba(255, 213, 79, 0.14)', border: '1px solid #ffd54f',
+                          borderRadius: '999px', padding: '1px 8px',
+                          textShadow: '0 0 6px rgba(255, 213, 79, 0.6)',
+                        }}
+                      >
+                        ✨ Mastered
+                      </span>
+                    )}
+                  </h4>
                   <span style={{ fontSize: '0.78rem', color: isNeedsRevision ? '#ff9f43' : 'var(--clr-text-soft)' }}>
                     {isNeedsRevision
                       ? '⚠️ Revision Required'
                       : (isCompleted ? 'Completed (Click to revise)' : (isPlayable ? 'Playable Now' : 'Locked'))}
                   </span>
+                  {topicMotivation[concept.key]?.why && (
+                    <p style={{ fontSize: '0.76rem', color: 'var(--clr-text-soft)', margin: '6px 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
+                      {topicMotivation[concept.key].why}
+                    </p>
+                  )}
                 </div>
                 {!isLocked && (
                   <span style={{ fontSize: '1.1rem', color: isNeedsRevision ? '#ff9f43' : (isPlayable ? 'var(--clr-accent)' : 'var(--clr-text-soft)') }}>▶</span>
@@ -67032,6 +67257,9 @@ function LearningJourneyTopicView({ topicId, onPlayConcept, onStartCheckpoint, o
             <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem' }}>Topic Checkpoint Quiz</h4>
             <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--clr-text-soft)' }}>
               15 cumulative questions. Score 80%+ to clear the topic and unlock successor topics.
+              {nextTopicName && !progression.completed && (
+                <> <strong style={{ color: 'var(--clr-accent)' }}>Clearing this unlocks: {nextTopicName}.</strong></>
+              )}
             </p>
 
             {progression.completed ? (
@@ -67073,6 +67301,7 @@ function LearningJourneyCheckpointQuizView({ topicId, onBack }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [unlockedPreview, setUnlockedPreview] = useState(null);
   const celebrationRef = useRef(null);
 
   const loadQuiz = async () => {
@@ -67149,6 +67378,18 @@ function LearningJourneyCheckpointQuizView({ topicId, onBack }) {
         body: JSON.stringify({ topicId, answers })
       });
       setResult(res);
+      logEvent('checkpoint_passed_or_failed', topicId, {
+        passed: res.passed, scorePercent: res.scorePercent, unlockedTopicId: res.unlockedTopicId || null,
+      });
+      // Pull one "why" line from the newly-unlocked unit so the celebration
+      // doubles as the next motivation pitch, not just a name.
+      if (res.passed && res.unlockedTopicId) {
+        journeyFetch('/api/learning-journey/progress').then((prog) => {
+          const nextTopic = prog.topics.find(t => t && t.topicId === res.unlockedTopicId);
+          const withWhy = nextTopic?.concepts.find(c => topicMotivation[c.key]?.why);
+          if (withWhy) setUnlockedPreview(topicMotivation[withWhy.key].why);
+        }).catch(() => {});
+      }
     } catch (err) {
       alert(err.message || 'Verification failed');
     } finally {
@@ -67205,9 +67446,34 @@ function LearningJourneyCheckpointQuizView({ topicId, onBack }) {
             </div>
           )}
           {result.passed && (
-            <p className="subtitle" style={{ color: 'var(--clr-correct, #26de81)', marginTop: '8px' }}>
-              The next topic has been unlocked.
-            </p>
+            result.unlockedTopicId ? (
+              <div style={{ marginTop: '14px' }}>
+                <div
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '10px 20px', borderRadius: '999px',
+                    background: 'rgba(255, 213, 79, 0.14)', border: '1.5px solid #ffd54f',
+                    color: '#ffd54f', fontWeight: 700, fontSize: '1rem',
+                    animation: 'star-pop-in 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                    textShadow: '0 0 8px rgba(255, 213, 79, 0.5)',
+                  }}
+                >
+                  🔓 Unlocked: {result.unlockedTopicId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                </div>
+                {unlockedPreview && (
+                  <p style={{
+                    maxWidth: '440px', margin: '10px auto 0', fontSize: '0.86rem',
+                    color: 'var(--clr-text-soft)', fontStyle: 'italic', lineHeight: 1.5,
+                  }}>
+                    {unlockedPreview}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="subtitle" style={{ color: 'var(--clr-correct, #26de81)', marginTop: '8px' }}>
+                🏆 That was the last topic — the whole journey is cleared.
+              </p>
+            )
           )}
         </div>
 

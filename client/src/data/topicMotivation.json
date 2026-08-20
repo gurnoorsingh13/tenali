@@ -1,0 +1,464 @@
+{
+  "basicarith": {
+    "why": "Nearly everything else in this app is these four moves wearing a costume. A kid who knows 7x8 without pausing has spare brain left for the actual problem. A kid who works it out every time spends everything on the arithmetic and never reaches the interesting bit.",
+    "how": "Your working memory holds about four things at once, and that is the whole bottleneck. Every fact you know cold is one slot freed up. That is why speed here is not about being clever, it is about not re-deriving the same thing forty times.",
+    "demo": {
+      "kind": "basicarith"
+    }
+  },
+  "addition": {
+    "why": "Adding is the one operation the others are secretly built from. Multiplying is repeated adding, and a computer chip does subtraction by adding a cleverly flipped number. It is all addition in different hats.",
+    "how": "Carrying is the whole idea. A column can only hold up to 9, so when it overflows you hand the extra to the column on its left, which is worth ten times more. That is why 8 + 7 gives you a 5 and a carried 1 instead of a 15 squashed into one box.",
+    "demo": {
+      "kind": "addition"
+    }
+  },
+  "multiply": {
+    "why": "Adding 7 to itself eight times is eight chances to slip. Knowing 7x8 is zero. Across a whole paper that gap decides whether you finish.",
+    "how": "Any multiplication splits into easier ones, because you are allowed to break a number up and multiply the pieces separately. Stuck on 7x8? It is 7x4 doubled. 14x6 is 10x6 plus 4x6. Nobody memorises all of them, they just get quick at splitting.",
+    "demo": {
+      "kind": "multiply"
+    }
+  },
+  "rounding": {
+    "why": "Round too early and the error hides inside your answer where nobody can find it later. Turn 1/3 into 0.33, multiply by 3000, and ten rupees vanish. Banks round at the very end for exactly this reason.",
+    "how": "Look at the digit just past your cut. Below 5 you leave it alone, 5 or more you push up. It works because that digit is the only thing deciding which side of halfway you sit on, and you always want whichever multiple is genuinely nearer.",
+    "demo": {
+      "kind": "rounding"
+    }
+  },
+  "fractionadd": {
+    "why": "1/2 + 1/3 is not 2/5. If it were, a batsman scoring 1 off 2 balls and then 1 off 3 would somehow be worse than either innings. Fractions only add when the pieces are the same size.",
+    "how": "You cannot add halves to thirds any more than you can add rupees to litres. So rename both into a size they share: halves and thirds both become sixths, giving 3/6 and 2/6, which add to 5/6. Finding that shared size is the entire job.",
+    "demo": {
+      "kind": "fractionadd"
+    }
+  },
+  "percent": {
+    "why": "50% off and then 20% off is not 70% off. It is 60%. The second cut only bites what survived the first, and shops are perfectly happy for you to assume otherwise.",
+    "how": "Per cent means out of a hundred, so taking 20% off means keeping 80%, which is multiplying by 0.8. Chain two discounts and you multiply 0.5 by 0.8 to get 0.4, so you pay 40% and save 60%. Percentages multiply. They never add.",
+    "demo": {
+      "kind": "percent"
+    }
+  },
+  "profitloss": {
+    "why": "A shop marks an item up 50%, then offers 30% off, and still walks away with a profit. 100 becomes 150, then 30% off drops it to 105. The sale is genuine and so is the money they made.",
+    "how": "Profit is measured against cost price but discount is measured against selling price, and those are different starting numbers. Almost every 'is this actually a deal' question is just spotting which number the percentage is being taken of.",
+    "demo": {
+      "kind": "profitloss"
+    }
+  },
+  "ratio": {
+    "why": "Mix concrete 1:2:3 and it holds up a building. Mix it 1:2:4 and it crumbles. Ratio is not about the amounts, it is about keeping them locked together whatever size you build.",
+    "how": "A ratio survives multiplying every part by the same number, which is why 2:3 and 8:12 are the same mix. Work out what one part is worth, then multiply everything by it. That is why you scale a recipe by multiplying and never by adding a cup to each.",
+    "demo": {
+      "kind": "ratio"
+    }
+  },
+  "sdt": {
+    "why": "Drive there at 30 km/h and back at 60, and your average speed is 40, not 45. You spend twice as long crawling at the slow speed, so it counts for more. Averaging two speeds directly is almost always wrong.",
+    "how": "Speed = distance / time, so time = distance / speed. Because speed sits underneath the division, every extra bit helps less than the last. On a 240 km trip, 40 to 80 km/h saves you three hours. 80 to 120 saves one.",
+    "demo": {
+      "kind": "sdt"
+    }
+  },
+  "squaring": {
+    "why": "The gaps between square numbers are the odd numbers. 1, 4, 9, 16 climbs by 3, then 5, then 7, forever. That is not a coincidence anyone arranged.",
+    "how": "A square number is a literal square. To grow from n by n to the next size you add a strip along the bottom, a strip up the side, and one corner square, which is n + n + 1. Always odd, which is where the pattern comes from.",
+    "demo": {
+      "kind": "squaring"
+    }
+  },
+  "decimals": {
+    "why": "0.1 + 0.2 does not equal 0.3 on most computers. It comes out as 0.30000000000000004. In base 2 a tenth never finishes, the same way a third never finishes for us, so the machine has to round.",
+    "how": "Every decimal place is a fraction over a power of ten, so 0.75 is 7/10 + 5/100, which tidies to 3/4. A fraction only terminates if its denominator is built from 2s and 5s, the factors of ten. A third has a 3 in it, so 0.333 runs forever.",
+    "demo": {
+      "kind": "decimals"
+    }
+  },
+  "shares": {
+    "why": "A share that falls 50% and then gains 50% has not broken even. It is down 25%. Losses always need a bigger gain to undo them, which is why 'it will bounce back' costs people so much.",
+    "how": "Percentage changes multiply against a moving base. 100 falls to 50, and 50% of 50 is only 25, so you land at 75. To recover from a 50% fall you need a 100% gain. The bigger the drop, the more lopsided this gets.",
+    "demo": {
+      "kind": "shares"
+    }
+  },
+  "banking": {
+    "why": "Pay 1000 a month into a recurring deposit and every instalment earns for a different length of time. The first earns for the whole term, the last for barely a month. That is why the total is not just 12,000 plus one tidy interest sum.",
+    "how": "Each deposit grows on its own for however many months it has left, and the maturity value is those twelve different results added up. The RD formula is just a shortcut for a sum somebody already did the long way.",
+    "demo": {
+      "kind": "banking"
+    }
+  },
+  "gst": {
+    "why": "Handed a 118 rupee bill and asked how much of it is 18% GST, most people take 18% of 118 and get 21.24. The answer is 18. Going backwards is not the same operation as going forwards.",
+    "how": "Adding tax means multiplying by 1.18, so removing it means dividing by 1.18, not subtracting 18%. 118 / 1.18 gives you the 100 it started from. Forward and back look symmetrical and are not.",
+    "demo": {
+      "kind": "gst"
+    }
+  },
+  "hcflcm": {
+    "why": "Two gears with 8 and 12 teeth line up again after 24 teeth, not 96. Multiplying always gives you an answer that works, but the LCM gives you the first one, which is the only one that matters if you are waiting at a bus stop.",
+    "how": "Break both numbers into primes. HCF keeps only the primes they share, LCM keeps every prime at its highest power. And HCF x LCM always equals the two numbers multiplied, which is a free way to check yourself.",
+    "demo": {
+      "kind": "hcflcm"
+    }
+  },
+  "primefactor": {
+    "why": "Multiplying two large primes takes a computer no time. Pulling them back out of the answer would outlast the universe. Your bank account is protected by nothing more than that one-way street.",
+    "how": "Every number has exactly one prime breakdown, however you find it. Building the product is a single multiplication. Reversing it means hunting for a factor with no clue where to start, and the candidates pile up brutally as the number gets longer.",
+    "demo": {
+      "kind": "primefactor"
+    }
+  },
+  "bases": {
+    "why": "There is no digit 2 in binary, the same way we have no single digit for ten. A computer counts 0, 1, 10, 11, 100. That 100 is four, not a hundred, and once that lands the rest of computing stops being magic.",
+    "how": "In base 10 each column is worth ten times the one on its right. In base 2 each is worth double. So 1001 means 8 + 0 + 0 + 1, which is 9. Eight of those switches makes a byte, and everything on your phone is one very long number written this way.",
+    "demo": {
+      "kind": "bases"
+    }
+  },
+  "sqrt": {
+    "why": "To double the area of a square you do not double the side, you multiply it by about 1.414. Builders knew that number thousands of years before anyone could write it properly, because it cannot be written properly. It never ends and never repeats.",
+    "how": "A square root drags you back from area to side. Because area grows with the square of the side, four times the area only buys you twice the width. That is why a room advertised as twice the size barely feels wider when you walk in.",
+    "demo": {
+      "kind": "sqrt"
+    }
+  },
+  "indices": {
+    "why": "Fold a sheet of paper 42 times and it reaches the moon. You cannot physically do it, but the arithmetic is not up for debate. Doubling beats everyone's intuition, every time.",
+    "how": "An index counts multiplications, so 2^42 is 2 multiplied by itself 42 times. Multiply powers of the same base and you add the indices; divide and you subtract. That is the whole rulebook, and it is why 10^3 x 10^4 is 10^7 and not 10^12.",
+    "demo": {
+      "kind": "indices"
+    }
+  },
+  "surds": {
+    "why": "Root 2 cannot be written as a fraction, and the Greeks proved it. The story goes that it upset them badly enough to keep quiet about it. Some numbers simply refuse to be a ratio of two whole ones.",
+    "how": "Leaving root 2 alone keeps the answer exact. Writing 1.414 has already thrown accuracy away, and if you keep calculating, that error grows. You simplify by pulling out square factors, so root 50 becomes 5 root 2.",
+    "demo": {
+      "kind": "surds"
+    }
+  },
+  "stdform": {
+    "why": "There are roughly 10^80 atoms in the observable universe. Written out that is 81 digits. Written properly it is four characters, and you can compare it to anything else at a glance.",
+    "how": "You write the number as something between 1 and 10 times a power of ten, and the power just counts how far the point moved. Multiply two of them by multiplying the fronts and adding the powers, which is the entire reason the format exists.",
+    "demo": {
+      "kind": "stdform"
+    }
+  },
+  "log": {
+    "why": "A magnitude 7 earthquake is not slightly worse than a 6. The ground moves ten times as far. The Richter scale is squashed on purpose, because the real numbers are too spread out to plot any other way.",
+    "how": "A logarithm asks how many times you multiplied. Each step up the scale is another multiplication rather than another addition, which is why 6 to 7 is an enormous jump. Decibels and pH are built the same way for the same reason.",
+    "demo": {
+      "kind": "log"
+    }
+  },
+  "quadratic": {
+    "why": "Throw anything at all and its path is a parabola. Not roughly, exactly, once you ignore air. The same curve turns up in satellite dishes because it gathers everything arriving straight on into a single point.",
+    "how": "The x squared term is what bends it. Positive a opens upward, negative a opens downward, and a larger a just narrows it. Every parabola is symmetric about its middle, which is why a ball takes as long going up as it does coming down.",
+    "demo": {
+      "kind": "quadratic"
+    }
+  },
+  "funceval": {
+    "why": "A function must give one output for one input, never two. That sounds fussy until you notice it is what makes a function trustworthy. 'Square it' qualifies. 'Square root of it' does not, until you pick a sign, because 4 could hand back 2 or -2.",
+    "how": "f(x) is a machine with a slot. Put your number everywhere x appears, then simplify. f(3) does not mean f multiplied by 3, which is the mistake almost everybody makes exactly once.",
+    "demo": {
+      "kind": "funceval"
+    }
+  },
+  "polymul": {
+    "why": "(a+b) squared is not a squared plus b squared. It is a squared plus 2ab plus b squared, and that missing 2ab is a real rectangle you can draw. It is probably the most common mistake in school algebra.",
+    "how": "Every term in the first bracket has to meet every term in the second. Draw it as a big rectangle chopped into parts and the 2ab shows up as two identical strips. The algebra is bookkeeping for an area you could have sketched.",
+    "demo": {
+      "kind": "polymul"
+    }
+  },
+  "polyfactor": {
+    "why": "Factoring turns an equation into a list of answers. Once x2 + 5x + 6 becomes (x+2)(x+3) you are finished, because the only way to multiply to zero is for one bracket to be zero. That single fact is what makes factoring worth the effort.",
+    "how": "You are hunting two numbers that multiply to the constant and add to the middle coefficient. For x2 + 5x + 6 that is 2 and 3. Splitting the middle term is the same hunt written out longer, for when the leading coefficient is not 1.",
+    "demo": {
+      "kind": "polyfactor"
+    }
+  },
+  "qformula": {
+    "why": "The formula also tells you, before you finish, how many answers exist. The part under the root decides: positive gives two, zero gives one, negative means the curve never touches the axis at all.",
+    "how": "It comes from completing the square on ax2 + bx + c once, in general, so that nobody ever has to do it again. The b2 - 4ac under the root is the discriminant, and its sign is what settles the number of solutions.",
+    "demo": {
+      "kind": "qformula"
+    }
+  },
+  "simul": {
+    "why": "Two equations with two unknowns usually pin down one answer. But parallel lines never meet, so there is no answer, and identical lines meet everywhere, so there are infinitely many. Solving is really asking where two lines cross.",
+    "how": "Elimination adds or subtracts the equations so one letter disappears. Substitution rearranges one and pushes it into the other. Both do the same job: get down to a single equation with a single unknown.",
+    "demo": {
+      "kind": "simul"
+    }
+  },
+  "ineq": {
+    "why": "Multiply an inequality by a negative and you have to flip the sign. -2 < 3 is true. Multiply both sides by -1 and 2 < -3 is nonsense, while 2 > -3 is fine. That flip is where most inequality marks quietly disappear.",
+    "how": "Everything you can do to an equation works here too, except that multiplying or dividing by a negative reverses the order. Picture the number line being reflected: whatever sat on the left is now on the right.",
+    "demo": {
+      "kind": "ineq"
+    }
+  },
+  "sequences": {
+    "why": "Add 5 a day for 20 days and you have 100. Double each day for 20 days and you have over half a million. It takes about five steps for multiplying to overtake adding, and after that it is not a contest.",
+    "how": "Arithmetic sequences have a fixed difference, so the nth term is a + (n-1)d. Geometric ones have a fixed ratio, so the nth term is ar^(n-1). The n sitting up in the exponent is the entire reason geometric growth runs away.",
+    "demo": {
+      "kind": "sequences"
+    }
+  },
+  "variation": {
+    "why": "Six workers take 10 days, so twelve take 5. But twelve painters do not produce a painting in half the time, and nine women do not make a baby in one month. Knowing when inverse variation genuinely applies is the actual skill.",
+    "how": "Direct variation means y = kx, so the ratio stays fixed. Inverse means y = k/x, so the product stays fixed. Find k from one known pair and every other pair follows, provided the relationship really is one of those two.",
+    "demo": {
+      "kind": "variation"
+    }
+  },
+  "binomial": {
+    "why": "The numbers in front of an expanded bracket are Pascal's triangle, and those same numbers count how many ways you can choose things. Expanding brackets and counting combinations turn out to be one question asked twice.",
+    "how": "Each term comes from picking either a or b out of every bracket, so its coefficient counts how many ways that pick can happen, which is nCr. That is why row four reads 1 4 6 4 1, and why the middle term is always the fattest.",
+    "demo": {
+      "kind": "binomial"
+    }
+  },
+  "complex": {
+    "why": "Every polynomial has exactly as many roots as its degree, but only if complex numbers are allowed. Without them the rule is riddled with exceptions. With them it is clean, which is a strong hint they were never optional.",
+    "how": "i is defined as the square root of -1 and everything else follows from that one move. Multiplying by i rotates a number 90 degrees on the plane, which is exactly why complex numbers are so good at describing anything that spins, like AC current.",
+    "demo": {
+      "kind": "complex"
+    }
+  },
+  "bounds": {
+    "why": "A length given as 12 cm to the nearest cm is really anywhere from 11.5 to 12.5. Multiply two such lengths to get an area and the uncertainty grows faster than the numbers do. Small measuring errors refuse to stay small.",
+    "how": "Each measurement gets bounds half a unit either side. For the largest possible product, multiply the two upper bounds; for the smallest, the two lowers. Division crosses over: biggest divided by smallest gives the upper bound.",
+    "demo": {
+      "kind": "bounds"
+    }
+  },
+  "lineareq": {
+    "why": "Whatever you do to one side you must do to the other. That is not a rule invented to annoy you, it is what the equals sign means. It is a balance, and tipping it loses your answer.",
+    "how": "You undo operations in reverse order to strip the letter bare. If x was multiplied and then had 3 added, subtract the 3 first and divide second. Same reason you take your shoes off before your socks.",
+    "demo": {
+      "kind": "lineareq"
+    }
+  },
+  "linprog": {
+    "why": "The best answer always sits at a corner of the allowed region. Never in the middle, never partway along an edge. That one fact turns an infinite search into checking four or five points by hand.",
+    "how": "Each constraint slices the plane with a line and what survives is a polygon of legal options. Because the thing you are maximising is linear, it always pushes as far as it can go, and far always lands on a vertex.",
+    "demo": {
+      "kind": "linprog"
+    }
+  },
+  "remfactor": {
+    "why": "To test whether (x-2) divides a polynomial, put x = 2 into it. Get zero and it divides. That is the entire method. No long division, no working.",
+    "how": "Dividing by (x-a) leaves a remainder, and that remainder turns out to be exactly f(a). So a remainder of zero means it went in cleanly, which makes (x-a) a factor. One fact, stated two ways.",
+    "demo": {
+      "kind": "remfactor"
+    }
+  },
+  "angles": {
+    "why": "Angles on a straight line always make 180, and round a point always 360. Always. So at any junction you measure one angle and get the rest for free, which is how surveyors map land they cannot walk across.",
+    "how": "A full turn is 360 and half a turn is 180, so anything filling those spaces has to add to them. Stack that with 'opposite angles are equal' where two lines cross and you can chase an unknown angle right across a diagram from one measurement.",
+    "demo": {
+      "kind": "angles"
+    }
+  },
+  "triangles": {
+    "why": "Push a square and it flops into a rhombus. Push a triangle and nothing happens, because three fixed sides already lock all three angles. That stubbornness is the only reason bridges and cranes are full of them.",
+    "how": "Three side lengths determine exactly one triangle, so there is nothing left to flex. A four sided frame has slack in it, which is why builders add a diagonal brace: it converts one weak square into two immovable triangles.",
+    "demo": {
+      "kind": "triangles"
+    }
+  },
+  "polygons": {
+    "why": "The outside angles of any polygon add to 360, whether it has 3 sides or 300. You are simply walking round the shape and ending up facing the way you started.",
+    "how": "Walk the perimeter and at each corner you turn through the exterior angle. One lap is one full turn, so those turns must total 360. Divide by n for a regular shape, and the interior angle is whatever is left over from 180.",
+    "demo": {
+      "kind": "polygons"
+    }
+  },
+  "congruence": {
+    "why": "Three sides fix a triangle completely. Three angles do not, they only fix its shape. That is exactly why SSS proves two triangles identical and AAA does not.",
+    "how": "You need enough information to leave no wiggle room, which is what SSS, SAS, ASA and RHS all guarantee. Two sides plus a non-included angle can build two genuinely different triangles, which is why that combination is missing from the list.",
+    "demo": {
+      "kind": "congruence"
+    }
+  },
+  "similarity": {
+    "why": "Scale a shape up by 2 and its area goes up by 4, not 2. A pizza with twice the diameter is four times the pizza. Shops price by diameter and rather hope you never square it.",
+    "how": "Lengths multiply by k, areas by k squared, volumes by k cubed, because area is two lengths multiplied and volume is three. Same reason a small animal loses heat faster: its surface has not shrunk nearly as fast as its bulk.",
+    "demo": {
+      "kind": "similarity"
+    }
+  },
+  "pythag": {
+    "why": "It only works on right angled triangles, and that limit is the useful part. If a2 + b2 comes out equal to c2, the corner is exactly 90 degrees, which is how builders check a foundation with a knotted rope and no protractor.",
+    "how": "The squares on the two short sides have the same total area as the square on the long one. So square, add or subtract, then square root. Memorise the 3-4-5 triangle and you can check any right angle on site in seconds.",
+    "demo": {
+      "kind": "pythag"
+    }
+  },
+  "circleth": {
+    "why": "The angle at the centre is always exactly double the angle at the edge standing on the same arc. Slide that edge point anywhere you like and the angle does not budge.",
+    "how": "Every radius is the same length, so the triangles hiding inside are isosceles and their base angles match. Chase those equal angles around and the doubling falls straight out. Nearly every circle theorem is that one trick reused.",
+    "demo": {
+      "kind": "circleth"
+    }
+  },
+  "mensur": {
+    "why": "Double every side of a box and it holds eight times as much, not twice. That is why the family pack is cheaper per gram, and why an elephant cannot just be a scaled up mouse. Its legs would snap.",
+    "how": "Volume is three lengths multiplied so it scales with k cubed, while surface area is two lengths so it scales with k squared. Bulk grows faster than the skin holding it together, and that single mismatch explains a surprising amount of biology and packaging.",
+    "demo": {
+      "kind": "mensur"
+    }
+  },
+  "transform": {
+    "why": "Reflect a shape in two mirrors and the result is a rotation. Not something like a rotation, exactly one. Games lean on this because reflecting twice is cheaper for a machine than working out a spin.",
+    "how": "Every transformation is a rule for where each point lands. Reflect in two intersecting mirrors and the total turn is double the angle between them. Chain transformations together and you can nearly always collapse the whole lot into one simpler move.",
+    "demo": {
+      "kind": "transform"
+    }
+  },
+  "bearings": {
+    "why": "Bearings are always three digits and always clockwise from north, so east is 090 and never 90. That rigidity is deliberate. Over a bad radio link, 'zero nine zero' cannot be misheard as anything else.",
+    "how": "Measure clockwise from north every time, no exceptions. To reverse a bearing add 180, or subtract it if you would sail past 360. Ships and rescue teams still work this way because there is exactly one way to read it.",
+    "demo": {
+      "kind": "bearings"
+    }
+  },
+  "coordgeom": {
+    "why": "The distance formula is Pythagoras in disguise. The gap in x and the gap in y are the two short sides of a right angled triangle that you never have to draw.",
+    "how": "Subtract the x values, subtract the y values, square both, add, then square root. Gradient is just the y gap over the x gap. Once shapes become coordinates, geometry turns into arithmetic and a machine can do it.",
+    "demo": {
+      "kind": "coordgeom"
+    }
+  },
+  "lineq": {
+    "why": "In y = mx + c, m is the steepness and c is where you started. Two numbers describe every straight line there has ever been, and once you have them you can predict any point without measuring it.",
+    "how": "m is rise over run, so a gradient of 3 means three up for every one across. c is the value when x is zero. Parallel lines share the same m, and perpendicular ones have gradients that multiply to -1.",
+    "demo": {
+      "kind": "lineq"
+    }
+  },
+  "trig": {
+    "why": "Stand 50 m from a building, measure the angle up to the roof, and tan hands you the height. No ladder and no drone. The same method measured the distance to the moon long before anybody went there.",
+    "how": "In a right angled triangle the ratio of two sides depends only on the angle, never on the size. So one angle plus one length gives you everything else. sin, cos and tan are just those three ratios with names attached.",
+    "demo": {
+      "kind": "trig"
+    }
+  },
+  "invtrig": {
+    "why": "Your calculator gives one answer for inverse sin, but infinitely many angles share that sine. It quietly picks the one between -90 and 90 and does not mention it, which is where a lot of marks go missing.",
+    "how": "Inverse trig runs the ratio backwards to recover the angle. Because sine repeats forever, the function has to be restricted to one stretch to return a single answer. For any real problem, sketch it and check the angle you got is the sensible one.",
+    "demo": {
+      "kind": "invtrig"
+    }
+  },
+  "heron": {
+    "why": "You can find a triangle's area from the three sides alone. No height, no angles, nothing measured from the base. Surveyors have used this on awkward plots of land for two thousand years.",
+    "how": "Work out s, half the perimeter, then take the square root of s(s-a)(s-b)(s-c). It works on any triangle at all, which is why it survives exactly where 'half base times height' gives up.",
+    "demo": {
+      "kind": "heron"
+    }
+  },
+  "section": {
+    "why": "The point splitting a line in the ratio 2:1 sits nearer the far end than most people expect, because the weights swap sides. Getting that the wrong way round is the classic error here.",
+    "how": "It is a weighted average of the two endpoints. For ratio m:n the formula is (mx2 + nx1)/(m+n), so the heavier weight pulls the point towards the opposite end. The midpoint is just the case where m and n are equal.",
+    "demo": {
+      "kind": "section"
+    }
+  },
+  "circmeasure": {
+    "why": "A radian is the angle where the arc is exactly as long as the radius, which works out at about 57.3 degrees. It looks like an awkward number until you see that it makes arc length simply r times theta, with no conversion factor at all.",
+    "how": "Because the radian is defined from the circle itself, arc length is r theta and sector area is half r squared theta. In degrees you would be multiplying by pi/180 every single time. Calculus only behaves in radians for the same reason.",
+    "demo": {
+      "kind": "circmeasure"
+    }
+  },
+  "conics": {
+    "why": "Slice a cone at different angles and you get a circle, an ellipse, a parabola or a hyperbola. Four curves that look unrelated are the same object viewed from different angles, which is why one family of equations covers all of them.",
+    "how": "Each one is the set of points obeying a fixed distance rule. A circle keeps one distance constant, an ellipse keeps the sum of two constant, a hyperbola keeps the difference. Change that one condition and you change which curve appears.",
+    "demo": {
+      "kind": "conics"
+    }
+  },
+  "diff": {
+    "why": "A speed camera measures your speed over an instant, not your average for the journey. That distinction is differentiation, and it is the difference between a fine and no fine.",
+    "how": "Take two points on a curve and slide them together until they merge. The chord becomes a tangent and its gradient is the rate of change at that exact spot. Every rule you learn later, like multiply by the power and drop it by one, comes out of that single limit.",
+    "demo": {
+      "kind": "diff"
+    }
+  },
+  "integ": {
+    "why": "The area under a speed-time graph is the distance travelled. Not proportional to it, equal to it. An area and a distance turn out to be the same calculation wearing different labels.",
+    "how": "Chop the region into thin strips, add them up, then make the strips infinitely thin. That sum is the integral. And because integration undoes differentiation, you can usually skip the chopping and just reverse the derivative.",
+    "demo": {
+      "kind": "integ"
+    }
+  },
+  "limits": {
+    "why": "1/x never actually reaches zero, but it gets as close as you could ever want. Maths needed an honest way to talk about that instead of waving its hands, and calculus does not exist without it.",
+    "how": "A limit asks what a value approaches, not what it equals. That is why 0/0 is not automatically nonsense: both parts might be shrinking at the same rate, and working out which one wins is most of what these questions are.",
+    "demo": {
+      "kind": "limits"
+    }
+  },
+  "diffeq": {
+    "why": "Radioactive decay, cooling coffee and rabbit populations are all the same equation. In each one the rate of change depends on how much is currently there. Three unrelated sciences, one piece of maths.",
+    "how": "You are handed a relationship involving the rate of change and asked to recover the original function. Separating the variables and integrating both sides is the standard opening move, and the arbitrary constant is why you always need one starting fact to pin the answer down.",
+    "demo": {
+      "kind": "diffeq"
+    }
+  },
+  "stats": {
+    "why": "Two classes can share an identical average and tell completely opposite stories. One where everyone scored 50, another where half scored 100 and half scored 0. An average on its own can hide a disaster.",
+    "how": "The mean tells you the middle and the standard deviation tells you how far people typically sit from it, which is why you need both. The median is safer when a few extreme values would drag the mean somewhere misleading, like average income in a room containing a billionaire.",
+    "demo": {
+      "kind": "stats"
+    }
+  },
+  "prob": {
+    "why": "Get 23 people in a room and it is already more likely than not that two share a birthday. Almost nobody guesses under 100. Your gut is comparing everyone to you, but the room is comparing everyone to everyone.",
+    "how": "It is usually easier to work out the chance of something not happening and subtract from 1. For birthdays you multiply the shrinking chance of each new person missing all the previous ones. Independent events multiply, which is why the numbers move so fast.",
+    "demo": {
+      "kind": "prob"
+    }
+  },
+  "sets": {
+    "why": "Ask 30 kids who likes tea and who likes coffee and the two answers will usually add to more than 30. The overlap gets counted twice, and handling that double count is precisely what set notation is for.",
+    "how": "Add both groups, then subtract the overlap you just counted twice. That is the whole union rule. Every search filter and database query you have ever used is doing this same intersection and union underneath.",
+    "demo": {
+      "kind": "sets"
+    }
+  },
+  "permcomb": {
+    "why": "A six character password has about 57 billion possibilities. Add two more characters and it passes 200 trillion. Length beats cleverness, because every new character multiplies everything that came before it.",
+    "how": "Permutations care about order, combinations do not. If order matters you multiply the shrinking number of choices. If it does not, you divide by the number of rearrangements you have now counted more than once. That division is the only difference between nPr and nCr.",
+    "demo": {
+      "kind": "permcomb"
+    }
+  },
+  "vectors": {
+    "why": "Walk 3 km east then 4 km north and you are 5 km from where you started, not 7. Direction changes what adding even means, and that is the entire reason vectors exist.",
+    "how": "Add vectors component by component, x with x and y with y, then get the straight line distance from Pythagoras. It is why a plane's heading and the wind combine into a third direction that matches neither.",
+    "demo": {
+      "kind": "vectors"
+    }
+  },
+  "dotprod": {
+    "why": "The dot product of two perpendicular directions is always zero. That gives a computer a one step test for 'are these at right angles' with no angle measured and no trigonometry anywhere.",
+    "how": "Multiply matching components and add them. The result equals the two lengths multiplied by cos of the angle between, so at 90 degrees the cosine is zero and the whole thing collapses. Game engines use exactly this to work out how directly a surface faces a light.",
+    "demo": {
+      "kind": "dotprod"
+    }
+  },
+  "matrix": {
+    "why": "Matrix multiplication does not commute. AB and BA usually differ, and often only one of them is even legal. Rotating a game character and then moving it does not land it where moving and then rotating would.",
+    "how": "Each entry comes from one row of the first matrix meeting one column of the second, which is why the shapes have to line up before you can multiply at all. That row-meets-column pattern is exactly what a graphics card is built to do millions of times a second.",
+    "demo": {
+      "kind": "matrix"
+    }
+  }
+}
