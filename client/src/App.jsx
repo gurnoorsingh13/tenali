@@ -23,10 +23,18 @@
 
 
 
+import { HintModal } from './components/HintSystem/HintModal.jsx';
+import { useQuizHintsAndXp } from './components/HintSystem/useHints.jsx';
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import VoiceAssistant from './components/VoiceAssistant';
 import { motion } from 'framer-motion';
 import OnboardingTour from './components/OnboardingTour';
+import SpatialReasoningMCQ from './SpatialReasoningMCQ';
+import ScribbleGuessApp from './ScribbleGuessApp';
+import ShapeSlicer3D from './ShapeSlicer3D';
+import ShapeTranslatorApp from './ShapeTranslatorApp';
+import NetBuilderApp from './NetBuilderApp';
+import CrossSectionApp from './CrossSectionApp';
 
 window.React = React;
 console.log("React version:", React.version);
@@ -40,7 +48,7 @@ import LinearAlgebraApp from './LinearAlgebraApp'
 function useProgressSubmit(revealed, isCorrect, topic, questionId) {
   useEffect(() => {
     if (!revealed) return;
-    const token = localStorage.getItem('tenali-token');
+    const token = localStorage.getItem('tenali-auth-token');
     if (!token || !topic) return;
 
     const API = import.meta.env.VITE_API_BASE_URL || '';
@@ -61,10 +69,12 @@ function useProgressSubmit(revealed, isCorrect, topic, questionId) {
 
 
 import Vachana from './vachana'
+import ReflectionJournal from './ReflectionJournal'  // Feature CT — platform-wide reflection journal
 import 'chart.js/auto'
 import { Line } from 'react-chartjs-2'
 
 import './App.css'
+import TreasureHuntApp from './treasurehunt/TreasureHuntApp.jsx'
 import EnhancedMathDetectiveApp from './detective-app'
 import GlossaryText from './components/GlossaryText'
 import KeyTerms from './components/KeyTerms'
@@ -76,6 +86,10 @@ import { installMasteryWatcher } from './lib/masteryCelebration'
 import MasteryUnlockToast from './components/MasteryUnlockToast'
 import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
+import CarJourneyApp from './CarJourneyApp';
+import RealWorldHubApp from './RealWorldHub';
+import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
+const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
 import VisualMathLabRedux, {
   FrogJumpTemplate,
   MathMachineTemplate,
@@ -87,24 +101,47 @@ import VisualMathLabRedux, {
 } from './VisualMathLabRedux';
 import CoordinateGrid from './components/CoordinateGrid';
 import LanguageDashboard from './language/LanguageDashboard'
+import ContrastChallengeApp, { QuizLayoutExtension } from './ContrastChallengeApp'
 import { VOCAB_CORPUS } from './vocabCorpus'
+import PercentExplanationApp from './PercentExplanationApp'
+import { playSound } from './audioContext'
+import GeometryApp from './GeometryApp';
 import EquationSandboxApp from './lib/EquationSandboxApp.jsx';
 import QFormulaConceptApp from './lib/concept/QFormulaConceptApp.jsx';
 import SimulConceptApp from './lib/simul-concept/SimulConceptApp.jsx';
 import DiagnosticQuiz from './lib/DiagnosticQuiz.jsx';
 import { useI18n } from './lib/i18n.jsx';
 import CuriosityApp from './Curiosity.jsx';
-import PercentExplanationApp from './PercentExplanationApp';
 import WhyMathApp from './WhyMathApp';
 import LearningMapApp from './LearningMapApp';
 import StudyModeToggle from './components/StudyModeToggle';
 import FocusHome from './components/FocusHome';
 import { useStudyMode } from './lib/studyMode';
-import { playSound } from './audioContext';
-import GeometryApp from './GeometryApp';
+import ProctoredQuiz from './proctor/ProctoredQuiz'
+import useProctor from './proctor/useProctor'
+import ProctorDashboard from './proctor/ProctorDashboard'
+import ProctorPanel from './proctor/ProctorPanel'
+import PlaygroundApp from './PlaygroundApp'
+import LocalCompilerApp from './LocalCompilerApp'
+import BattleApp from './BattleApp'
+import SudokuApp from './SudokuApp'
 
 // API base URL from environment variables (Vite)
-const API = import.meta.env.VITE_API_BASE_URL || '';
+export const API = import.meta.env.VITE_API_BASE_URL || '';
+
+// Base path the app is mounted at (e.g. '/summership' in production, '' at root).
+// Derived from Vite's build-time base so path routing + internal navigation work
+// whether the app is served from the domain root or a sub-path.
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
+// Prefix an absolute in-app path with BASE for navigation (keeps us inside the sub-path).
+const withBase = (p) => BASE + p;
+// Strip BASE off window.location.pathname so route matching can use root-relative paths.
+const stripBase = (pn) => {
+  let x = (pn || '/').replace(/\/+$/, '').toLowerCase();
+  const b = BASE.toLowerCase();
+  if (b && (x === b || x.startsWith(b + '/'))) x = x.slice(b.length);
+  return x || '/';
+};
 
 // Global fetch interceptor to automatically attach authorization header
 const originalFetch = window.fetch;
@@ -201,7 +238,7 @@ function AuthMenu({ t = (s) => s }) {
   // Hide hamburger menu in visual learning to prevent navigation away
   const params = new URLSearchParams(window.location.search)
   const mode = params.get('mode')
-  const pathname = window.location.pathname.replace(/\/$/, '').toLowerCase()
+  const pathname = stripBase(window.location.pathname)
   const isVisualLearning =
     pathname === '/geocraft' ||
     pathname === '/visual-math-lab-redux' ||
@@ -236,7 +273,7 @@ function AuthMenu({ t = (s) => s }) {
       if (isVisualLearning) {
         window.location.reload()
       } else {
-        window.location.href = '/tenth'
+        window.location.href = withBase('/tenth')
       }
     } catch (err) {
       setError(err.message || 'login failed')
@@ -293,7 +330,7 @@ function AuthMenu({ t = (s) => s }) {
                   <>
                     <button
                       type="button"
-                      onClick={() => { window.location.href = '/'; setOpen(false) }}
+                      onClick={() => { window.location.href = withBase('/'); setOpen(false) }}
                       style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--clr-text)', cursor: 'pointer', fontSize: '0.95rem' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
@@ -303,7 +340,7 @@ function AuthMenu({ t = (s) => s }) {
 
                     <button
                       type="button"
-                      onClick={() => { window.location.href = '/profile'; setOpen(false) }}
+                      onClick={() => { window.location.href = withBase('/profile'); setOpen(false) }}
                       style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--clr-text)', cursor: 'pointer', fontSize: '0.95rem' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
@@ -418,7 +455,7 @@ function AuthGate({ children }) {
         This page is only available to signed-in users. Open the <strong>menu</strong> in the top-right corner and choose <strong>Log in</strong>.
       </p>
       <button
-        onClick={() => { window.location.href = import.meta.env.BASE_URL || '/' }}
+        onClick={() => { window.location.href = withBase('/') }}
         style={{ marginTop: 24, padding: '10px 24px', borderRadius: 8, background: 'var(--clr-accent, #e8833a)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' }}>
         ← Back to home
       </button>
@@ -487,7 +524,10 @@ export function useTimer() {
   // Goal mode ('standard' | 'speed' | 'perfect' | 'revision')
   const [mode, setMode]           = useState('standard')
   // Reference to the timestamp when timer started (using Date.now())
-  const startRef    = useRef(Date.now())
+  const startRef    = useRef(typeof window !== 'undefined' ? Date.now() : 0)
+  
+  // Helper to extract current timestamp
+  const getTimestamp = () => Date.now()
   const intervalRef = useRef(null)
   const limitRef    = useRef(0)
   const onTORef     = useRef(null) // timeout callback ref (avoids stale closure)
@@ -1698,6 +1738,13 @@ function ScaffoldedTablesApp({ studentName, defaultTable = 2 }) {
   const [appPhase, setAppPhase] = useState('choosing')
   const [currentTable, setCurrentTable] = useState(null)
 
+  // Stable celebration emoji — picked once when the "MASTERED" screen
+  // mounts so the emoji doesn't flicker between 🎉 / 🏆 / ⭐ / 🌟 / 🎊 on
+  // every unrelated re-render (timer ticks, level transitions, etc.).
+  const [masteryEmoji] = useState(
+    () => ['🎉', '🏆', '⭐', '🌟', '🎊'][Math.floor(Math.random() * 5)]
+  )
+
   // ── Level:
   // 1 = show answer (13×2=26, student types 26)
   // 2 = partial table (5 rows, left or right column only)
@@ -2170,7 +2217,7 @@ function ScaffoldedTablesApp({ studentName, defaultTable = 2 }) {
           </h1>
           <div className="welcome-box">
             <p style={{ fontSize: '3rem', margin: '0.5rem 0' }}>
-              {['🎉', '🏆', '⭐', '🌟', '🎊'][Math.floor(Math.random() * 5)]}
+              {masteryEmoji}
             </p>
             <p className="welcome-text" style={{ fontSize: '1.3rem', color: 'var(--clr-accent)' }}>
               Fantastic work! You nailed {MASTERY_STREAK} in a row!
@@ -4759,7 +4806,10 @@ function AdaptiveMixedApp({ studentName }) {
         e.preventDefault(); setAnswer(prev => prev + 'x')
       } else if (e.key === '^') {
         e.preventDefault(); setAnswer(prev => prev + '^')
-      } else if (e.key === 'Backspace') {
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    } else if (e.key === 'Backspace') {
         e.preventDefault(); setAnswer(prev => prev.slice(0, -1))
       }
     }
@@ -41122,7 +41172,7 @@ function TenthApp({ onBack }) {
         </p>
       )}
 
-      <a href="/gym" style={{
+      <a href={withBase('/gym')} style={{
         display: 'block', textDecoration: 'none', color: 'var(--clr-text)',
         padding: '20px 24px', marginBottom: 28, borderRadius: 14,
         background: 'linear-gradient(135deg, rgba(46,160,67,0.18), rgba(108,206,255,0.12))',
@@ -41166,7 +41216,7 @@ function TenthApp({ onBack }) {
             {u.chapters.map((c) => (
               <a
                 key={c.n}
-                href={`/chapter${c.n}`}
+                href={withBase(`/chapter${c.n}`)}
                 style={{
                   display: 'block', textDecoration: 'none', color: 'var(--clr-text)',
                   padding: '14px 16px', borderRadius: 10,
@@ -41564,7 +41614,7 @@ function CoordGeomInteractiveApp({ onBack }) {
 
   const loadQuestion = async () => {
     try {
-      const r = await fetch(`/coordgeom-api/question?difficulty=${difficulty}`);
+      const r = await fetch(`${API}/coordgeom-api/question?difficulty=${difficulty}`);
       if (!r.ok) throw new Error('Server error');
       const data = await r.json();
       setCurrentQ(data);
@@ -41606,7 +41656,7 @@ function CoordGeomInteractiveApp({ onBack }) {
         ...currentQ,
         userAnswer: currentQ.type === 'coord' ? `(${dartPos.x}, ${dartPos.y})` : textAnswer
       };
-      const r = await fetch('/coordgeom-api/check', {
+      const r = await fetch(`${API}/coordgeom-api/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -41829,7 +41879,7 @@ function DartBoardApp({ onBack }) {
 
   const loadQuestion = async () => {
     try {
-      const r = await fetch(`/darts-api/question?level=${currentLevel}`);
+      const r = await fetch(`${API}/darts-api/question?level=${currentLevel}`);
       if (!r.ok) throw new Error('Server error');
       const data = await r.json();
       setCurrentQ(data);
@@ -41892,7 +41942,7 @@ function DartBoardApp({ onBack }) {
         userX: dartPos.x,
         userY: dartPos.y,
       };
-      const r = await fetch('/darts-api/check', {
+      const r = await fetch(`${API}/darts-api/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -42380,11 +42430,11 @@ function App() {
       const currentMode = params.get('mode');
       if (mode) {
         if (currentMode !== mode) {
-          window.history.replaceState({}, '', `/?mode=${mode}`);
+          window.history.replaceState({}, '', `${BASE}/?mode=${mode}`);
         }
       } else {
         if (currentMode) {
-          window.history.replaceState({}, '', '/');
+          window.history.replaceState({}, '', `${BASE}/`);
         }
       }
     } catch (e) {
@@ -42411,6 +42461,23 @@ function App() {
   const [celebrationQueue, setCelebrationQueue] = useState([])
   const [transferTopic, setTransferTopic] = useState(null)
   const syncTimeoutRef = useRef(null)
+
+  // Generate confetti particles once per active celebration card so they
+  // don't teleport to new positions on every parent re-render (timer
+  // ticks, theme toggle, etc.). Keyed on the active celebration's identity
+  // so dismissing + re-enqueuing the same card produces a fresh burst.
+  const confettiParticles = React.useMemo(() => {
+    const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444'];
+    return Array.from({ length: 40 }).map((_, idx) => ({
+      id: idx,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: Math.random() * 2 + 1.5,
+      size: Math.random() * 10 + 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+    }));
+  }, [celebrationQueue[0]?.title, celebrationQueue[0]?.message]);
 
   // Journey & Goal states from upstream
   const [isGoalMode, setIsGoalMode] = useState(false)
@@ -42499,7 +42566,7 @@ function App() {
     const fetchJourneyProgress = async () => {
       const API = import.meta.env.VITE_API_BASE_URL || '';
       try {
-        const token = localStorage.getItem('tenali-token');
+        const token = localStorage.getItem('tenali-auth-token');
         if (token) {
           const res = await fetch(`${API}/api/progress`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -42730,6 +42797,22 @@ function App() {
   }, [completedTopics, goldMastery, coins, totalSolved, mode]);
 
 
+  // Sync current mode to window global for QuizLayoutExtension
+  useEffect(() => {
+    window.currentTenaliMode = mode;
+  }, [mode])
+
+  // Custom event listener to change modes
+  useEffect(() => {
+    const handleModeChange = (e) => {
+      if (e.detail) {
+        setMode(e.detail);
+      }
+    };
+    window.addEventListener('tenali-change-mode', handleModeChange);
+    return () => window.removeEventListener('tenali-change-mode', handleModeChange);
+  }, []);
+
   // Listen for navigation events from AuthMenu
   useEffect(() => {
     const onNav = (e) => { setMode(e.detail.mode) }
@@ -42765,36 +42848,23 @@ function App() {
       setCelebrationQueue(prev => prev.slice(1));
     };
 
-    // Confetti particles generator (40 random floating pieces)
-    const renderConfetti = () => {
-      return Array.from({ length: 40 }).map((_, idx) => {
-        const left = Math.random() * 100;
-        const delay = Math.random() * 2;
-        const duration = Math.random() * 2 + 1.5;
-        const size = Math.random() * 10 + 6;
-        const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444'];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        return (
-          <div
-            key={idx}
-            className="confetti-piece"
-            style={{
-              left: `${left}%`,
-              animationDelay: `${delay}s`,
-              animationDuration: `${duration}s`,
-              backgroundColor: color,
-              width: `${size}px`,
-              height: `${size}px`,
-              transform: `rotate(${Math.random() * 360}deg)`
-            }}
-          />
-        );
-      });
-    };
-
     return (
       <div className="celebration-overlay" onClick={dismissCelebration}>
-        {renderConfetti()}
+        {confettiParticles.map(p => (
+          <div
+            key={p.id}
+            className="confetti-piece"
+            style={{
+              left: `${p.left}%`,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.duration}s`,
+              backgroundColor: p.color,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              transform: `rotate(${p.rotation}deg)`
+            }}
+          />
+        ))}
         <div className="celebration-card" onClick={e => e.stopPropagation()}>
           <h2 className="celebration-title">{active.title}</h2>
           <div className="celebration-badge-container">
@@ -42816,7 +42886,7 @@ function App() {
 
   // ========== ROUTING: URL-BASED (STUDENT PAGES) ==========
   // Check if current URL matches a specific student page
-  const pathname = window.location.pathname.replace(/\/$/, '').toLowerCase()
+  const pathname = stripBase(window.location.pathname)
 
 
 
@@ -42830,7 +42900,7 @@ function App() {
         <div className="card">
           <AuthGate>
             <div style={{ position: 'relative' }}>
-              <ProfileShowcase completedTopics={completedTopics} onSelectTopic={(topicKey) => { window.location.href = `/?mode=${topicKey}` }} />
+              <ProfileShowcase completedTopics={completedTopics} onSelectTopic={(topicKey) => { window.location.href = withBase(`/?mode=${topicKey}`) }} />
             </div>
           </AuthGate>
         </div>
@@ -42906,7 +42976,20 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <TatsavitLineApp onBack={() => { window.location.href = '/' }} />
+        <TatsavitLineApp onBack={() => { window.location.href = withBase('/') }} />
+      </>
+    )
+  }
+
+  if (pathname === '/riddle') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <div className="app-shell"><div className="card">
+          <RiddleApp onBack={() => { window.location.href = withBase('/') }} />
+        </div></div>
       </>
     )
   }
@@ -42918,7 +43001,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <TatsavitApp onBack={() => { window.location.href = '/' }} />
+        <TatsavitApp onBack={() => { window.location.href = withBase('/') }} />
       </>
     )
   }
@@ -42931,7 +43014,7 @@ function App() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
         <div className="card">
-          <LanguageDashboard onBack={() => { window.location.href = '/' }} />
+          <LanguageDashboard onBack={() => { window.location.href = withBase('/') }} />
         </div>
       </div>
     )
@@ -42944,7 +43027,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><TenthApp onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><TenthApp onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -42958,7 +43041,7 @@ function App() {
         </button>
         <div className="app-shell">
           <div className="card">
-            <GeometryApp onBack={() => { window.location.href = '/' }} />
+            <GeometryApp onBack={() => { window.location.href = withBase('/') }} />
           </div>
         </div>
       </>
@@ -42969,37 +43052,37 @@ function App() {
     return (<>
       <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>{theme === 'dark' ? '☀️' : '🌙'}</button>
       <div className="app-shell"><div className="card">
-        <GymApp onBack={() => { window.location.href = '/tenth' }} />
+        <GymApp onBack={() => { window.location.href = withBase('/tenth') }} />
       </div></div>
     </>)
   }
-  if (pathname === '/bridge1') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge1App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge2') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge2App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge3') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge3App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge4') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge4App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge5') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge5App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge6') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge6App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge7') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge7App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge8') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge8App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge9') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge9App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge10') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge10App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge11') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge11App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge12') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge12App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge13') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge13App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge14') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge14App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge15') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge15App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge16') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge16App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge17') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge17App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge18') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge18App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge19') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge19App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge20') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge20App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge21') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge21App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge22') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge22App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge23') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge23App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge24') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge24App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge25') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge25App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge26') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge26App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
-  if (pathname === '/bridge27') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge27App onBack={() => { window.location.href = '/chapter5' }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge1') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge1App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge2') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge2App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge3') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge3App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge4') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge4App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge5') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge5App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge6') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge6App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge7') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge7App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge8') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge8App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge9') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge9App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge10') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge10App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge11') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge11App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge12') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge12App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge13') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge13App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge14') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge14App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge15') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge15App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge16') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge16App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge17') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge17App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge18') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge18App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge19') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge19App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge20') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge20App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge21') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge21App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge22') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge22App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge23') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge23App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge24') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge24App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge25') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge25App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge26') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge26App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
+  if (pathname === '/bridge27') return (<><button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button><div className="app-shell"><div className="card"><AuthGate><Bridge27App onBack={() => { window.location.href = withBase('/chapter5') }} /></AuthGate></div></div></>)
 
   // Route: /linearalgebra → Linear Algebra Module 1 (Interactive Learning)
   if (pathname === '/linearalgebra' || pathname === '/la') {
@@ -43009,7 +43092,7 @@ function App() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
         <div className="app-shell"><div className="card">
-          <LinearAlgebraApp onBack={() => { window.location.href = '/' }} />
+          <LinearAlgebraApp onBack={() => { window.location.href = withBase('/') }} />
         </div></div>
       </>
     )
@@ -43022,7 +43105,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter1App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter1App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43034,7 +43117,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter2App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter2App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43046,7 +43129,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter3App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter3App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43058,7 +43141,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter4App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter4App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43070,7 +43153,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter5App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter5App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43082,7 +43165,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter6App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter6App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43094,7 +43177,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter7App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter7App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43106,7 +43189,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter8App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter8App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43118,7 +43201,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter9App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter9App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43130,7 +43213,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter10App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter10App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43142,7 +43225,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter11App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter11App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43154,7 +43237,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter12App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter12App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43166,7 +43249,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter13App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter13App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43178,7 +43261,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter14App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter14App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43190,7 +43273,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter15App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter15App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43202,7 +43285,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter16App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter16App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43214,7 +43297,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter17App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter17App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43226,7 +43309,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter18App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter18App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43238,7 +43321,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter19App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter19App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43250,7 +43333,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter20App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter20App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43262,7 +43345,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter21App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter21App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43274,7 +43357,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter22App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter22App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43286,7 +43369,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter23App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter23App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43298,7 +43381,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <AuthGate><Chapter24App onBack={() => { window.location.href = '/' }} /></AuthGate>
+        <AuthGate><Chapter24App onBack={() => { window.location.href = withBase('/') }} /></AuthGate>
       </>
     )
   }
@@ -43310,7 +43393,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <Tatsavit1App onBack={() => { window.location.href = '/' }} />
+        <Tatsavit1App onBack={() => { window.location.href = withBase('/') }} />
       </>
     )
   }
@@ -43322,7 +43405,7 @@ function App() {
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <RiyaApp onBack={() => { window.location.href = '/' }} />
+        <RiyaApp onBack={() => { window.location.href = withBase('/') }} />
       </>
     )
   }
@@ -43335,6 +43418,95 @@ function App() {
   // Route: /extendedeuclid → Extended Euclidean algorithm quiz
   if (pathname === '/extendedeuclid') {
     return <ExtendedEuclidApp />
+  }
+
+  // Route: /linear → Linear Algebra flashcards (proctored quiz)
+  // Proctoring starts automatically on this route — no toggle needed.
+  if (pathname === '/linear') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <ProctorPanel />
+        <div className="app-shell"><div className="card">
+          <ProctoredQuiz
+            quizType="linear-algebra"
+            onBack={() => { window.location.href = withBase('/') }}
+            autoStartConsent={true}
+          >
+            <LinearAlgebraApp onBack={() => { window.location.href = withBase('/') }} />
+          </ProctoredQuiz>
+        </div></div>
+        <a href={withBase('/proctor')} className="proctor-dashboard-fab" title="Instructor Dashboard — view all proctor sessions">
+          📊 Dashboard
+        </a>
+      </>
+    )
+  }
+
+  // Route: /proctor → Proctor Dashboard (instructor view)
+  if (pathname === '/proctor') {
+    const ProctorDash = ProctorDashboard
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <div className="app-shell"><div className="card">
+          <ProctorDash onBack={() => { window.location.href = withBase('/') }} />
+        </div></div>
+      </>
+    )
+  }
+
+  // Route: /playground → Code Playground
+  if (pathname === '/playground') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <PlaygroundApp onBack={() => { window.location.href = withBase('/') }} />
+      </>
+    )
+  }
+
+  // Route: /battle → Battle Arena
+  if (pathname === '/battle') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <BattleApp onBack={() => { window.location.href = withBase('/') }} />
+      </>
+    )
+  }
+
+  // Route: /sudoku → Sudoku Puzzle
+  if (pathname === '/sudoku') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <SudokuApp onBack={() => { window.location.href = withBase('/') }} />
+      </>
+    )
+  }
+
+  // Route: /local-compiler → Local Compiler (direct subprocess execution)
+  // Also supports /playground2 for backward compatibility
+  if (pathname === '/local-compiler' || pathname === '/playground2') {
+    return (
+      <>
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
+        </button>
+        <LocalCompilerApp onBack={() => { window.location.href = withBase('/') }} />
+      </>
+    )
   }
 
   // Route: /supertables1 → Adaptive speed drill (2-phase)
@@ -43357,7 +43529,7 @@ function App() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
         <div className="app-shell">
-          <Vachana onBack={() => { window.location.href = '/' }} />
+          <Vachana onBack={() => { window.location.href = withBase('/') }} />
         </div>
       </>
     )
@@ -44052,6 +44224,448 @@ function App() {
     )
   }
 
+  // ========== MATH RIDDLES APP ==========
+  function RiddleApp({ onBack }) {
+    const [stage, setStage] = useState('setup')
+    const [difficulty, setDifficulty] = useState(2)
+    const [selectedType, setSelectedType] = useState(null)
+    const [riddleType, setRiddleType] = useState(null)
+    const [maxForType, setMaxForType] = useState(44)
+    const [question, setQuestion] = useState(null)
+    const [answer, setAnswer] = useState('')
+    const [selectedOption, setSelectedOption] = useState(null)
+    const [feedback, setFeedback] = useState('')
+    const [isCorrect, setIsCorrect] = useState(null)
+    const [revealed, setRevealed] = useState(false)
+    const [hintUsed, setHintUsed] = useState(false)
+    const [hintText, setHintText] = useState('')
+    const [solutionSteps, setSolutionSteps] = useState(null)
+    const [score, setScore] = useState(0)
+    const [total, setTotal] = useState(0)
+    const [wrongAttempts, setWrongAttempts] = useState(0)
+    const [questionNumber, setQuestionNumber] = useState(0)
+    const [totalQuestions, setTotalQuestions] = useState(15)
+    const [results, setResults] = useState([])
+    const [loading, setLoading] = useState(false)
+    const submittedRef = useRef(false)
+    const usedIdsRef = useRef([])
+
+    const fetchQuestion = async (typeOverride) => {
+      const type = typeOverride !== undefined ? typeOverride : riddleType
+      setLoading(true)
+      try {
+        const typeParam = type ? `&type=${encodeURIComponent(type)}` : ''
+        const usedParam = usedIdsRef.current.length ? `&used=${encodeURIComponent(JSON.stringify(usedIdsRef.current))}` : ''
+        const r = await fetch(`${API}/riddle-api/question?difficulty=${difficulty}${typeParam}${usedParam}`)
+        const data = await r.json()
+        if (data.id != null) usedIdsRef.current = [...usedIdsRef.current, data.id]
+        setQuestion(data)
+        setAnswer('')
+        setSelectedOption(null)
+        setFeedback('')
+        setIsCorrect(null)
+        setRevealed(false)
+        setHintUsed(false)
+        setHintText('')
+        setSolutionSteps(null)
+        submittedRef.current = false
+      } catch (e) { console.error('Failed to fetch riddle:', e) }
+      setLoading(false)
+    }
+
+    const startGame = () => {
+      let n = Number(totalQuestions)
+      if (!Number.isFinite(n) || n < 1) n = Math.min(15, maxForType)
+      if (n > maxForType) n = maxForType
+      setTotalQuestions(n)
+      setStage('playing')
+      setScore(0); setTotal(0); setWrongAttempts(0)
+      setQuestionNumber(1); setResults([])
+      usedIdsRef.current = []
+      fetchQuestion()
+    }
+
+    const startGameWithType = (type) => {
+      setRiddleType(type)
+      startGame()
+      fetchQuestion(type)
+    }
+
+    const selectType = async (type) => {
+      setSelectedType(type)
+      try {
+        const r = await fetch(`${API}/riddle-api/count?type=${encodeURIComponent(type)}`)
+        const data = await r.json()
+        const max = data.count || 44
+        setMaxForType(max)
+        setTotalQuestions(prev => {
+          const n = Number(prev)
+          return (Number.isFinite(n) && n >= 1 && n <= max) ? n : Math.min(15, max)
+        })
+      } catch (e) { setMaxForType(44) }
+    }
+
+    const advance = () => {
+      if (questionNumber >= totalQuestions) { setStage('finished'); return }
+      setQuestionNumber(n => n + 1)
+      fetchQuestion()
+    }
+
+    const handleSubmit = async () => {
+      if (!question || revealed || submittedRef.current) return
+      const userAnswer = question.type === 'image-option' ? selectedOption : answer.trim()
+      if (!userAnswer) return
+      submittedRef.current = true
+
+      try {
+        const r = await fetch(`${API}/riddle-api/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: question.id, answer: userAnswer })
+        })
+        const data = await r.json()
+        setIsCorrect(data.correct); setRevealed(true)
+        setTotal(t => t + 1)
+        if (data.correct) { setScore(s => s + 1); setFeedback('Correct! Well done!') }
+        else {
+          setWrongAttempts(w => w + 1)
+          setFeedback(`Not quite. The answer was ${data.correctAnswer}`)
+        }
+        fetchSolution()
+        setResults(prev => [...prev, { prompt: question.title || 'Riddle', userAnswer, correctAnswer: data.correctAnswer, correct: data.correct }])
+      } catch (e) { submittedRef.current = false; console.error('Check failed:', e) }
+    }
+
+    const fetchSolution = async () => {
+      if (!question) return
+      try {
+        const r = await fetch(`${API}/riddle-api/solution`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: question.id })
+        })
+        const data = await r.json()
+        setSolutionSteps(data.steps || [])
+      } catch (e) {
+        setSolutionSteps(null)
+      }
+    }
+
+    const handleSolve = async () => {
+      if (!question || revealed) return
+      submittedRef.current = true
+      setIsCorrect(false); setRevealed(true)
+      setHintUsed(true)
+      setFeedback('Solved — here\'s the step-by-step solution!')
+      fetchSolution()
+      setResults(prev => [...prev, { prompt: question.title || 'Riddle', userAnswer: '(solved)', correctAnswer: question.answer, correct: false }])
+    }
+
+    const handleHint = () => {
+      if (!question) return
+      setHintUsed(true)
+      setHintText(question.hint || 'No hint available.')
+    }
+
+    const handleKeyDown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (!revealed) handleSubmit(); else advance() } }
+
+    const numpadPress = (key) => {
+      if (revealed) return
+      if (key === '⌫') setAnswer(a => a.slice(0, -1))
+      else if (key === '±') setAnswer(a => a.startsWith('-') ? a.slice(1) : '-' + a)
+      else setAnswer(a => a + key)
+    }
+
+    const stars = hintUsed ? (wrongAttempts <= 1 ? 2 : 1) : (wrongAttempts === 0 ? 3 : wrongAttempts <= 1 ? 2 : 1)
+    const pct = total > 0 ? Math.round((score / total) * 100) : 0
+
+    return (
+      <>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+            <button className="back-button" onClick={onBack}>&larr;</button>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', margin: 0, flex: 1, textAlign: 'center', color: 'var(--clr-text)' }}>Math Riddles</h2>
+            <div style={{ width: 40 }} />
+          </div>
+
+          {stage === 'setup' && (
+            <div className="welcome-box">
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', color: 'var(--clr-text)', marginBottom: '8px' }}>Math Riddles</h2>
+              <p className="welcome-text">Pick a riddle type to begin!</p>
+
+              {/* Flashcards for each riddle type */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', margin: '16px 0' }}>
+                {[
+                  {
+                    type: 'find-rule',
+                    icon: '🔍',
+                    label: 'Find the Rule',
+                    color: 'var(--clr-accent)',
+                    desc: 'Study input → output pairs, spot the hidden formula, then apply it to a new input.',
+                    example: '3 → 8, 7 → 12  ⇒  9 → ?'
+                  },
+                  {
+                    type: 'sequence',
+                    icon: '🔢',
+                    label: 'Number Sequence',
+                    color: '#7c5cff',
+                    desc: 'Look at the pattern in a list of numbers and predict what comes next.',
+                    example: '2, 4, 8, 16, ?'
+                  },
+                  {
+                    type: 'logic',
+                    icon: '🧩',
+                    label: 'Logic Puzzle',
+                    color: '#ff8a5c',
+                    desc: 'Read a word problem, reason it through step by step to reach the answer.',
+                    example: 'If all Bloops are Razzies…'
+                  },
+                  {
+                    type: 'image',
+                    icon: '🖼️',
+                    label: 'Visual Puzzle',
+                    color: '#2bbf9c',
+                    desc: 'Decode shapes, patterns and images — pick the option that completes the picture.',
+                    example: 'Which piece fits the gap?'
+                  }
+                ].map((fc, i) => (
+                  <div key={i} onClick={() => selectType(fc.type)}
+                    style={{ background: selectedType === fc.type ? 'var(--clr-accent-soft)' : 'var(--clr-surface)', border: selectedType === fc.type ? `2px solid ${fc.color}` : '1px solid var(--clr-border)', borderTop: `3px solid ${fc.color}`, borderRadius: 'var(--radius)', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', transition: 'transform 0.12s, box-shadow 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)' }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>{fc.icon}</span>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', color: fc.color, fontWeight: 700 }}>{fc.label}</span>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', lineHeight: 1.45, color: 'var(--clr-text-soft)', margin: '0 0 8px' }}>{fc.desc}</p>
+                    <div style={{ fontSize: '0.82rem', fontStyle: 'italic', color: 'var(--clr-text)', background: 'var(--clr-input)', borderRadius: '8px', padding: '6px 8px' }}>{fc.example}</div>
+                    <div style={{ marginTop: '10px', fontSize: '0.78rem', fontWeight: 600, color: fc.color }}>{selectedType === fc.type ? '✓ Selected' : '▶ Select →'}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Options appear only after a type is selected */}
+              {selectedType && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '12px 0' }}>
+                    {[{ v: 1, l: 'Easy' }, { v: 2, l: 'Medium' }, { v: 3, l: 'Hard' }, { v: 5, l: 'All' }].map(d => (
+                      <button key={d.v} className={`radio-pill${difficulty === d.v ? ' active' : ''}`} onClick={() => setDifficulty(d.v)}>{d.l}</button>
+                    ))}
+                  </div>
+                  <div className="question-count-row" style={{ marginTop: '12px' }}>
+                    <label className="question-count-label">How many riddles? (max {maxForType})</label>
+                    <input className="answer-input question-count-input" type="text" value={totalQuestions} onChange={e => {
+                      const v = e.target.value
+                      if (v === '') { setTotalQuestions(''); return }
+                      if (/^\d+$/.test(v)) { const n = Number(v); if (n >= 1 && n <= maxForType) setTotalQuestions(n); }
+                    }} onBlur={() => { if (totalQuestions === '' || Number(totalQuestions) < 1) setTotalQuestions(Math.min(15, maxForType)) }} />
+                  </div>
+                  <div className="button-row">
+                    <button onClick={() => startGameWithType(selectedType)}>Start Riddles</button>
+                    <button onClick={() => { setSelectedType(null); setRiddleType(null); setMaxForType(44); startGame() }} style={{ background: 'transparent', border: '1px solid var(--clr-text-soft)', color: 'var(--clr-text-soft)' }}>Mixed</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {stage === 'playing' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                <div className="progress-pill center">Riddle {questionNumber}/{totalQuestions}</div>
+                {riddleType && <div className="progress-pill center" style={{ textTransform: 'capitalize' }}>{riddleType === 'image' ? 'Visual Puzzle' : riddleType.replace('-', ' ')}</div>}
+                <div className="score-pill">⭐ {score}/{total}</div>
+              </div>
+
+              {loading && <div style={{ textAlign: 'center', padding: '24px', color: 'var(--clr-text-soft)' }}>Loading riddle…</div>}
+
+              {!loading && question && (
+                <>
+                  {/* Title */}
+                  {question.title && <h3 style={{ fontFamily: 'var(--font-display)', textAlign: 'center', fontSize: '1.3rem', color: 'var(--clr-text)', margin: '0 0 12px' }}>{question.title}</h3>}
+
+                  {/* Find Rule: Equation Table */}
+                  {question.type === 'find-rule' && question.equations && (
+                    <div style={{ background: 'var(--clr-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--clr-border)', padding: '16px 20px', margin: '0 auto 16px', maxWidth: 320 }}>
+                      {question.equations.map((eq, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < question.equations.length - 1 ? '1px solid var(--clr-border)' : 'none', fontSize: '1.1rem' }}>
+                          <span style={{ color: 'var(--clr-text)' }}>{eq.input}</span>
+                          <span style={{ color: 'var(--clr-accent)', fontWeight: 600 }}>→</span>
+                          <span style={{ color: 'var(--clr-text)' }}>{eq.output}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '1.1rem', borderTop: '2px solid var(--clr-accent)', marginTop: '4px' }}>
+                        <span style={{ color: 'var(--clr-text)' }}>{question.question}</span>
+                        <span style={{ color: 'var(--clr-accent)', fontWeight: 600 }}>→</span>
+                        <span style={{ color: 'var(--clr-accent)', fontWeight: 700, fontStyle: 'italic' }}>?</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sequence Type */}
+                  {question.type === 'sequence' && question.sequence && (
+                    <div style={{ textAlign: 'center', margin: '0 auto 16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', margin: '0 0 8px' }}>
+                        {question.sequence.map((n, i) => (
+                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 'var(--radius)', background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--clr-text)' }}>{n}</span>
+                        ))}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 'var(--radius)', background: 'var(--clr-accent-soft)', border: '2px dashed var(--clr-accent)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--clr-accent)' }}>?</span>
+                      </div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--clr-text-soft)', margin: 0 }}>{question.question}</p>
+                    </div>
+                  )}
+
+                  {/* Logic Type */}
+                  {question.type === 'logic' && (
+                    <div className="question-box" style={{ textAlign: 'center', margin: '0 auto 16px', maxWidth: 480, padding: '20px', background: 'var(--clr-surface)', borderRadius: 'var(--radius)', border: '1px solid var(--clr-border)' }}>
+                      <p style={{ fontSize: '1.1rem', lineHeight: 1.6, color: 'var(--clr-text)', margin: 0 }}>{question.question}</p>
+                    </div>
+                  )}
+
+                  {/* Image Types */}
+                  {(question.type === 'image-numpad' || question.type === 'image-option') && question.image && (
+                    <div style={{ textAlign: 'center', margin: '0 auto 16px' }}>
+                      <img src={question.image} alt="Riddle" style={{ maxWidth: '100%', maxHeight: 280, width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 'var(--radius)', border: '1px solid var(--clr-border)', background: 'var(--clr-input)' }} />
+                    </div>
+                  )}
+
+                  {/* Answer Input */}
+                  {!revealed && question.type !== 'image-option' && (
+                    <div style={{ textAlign: 'center', margin: '0 0 12px' }}>
+                      <input
+                        className="answer-input"
+                        type="text"
+                        value={answer}
+                        onChange={e => setAnswer(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Your answer"
+                        autoFocus
+                        style={{ maxWidth: 200, textAlign: 'center', fontSize: '1.3rem' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Option Buttons for image-option type */}
+                  {!revealed && question.type === 'image-option' && question.options && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', margin: '0 0 12px' }}>
+                      {question.options.map((opt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setSelectedOption(opt)}
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 'var(--radius)',
+                            border: selectedOption === opt ? '2px solid var(--clr-accent)' : '1.5px solid var(--clr-border)',
+                            background: selectedOption === opt ? 'var(--clr-accent-soft)' : 'var(--clr-input)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: question.optionImages ? '0' : '1.2rem',
+                            fontWeight: 600,
+                            color: 'var(--clr-text)',
+                            transition: 'all 0.15s',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {question.optionImages && question.optionImages[i] ? (
+                            <img src={question.optionImages[i]} alt={opt} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }} />
+                          ) : opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Numpad */}
+                  {!revealed && (question.type !== 'image-option') && (
+                    <div className="numpad" style={{ maxWidth: 280, margin: '0 auto 12px' }}>
+                      {[['7','8','9'],['4','5','6'],['1','2','3']].map((row, ri) => (
+                        <div key={ri} className="numpad-row">
+                          {row.map(k => <button key={k} className="numpad-key" onClick={() => numpadPress(k)}>{k}</button>)}
+                        </div>
+                      ))}
+                      <div className="numpad-row">
+                        <button className="numpad-key numpad-special" onClick={() => numpadPress('±')}>±</button>
+                        <button className="numpad-key" onClick={() => numpadPress('0')}>0</button>
+                        <button className="numpad-key numpad-special" onClick={() => numpadPress('⌫')}>⌫</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback */}
+                  {revealed && (
+                    <div className={`feedback ${isCorrect ? 'correct' : 'wrong'}`} style={{ marginBottom: '12px' }}>{feedback}</div>
+                  )}
+
+                  {/* Hint */}
+                  {hintText && (
+                    <div className="feedback solve" style={{ marginBottom: '12px', textAlign: 'center' }}>💡 {hintText}</div>
+                  )}
+
+                  {/* Step-by-step solution (deep) */}
+                  {solutionSteps && solutionSteps.length > 0 && (
+                    <div style={{ background: 'var(--clr-surface)', border: '1px solid var(--clr-accent)', borderRadius: 'var(--radius)', padding: '14px 18px', margin: '0 auto 14px', maxWidth: 460, textAlign: 'left' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', color: 'var(--clr-accent)', fontWeight: 700, marginBottom: '8px', textAlign: 'center' }}>🔦 Step-by-Step Solution</div>
+                      {solutionSteps.map((step, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '10px', padding: '6px 0', borderBottom: i < solutionSteps.length - 1 ? '1px solid var(--clr-border)' : 'none', fontSize: '0.92rem', lineHeight: 1.5, color: 'var(--clr-text)' }}>
+                          <span style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', background: 'var(--clr-accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}>{i + 1}</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Buttons */}
+                  <div className="button-row">
+                    {!revealed ? (
+                      <>
+                        <button onClick={handleSubmit} disabled={question.type === 'image-option' ? !selectedOption : !answer.trim()}>Submit</button>
+                        <button onClick={handleSolve} style={{ background: 'transparent', border: '1px solid var(--clr-accent)', color: 'var(--clr-accent)' }}>Solve</button>
+                        {!hintUsed && <button onClick={handleHint} style={{ background: 'transparent', border: '1px solid var(--clr-text-soft)', color: 'var(--clr-text-soft)' }}>💡 Hint</button>}
+                      </>
+                    ) : (
+                      <button onClick={advance}>{questionNumber >= totalQuestions ? 'Finish' : 'Next Riddle'}</button>
+                    )}
+                  </div>
+
+                  {/* Results so far */}
+                  {results.length > 0 && (
+                    <div style={{ marginTop: '16px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                        <thead><tr style={{ color: 'var(--clr-text-soft)' }}><th style={{ textAlign: 'left', padding: '4px 8px' }}>#</th><th style={{ textAlign: 'left', padding: '4px 8px' }}>Riddle</th><th style={{ textAlign: 'center', padding: '4px 8px' }}>Your Answer</th><th style={{ textAlign: 'center', padding: '4px 8px' }}>Correct?</th></tr></thead>
+                        <tbody>
+                          {results.map((r, i) => (
+                            <tr key={i} style={{ borderTop: '1px solid var(--clr-border)' }}>
+                              <td style={{ padding: '4px 8px', color: 'var(--clr-text-soft)' }}>{i + 1}</td>
+                              <td style={{ padding: '4px 8px', color: 'var(--clr-text)' }}>{r.prompt}</td>
+                              <td style={{ padding: '4px 8px', textAlign: 'center', color: 'var(--clr-text)' }}>{r.userAnswer}</td>
+                              <td style={{ padding: '4px 8px', textAlign: 'center', color: r.correct ? 'var(--clr-correct)' : 'var(--clr-wrong)' }}>{r.correct ? '✓' : '✗'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {stage === 'finished' && (
+            <div className="welcome-box">
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>{'⭐'.repeat(stars)}</div>
+              <p className="final-score">{score}/{total} Riddles Solved!</p>
+              <p className="welcome-text">Accuracy: {pct}% · Hints used: {hintUsed ? 'Yes' : 'No'}</p>
+              <div className="button-row">
+                <button onClick={() => { setStage('setup'); setRiddleType(null) }}>Play Again</button>
+                <button onClick={onBack} style={{ background: 'transparent', border: '1px solid var(--clr-accent)', color: 'var(--clr-accent)' }}>Back to Home</button>
+              </div>
+            </div>
+          )}
+      </>
+    )
+  }
+
   // ========== ROUTING: MODE-BASED (HOME MENU + QUIZZES) ==========
   // Map quiz mode keys to their component classes
   const modeMap = {
@@ -44063,12 +44677,15 @@ function App() {
     'mensuration-lab': MensurationLabApp,
     'basic-arith-lab': BasicArithmeticLabApp,
     geocraft: GeometryApp,
+    battle: BattleApp,          // Live fastest-finger duels
+    sudoku: SudokuApp,          // 9x9 Sudoku puzzle
 
     'comic-addition': ComicAdditionApp,
     gk: GKApp,                    // General Knowledge
     addition: AdditionApp,         // Basic addition
     'column-addition': ColumnAdditionApp, // Column Addition with carries
     'column-multiplication': ColumnMultiplicationApp, // Column Multiplication with carries
+    'column-division': ColumnDivisionApp, // Column Division with long division steps
     'column-subtraction': ColumnSubtractionApp, // Column Subtraction with borrows
     quadratic: QuadraticApp,       // Quadratic substitution
     multiply: MultiplyApp,         // Multiplication tables
@@ -44109,10 +44726,13 @@ function App() {
     integ: IntegApp,               // Integration
     stdform: StdFormApp,           // Standard Form
     bounds: BoundsApp,             // Bounds
-    sdt: SDTApp,                   // Speed, Distance, Time
+    sdt: SDTApp,
+    contrastlist: ContrastChallengeApp,   // Contrast Challenge
     variation: VariationApp,       // Variation
     hcflcm: InteractiveLcmHcfApp,  // HCF & LCM
     idlivada: IdliVadaSambharApp,  // Idli–Vada–Sambhar (Multiples, Common Multiples & LCM)
+    carjourney: CarJourneyApp,     // The Car Journey (Feature CR — 16-stop math road trip)
+    realworld: RealWorldHubApp,    // Real-World hub (Feature CR) — phenomenon pathway cards
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
     binomial: BinomialApp,         // Binomial Theorem
@@ -44154,7 +44774,10 @@ function App() {
     lineqgym: LinEqGymApp,         // LinearEquations-Gym — solve linear equations (MCQ)
     indicesgym: IndicesGymApp,     // Indices-Gym — index laws (MCQ)
     polygym: PolyGymApp,           // Polynomials Gym — arithmetic → monomial algebra (MCQ)
+    treasurehunt: TreasureHuntApp, // Treasure Hunt — solve & seek grid game
+    // matrixmystics mode removed — Matrix Mystics content now embedded in LinearAlgebraApp's mission quiz
     trackProgress: null,
+    riddle: RiddleApp,              // Math Riddles
   }
 
   // Get the component to render (or null if mode not set)
@@ -44262,7 +44885,7 @@ function App() {
     }
 
     if (ActiveApp) {
-      const element = (
+      const appEl = (
         <ActiveApp
           completedTopics={completedTopics}
           goldMastery={goldMastery}
@@ -44298,7 +44921,7 @@ function App() {
           isGoalMode={isGoalMode}
         />
       );
-      return journeyContext ? <AuthGate>{element}</AuthGate> : element;
+      return journeyContext ? <AuthGate>{appEl}</AuthGate> : appEl;
     }
 
     return (
@@ -44317,10 +44940,10 @@ function App() {
 
   return (
     <div className="app-shell">
-      {showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
+      {mode === null && showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
       {/* The guided tour walks the student around the very features Focus
           Mode is hiding, so it comes down with them. */}
-      {!focusActive && (
+      {mode === null && !focusActive && (
         <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
           🧭 Guide
         </button>
@@ -44329,15 +44952,18 @@ function App() {
       <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
-      {mode === 'vachana' ? (
-        <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-      ) : (
-        <div className="card">
-          {renderContent()}
-        </div>
-      )}
+      <div>
+        {mode === 'vachana' ? (
+          <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
+        ) : (
+          <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>
+            {renderContent()}
+          </div>
+        )}
+      </div>
       {renderCelebrationModal()}
       <MasteryUnlockToast onOpenMap={(id) => { setMapFocusTopicId(id); setMapCelebrateId(id); setMode('topic_map') }} />
+      <ReflectionJournal />
     </div>
   )
 }
@@ -44382,6 +45008,8 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     { key: 'randommix', name: 'Random Mix', subtitle: 'Adaptive cross-topic quiz', color: 'featured' },
     { key: 'custom', name: 'Custom Lesson', subtitle: 'Build your own mixed quiz', color: 'featured' },
     { key: 'gym', name: 'Gym', subtitle: 'Adaptive workout across all 7 gym puzzles', color: 'featured' },
+    { key: 'treasurehunt', name: 'Treasure Hunt', subtitle: 'Solve & seek on a treasure grid', color: 'featured' },
+    { key: 'contrastlist', name: 'Contrast Challenge', subtitle: 'Distinguish similar concepts', color: 'featured' },
     { key: 'vachana', name: 'Vachana', subtitle: 'Mathematical Literacy Lab', color: 'featured' },
   ]
   // Visual Learning Universe lives only in the hamburger menu
@@ -44393,12 +45021,17 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     { key: 'curiosity', name: 'What If', subtitle: 'Explore "What if" variations', color: 'pink' },
   ]
 
+  // Set false to remove the Car Journey card from the home grid (hamburger-only mode).
+  const CJ_SHOW_GRID_CARD = true
+
   // All regular quiz apps sorted alphabetically by name
   const regularApps = [
+    { key: 'battle', name: '⚔️ Battle Arena', subtitle: 'Live fastest-finger duels', color: 'red' },
     { key: 'detective', name: '🔍 Detective Agency', subtitle: 'Solve math mysteries and crack cases!', color: 'indigo' },
     { key: 'comic-addition', name: 'Comic Addition', subtitle: 'Story Mode', color: 'purple' },
     { key: 'addition', name: 'Addition', subtitle: '20-question addition practice', color: 'blue' },
     { key: 'column-addition', name: 'Column Addition', subtitle: 'Vertical addition with carrying', color: 'blue' },
+    { key: 'column-division', name: 'Column Division', subtitle: 'Vertical division with long division', color: 'blue' },
     { key: 'column-multiplication', name: 'Column Multiplication', subtitle: 'Vertical multiplication with carrying', color: 'blue' },
     { key: 'column-subtraction', name: 'Column Subtraction', subtitle: 'Vertical subtraction with borrowing', color: 'blue' },
     { key: 'angles', name: 'Angles', subtitle: 'Lines, points, parallel lines', color: 'green' },
@@ -44464,8 +45097,10 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     { key: 'sqrt', name: 'Square Root', subtitle: 'Nearest-integer square root drill', color: 'green' },
     { key: 'stdform', name: 'Standard Form', subtitle: 'Scientific notation operations', color: 'purple' },
     { key: 'stats', name: 'Statistics', subtitle: 'Mean, median, mode, range', color: 'blue' },
+    { key: 'sudoku', name: 'Sudoku', subtitle: '9x9 number puzzle — fill every row, column & box', color: 'teal' },
     { key: 'surds', name: 'Surds', subtitle: 'Simplify, add, multiply, rationalise', color: 'green' },
     { key: 'tatsavit', name: 'Tatsavit', subtitle: 'Algebra simplification drill', color: 'blue' },
+    ...(CJ_SHOW_GRID_CARD ? [{ key: 'carjourney', name: 'The Car Journey', subtitle: '16-stop math road trip — counting to calculus', color: 'orange' }] : []),
     { key: 'transform', name: 'Transformations', subtitle: 'Reflect, rotate, translate, enlarge', color: 'purple' },
     { key: 'triangles', name: 'Triangles', subtitle: 'Angle sum, isosceles, exterior', color: 'blue' },
     { key: 'trig', name: 'Trigonometry', subtitle: 'SOH-CAH-TOA, sine/cosine rule', color: 'green' },
@@ -44481,7 +45116,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     { key: 'lineqgym', name: 'LinearEquations-Gym', subtitle: 'Solve linear equations (MCQ)', color: 'blue' },
     { key: 'indicesgym', name: 'Indices-Gym', subtitle: 'Index laws (MCQ)', color: 'green' },
     { key: 'polygym', name: 'Polynomials Gym', subtitle: 'Arithmetic → monomial algebra (MCQ)', color: 'blue' },
-  ]
+  ] // end regularApps (MatrixMystics tile removed — uses LinearAlgebraApp via linearalgebra mode)
 
   // Combined list for search filtering
   const allApps = [...hamburgerApps, ...regularApps]
@@ -44594,7 +45229,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
               <button key={app.key} onClick={() => {
                 setMenuOpen(false);
                 if (app.isRedirect) {
-                  window.location.href = app.path;
+                  window.location.href = withBase(app.path);
                 } else {
                   onSelect(app.key);
                 }
@@ -44610,6 +45245,18 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
             ))}
             <div style={{ height: '1px', background: 'var(--clr-border)', margin: '4px 0' }} />
 
+            {/* Real-World hub (Feature CR) — opens the phenomenon pathway cards */}
+            <button onClick={() => { setMenuOpen(false); onSelect('realworld') }} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
+              fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
+            }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+              onMouseLeave={e => e.target.style.background = 'none'}>
+              <strong style={{ color: 'var(--clr-accent)' }}>🌍 Real-World</strong>
+              <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Math pathways through real phenomena</span>
+            </button>
+            <div style={{ height: '1px', background: 'var(--clr-border)', margin: '4px 0' }} />
+
             <button onClick={() => { setMenuOpen(false); onSelect('goalpractice') }} style={{
               display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
               background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
@@ -44618,6 +45265,16 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
                onMouseLeave={e => e.target.style.background = 'none'}>
               <strong style={{ color: 'var(--clr-accent)' }}>🎯 Goal Practice</strong>
               <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Practice with targets & limits</span>
+            </button>
+
+            <button onClick={() => { setMenuOpen(false); onSelect('riddle') }} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
+              fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
+            }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+               onMouseLeave={e => e.target.style.background = 'none'}>
+              <strong style={{ color: 'var(--clr-accent)' }}>🧩 Math Riddles</strong>
+              <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Find the hidden rule & solve puzzles!</span>
             </button>
 
             {filteredHamburgerApps.map(app => (
@@ -44632,7 +45289,29 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
               </button>
             ))}
 
+            {featuredApps.map(app => (
+              <button key={app.key} onClick={() => { setMenuOpen(false); onSelect(app.key) }} style={{
+                display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
+                background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
+                fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
+              }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+                onMouseLeave={e => e.target.style.background = 'none'}>
+                <strong style={{ color: 'var(--clr-accent)' }}>{app.name}</strong>
+                <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>{app.subtitle}</span>
+              </button>
+            ))}
+
             <div style={{ height: '1px', background: 'var(--clr-border)', margin: '4px 0' }} />
+
+            <button onClick={() => { setMenuOpen(false); window.location.href = withBase('/playground'); }} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
+              fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
+            }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+               onMouseLeave={e => e.target.style.background = 'none'}>
+              <strong style={{ color: 'var(--clr-accent)' }}>💻 Code Playground</strong>
+              <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Run code in 50+ languages</span>
+            </button>
 
             <button onClick={() => { setMenuOpen(false); window.location.href = window.location.pathname.replace(/\/$/, '') + '/language'; }} style={{
               display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
@@ -44941,7 +45620,7 @@ function AchievementCollections({ completedTopics = [], onSelectTopic }) {
       {selectedBook && (
         <div className="book-modal-overlay" onClick={() => setSelectedBook(null)}>
           <div className="book-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="book-modal-close" onClick={() => setSelectedBook(null)}>✕</button>
+            <button className="book-modal-close" onClick={() => setSelectedBook(null)} aria-label="Close">✕</button>
             <h2 className="book-modal-title">{selectedBook.name}</h2>
             <p className="book-modal-desc">{selectedBook.description}</p>
 
@@ -45400,7 +46079,7 @@ function ProfileShowcase({ completedTopics = [], onSelectTopic }) {
       {activeBadgeDetail && (
         <div className="badge-detail-overlay" onClick={() => setActiveBadgeDetail(null)}>
           <div className="badge-detail-modal" onClick={e => e.stopPropagation()}>
-            <button className="badge-detail-close" onClick={() => setActiveBadgeDetail(null)}>✕</button>
+            <button className="badge-detail-close" onClick={() => setActiveBadgeDetail(null)} aria-label="Close">✕</button>
 
             <div className="badge-detail-hero">
               <div className={`badge-detail-aura level-${activeBadgeDetail.level}`} style={{ background: activeBadgeDetail.isLocked ? '#e11d48' : '' }} />
@@ -46851,8 +47530,15 @@ function GKApp({ onBack, markTopicCompleted, isGoalMode = false }) {
   }, [isGoalMode]);
   // Timer for tracking response time per question
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('gk', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   // Guard ref: prevents double-fetch from React StrictMode concurrent effect invocations
   const fetchingRef = useRef(false)
+  // Tracks the in-flight question fetch so unmounting can cancel it — the
+  // fetchingRef guard above already stops a second overlapping call from
+  // starting, but nothing previously stopped a pending fetch's setState
+  // calls from firing after the component unmounts.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   /**
    * loadQuestion(excludeIds?): Fetch next GK question from API
@@ -46879,19 +47565,27 @@ function GKApp({ onBack, markTopicCompleted, isGoalMode = false }) {
     setFeedback('')
     setIsCorrect(null)
     setRevealed(false)
-    const ids = excludeIds || seenIds
-    const excludeParam = ids.length ? `?exclude=${ids.join(',')}` : ''
-    const res = await fetch(`${API}/gk-api/question${excludeParam}`)
-    const data = await res.json()
-    setQuestion(data)
-    // Track this question ID so we don't ask it again (persist to localStorage)
-    const newSeen = [...ids, data.id]
-    setSeenIds(newSeen)
-    saveGKSeen(newSeen)
-    setQuestionNumber((n) => n + 1)
-    setLoading(false)
-    fetchingRef.current = false
-    timer.start()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+    try {
+      const ids = excludeIds || seenIds
+      const excludeParam = ids.length ? `?exclude=${ids.join(',')}` : ''
+      const res = await fetch(`${API}/gk-api/question${excludeParam}`, { signal: controller.signal })
+      const data = await res.json()
+      setQuestion(data)
+      // Track this question ID so we don't ask it again (persist to localStorage)
+      const newSeen = [...ids, data.id]
+      setSeenIds(newSeen)
+      saveGKSeen(newSeen)
+      setQuestionNumber((n) => n + 1)
+      timer.start()
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Failed to load GK question:', e)
+    } finally {
+      setLoading(false)
+      fetchingRef.current = false
+    }
   }
 
   /**
@@ -47101,7 +47795,8 @@ function GKApp({ onBack, markTopicCompleted, isGoalMode = false }) {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'gk'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -47134,6 +47829,11 @@ function ColumnAdditionApp({ onBack, initialDifficulty, initialNumQuestions, ini
   const answerRefs = useRef([])
   const carryRefs = useRef([])
   const advanceTimerRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   useEffect(() => { if (!isGoalMode) setSessionGoal('standard') }, [isGoalMode])
 
@@ -47147,16 +47847,23 @@ function ColumnAdditionApp({ onBack, initialDifficulty, initialNumQuestions, ini
   }
 
   const fetchQuestion = async (diff) => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
     setLoading(true)
     try {
-      const r = await fetch(`${API}/column-addition-api/question?difficulty=${diff || difficulty}`)
+      const r = await fetch(`${API}/column-addition-api/question?difficulty=${diff || difficulty}`, { signal: controller.signal })
       const data = await r.json()
       setQuestion(data)
       setAnswerInputs(new Array(data.answerDigits.length).fill(''))
       setCarryInputs(new Array(data.carries.length).fill(''))
       setCorrectAnswerDigits(null); setCorrectCarryDigits(null)
       setTimeout(() => { if (answerRefs.current[data.answerDigits.length - 1]) answerRefs.current[data.answerDigits.length - 1].focus() }, 100)
-    } catch (e) { console.error('Fetch column addition question failed:', e) }
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Fetch column addition question failed:', e)
+    }
     setLoading(false)
   }
 
@@ -47469,6 +48176,11 @@ function ColumnMultiplicationApp({ onBack, initialDifficulty, initialNumQuestion
   const answerRefs = useRef([])
   const carryRefs = useRef([])
   const advanceTimerRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   const [isMulti, setIsMulti] = useState(false)
   const [currentPP, setCurrentPP] = useState(0)
@@ -47497,9 +48209,13 @@ function ColumnMultiplicationApp({ onBack, initialDifficulty, initialNumQuestion
   }
 
   const fetchQuestion = async (diff) => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
     setLoading(true)
     try {
-      const r = await fetch(`${API}/column-multiplication-api/question?difficulty=${diff || difficulty}`)
+      const r = await fetch(`${API}/column-multiplication-api/question?difficulty=${diff || difficulty}`, { signal: controller.signal })
       const data = await r.json()
       setQuestion(data)
       const multi = !!data.multiDigitMultiplier
@@ -47527,7 +48243,10 @@ function ColumnMultiplicationApp({ onBack, initialDifficulty, initialNumQuestion
           if (answerRefs.current[lastIdx]) answerRefs.current[lastIdx].focus()
         }, 100)
       }
-    } catch (e) { console.error('Fetch column multiplication question failed:', e) }
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Fetch column multiplication question failed:', e)
+    }
     setLoading(false)
   }
 
@@ -48301,6 +49020,662 @@ function ColumnMultiplicationApp({ onBack, initialDifficulty, initialNumQuestion
   )
 }
 
+
+/**
+ * ColumnDivisionApp Component
+ * Paper-style long division: dividend ÷ divisor.
+ * User fills quotient digits, products, and partial remainders step by step.
+ */
+function ColumnDivisionApp({ onBack, initialDifficulty, initialNumQuestions, initialStarted, isGoalMode = false }) {
+  const [difficulty, setDifficulty] = useState(initialDifficulty || 'easy')
+  const [numQuestions, setNumQuestions] = useState(initialNumQuestions || String(DEFAULT_TOTAL))
+  const [started, setStarted] = useState(initialStarted || false)
+  const [finished, setFinished] = useState(false)
+  const [question, setQuestion] = useState(null)
+  const [score, setScore] = useState(0)
+  const [questionNumber, setQuestionNumber] = useState(0)
+  const [totalQ, setTotalQ] = useState(DEFAULT_TOTAL)
+  const [feedback, setFeedback] = useState('')
+  const [isCorrect, setIsCorrect] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [revealed, setRevealed] = useState(false)
+  const [results, setResults] = useState([])
+  const timer = useTimer()
+  const [sessionGoal, setSessionGoal] = useState(isGoalMode ? 'speed' : 'standard')
+  const [showHelp, setShowHelp] = useState(false)
+
+  const [quotientInputs, setQuotientInputs] = useState([])
+  const [productInputs, setProductInputs] = useState([])
+  const [remainderInputs, setRemainderInputs] = useState([])
+  const [solutionSteps, setSolutionSteps] = useState(null)
+  const [activeBorrows, setActiveBorrows] = useState(new Set())
+  const [borrowInputs, setBorrowInputs] = useState({})
+  const [hoveredBorrow, setHoveredBorrow] = useState(null)
+  const quotientRefs = useRef([])
+  const productRefs = useRef([])
+  const remainderRefs = useRef([])
+  const borrowRefs = useRef({})
+  const advanceTimerRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
+
+  const COL = 40
+  const BRACKET = 80
+
+  useEffect(() => { if (!isGoalMode) setSessionGoal('standard') }, [isGoalMode])
+
+  const startQuiz = async () => {
+    const q = Number(numQuestions) || DEFAULT_TOTAL
+    setTotalQ(q); setScore(0); setQuestionNumber(1); setResults([])
+    setFinished(false); setStarted(true); setFeedback(''); setIsCorrect(null); setRevealed(false)
+    timer.reset(); timer.start()
+    await fetchQuestion()
+  }
+
+  const fetchQuestion = async (diff) => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
+    setLoading(true)
+    try {
+      const r = await fetch(`${API}/column-division-api/question?difficulty=${diff || difficulty}`, { signal: controller.signal })
+      const data = await r.json()
+      setQuestion(data)
+      setQuotientInputs(new Array(data.quotientDigits.length).fill(''))
+      setProductInputs(data.steps.map(s => new Array(String(s.product).length).fill('')))
+      setRemainderInputs(data.steps.map(s => new Array(Math.max(String(s.remainder).length, 1)).fill('')))
+      setBorrowInputs({})
+      setActiveBorrows(new Set())
+      setTimeout(() => { if (quotientRefs.current[0]) quotientRefs.current[0].focus() }, 100)
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Fetch column division question failed:', e)
+    }
+    setLoading(false)
+  }
+
+  const activateBorrow = (rowKey, col, isCurrentlyActive) => {
+    const key = `${rowKey}-${col}`
+    if (isCurrentlyActive) {
+      setActiveBorrows(prev => { const next = new Set(prev); next.delete(key); return next })
+      setBorrowInputs(prev => { const next = { ...prev }; delete next[key]; return next })
+    } else {
+      setActiveBorrows(prev => { const next = new Set(prev); next.add(key); return next })
+      setTimeout(() => { if (borrowRefs.current[key]) borrowRefs.current[key].focus() }, 50)
+    }
+  }
+
+  const hideAllBorrows = () => {
+    setActiveBorrows(new Set())
+  }
+
+  const handleBorrowInput = (rowKey, col, val) => {
+    if (revealed) return
+    if (val !== '' && !/^\d{1,2}$/.test(val)) return
+    const key = `${rowKey}-${col}`
+    setBorrowInputs(prev => ({ ...prev, [key]: val }))
+  }
+
+  const handleQuotientInput = (idx, val) => {
+    if (revealed) return
+    if (val !== '' && !/^\d$/.test(val)) return
+    const next = [...quotientInputs]; next[idx] = val; setQuotientInputs(next)
+    hideAllBorrows()
+    if (val && idx < quotientInputs.length - 1) {
+      if (quotientRefs.current[idx + 1]) quotientRefs.current[idx + 1].focus()
+    } else if (val && idx === quotientInputs.length - 1) {
+      if (productRefs.current[0] && productRefs.current[0][0]) productRefs.current[0][0].focus()
+    }
+  }
+
+  const handleProductInput = (stepIdx, digitIdx, val) => {
+    if (revealed) return
+    if (val !== '' && !/^\d$/.test(val)) return
+    const next = productInputs.map(r => [...r])
+    next[stepIdx] = [...next[stepIdx]]; next[stepIdx][digitIdx] = val
+    setProductInputs(next)
+    hideAllBorrows()
+    const digits = productInputs[stepIdx]
+    if (val && digitIdx < digits.length - 1) {
+      if (productRefs.current[stepIdx] && productRefs.current[stepIdx][digitIdx + 1]) productRefs.current[stepIdx][digitIdx + 1].focus()
+    } else if (val && digitIdx === digits.length - 1) {
+      if (remainderRefs.current[stepIdx] && remainderRefs.current[stepIdx][0]) remainderRefs.current[stepIdx][0].focus()
+    }
+  }
+
+  const handleRemainderInput = (stepIdx, digitIdx, val) => {
+    if (revealed) return
+    if (val !== '' && !/^\d$/.test(val)) return
+    const next = remainderInputs.map(r => [...r])
+    next[stepIdx] = [...next[stepIdx]]; next[stepIdx][digitIdx] = val
+    setRemainderInputs(next)
+    const digits = remainderInputs[stepIdx]
+    if (val && digitIdx < digits.length - 1) {
+      if (remainderRefs.current[stepIdx] && remainderRefs.current[stepIdx][digitIdx + 1]) remainderRefs.current[stepIdx][digitIdx + 1].focus()
+    } else if (val && digitIdx === digits.length - 1 && stepIdx < remainderInputs.length - 1) {
+      if (productRefs.current[stepIdx + 1] && productRefs.current[stepIdx + 1][0]) productRefs.current[stepIdx + 1][0].focus()
+    }
+  }
+
+  const handleKeyDown = (e, type, stepIdx, digitIdx) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      if (e.shiftKey) {
+        if (type === 'quotient' && digitIdx > 0) quotientRefs.current[digitIdx - 1]?.focus()
+        else if (type === 'product') {
+          if (digitIdx > 0) productRefs.current[stepIdx]?.[digitIdx - 1]?.focus()
+          else if (digitIdx === 0 && stepIdx > 0) { const lastR = remainderInputs[stepIdx - 1].length - 1; remainderRefs.current[stepIdx - 1]?.[lastR]?.focus() }
+          else if (digitIdx === 0 && stepIdx === 0) quotientRefs.current[quotientInputs.length - 1]?.focus()
+        }
+        else if (type === 'remainder') {
+          if (digitIdx > 0) remainderRefs.current[stepIdx]?.[digitIdx - 1]?.focus()
+          else if (digitIdx === 0) productRefs.current[stepIdx]?.[productInputs[stepIdx].length - 1]?.focus()
+        }
+      } else {
+        if (type === 'quotient' && digitIdx < quotientInputs.length - 1) quotientRefs.current[digitIdx + 1]?.focus()
+        else if (type === 'quotient' && digitIdx === quotientInputs.length - 1) productRefs.current[0]?.[0]?.focus()
+        else if (type === 'product') {
+          if (digitIdx < productInputs[stepIdx].length - 1) productRefs.current[stepIdx]?.[digitIdx + 1]?.focus()
+          else remainderRefs.current[stepIdx]?.[0]?.focus()
+        }
+        else if (type === 'remainder') {
+          if (digitIdx < remainderInputs[stepIdx].length - 1) remainderRefs.current[stepIdx]?.[digitIdx + 1]?.focus()
+          else if (stepIdx < remainderInputs.length - 1) productRefs.current[stepIdx + 1]?.[0]?.focus()
+        }
+      }
+    } else if (e.key === 'Backspace') {
+      if (e.currentTarget.value) return
+      e.preventDefault()
+      if (type === 'quotient' && digitIdx > 0 && quotientRefs.current[digitIdx - 1]) quotientRefs.current[digitIdx - 1].focus()
+      else if (type === 'product') {
+        if (digitIdx > 0 && productRefs.current[stepIdx] && productRefs.current[stepIdx][digitIdx - 1]) productRefs.current[stepIdx][digitIdx - 1].focus()
+        else if (digitIdx === 0 && stepIdx > 0 && remainderRefs.current[stepIdx - 1]) {
+          const lastR = remainderInputs[stepIdx - 1].length - 1
+          if (remainderRefs.current[stepIdx - 1][lastR]) remainderRefs.current[stepIdx - 1][lastR].focus()
+        } else if (digitIdx === 0 && stepIdx === 0 && quotientRefs.current[quotientInputs.length - 1]) quotientRefs.current[quotientInputs.length - 1].focus()
+      }
+      else if (type === 'remainder') {
+        if (digitIdx > 0 && remainderRefs.current[stepIdx] && remainderRefs.current[stepIdx][digitIdx - 1]) remainderRefs.current[stepIdx][digitIdx - 1].focus()
+        else if (digitIdx === 0 && productRefs.current[stepIdx] && productRefs.current[stepIdx][0]) productRefs.current[stepIdx][0].focus()
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      if (type === 'quotient' && digitIdx > 0) quotientRefs.current[digitIdx - 1]?.focus()
+      else if (type === 'product') {
+        if (digitIdx > 0) productRefs.current[stepIdx]?.[digitIdx - 1]?.focus()
+        else if (digitIdx === 0 && stepIdx > 0) { const lastR = remainderInputs[stepIdx - 1].length - 1; remainderRefs.current[stepIdx - 1]?.[lastR]?.focus() }
+      }
+      else if (type === 'remainder') {
+        if (digitIdx > 0) remainderRefs.current[stepIdx]?.[digitIdx - 1]?.focus()
+        else if (digitIdx === 0) productRefs.current[stepIdx]?.[productInputs[stepIdx].length - 1]?.focus()
+      }
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      if (type === 'quotient' && digitIdx < quotientInputs.length - 1) quotientRefs.current[digitIdx + 1]?.focus()
+      else if (type === 'quotient' && digitIdx === quotientInputs.length - 1) productRefs.current[0]?.[0]?.focus()
+      else if (type === 'product') {
+        if (digitIdx < productInputs[stepIdx].length - 1) productRefs.current[stepIdx]?.[digitIdx + 1]?.focus()
+        else if (digitIdx === productInputs[stepIdx].length - 1) remainderRefs.current[stepIdx]?.[0]?.focus()
+      }
+      else if (type === 'remainder') {
+        if (digitIdx < remainderInputs[stepIdx].length - 1) remainderRefs.current[stepIdx]?.[digitIdx + 1]?.focus()
+        else if (digitIdx === remainderInputs[stepIdx].length - 1 && stepIdx < remainderInputs.length - 1) productRefs.current[stepIdx + 1]?.[0]?.focus()
+      }
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (revealed || loading || !question) return
+    timer.stop()
+    const userQuotient = quotientInputs.map(v => v === '' ? null : Number(v))
+    const userProducts = productInputs.map(arr => arr.length === 0 ? 0 : arr.map(v => v === '' ? null : Number(v)).reduce((a, b) => a * 10 + (b || 0), 0))
+    const userRemainders = remainderInputs.map(arr => arr.length === 0 ? 0 : arr.map(v => v === '' ? null : Number(v)).reduce((a, b) => a * 10 + (b || 0), 0))
+    try {
+      const r = await fetch(`${API}/column-division-api/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
+        body: JSON.stringify({ dividend: question.dividend, divisor: question.divisor, userQuotient, userProducts, userRemainders, sessionGoal })
+      })
+      const data = await r.json()
+      setIsCorrect(data.correct); setRevealed(true)
+      let explanation = ''
+      let solSteps = null
+      try {
+        const sr = await fetch(`${API}/column-division-api/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
+          body: JSON.stringify({ dividend: question.dividend, divisor: question.divisor, solve: true })
+        })
+        const sd = await sr.json()
+        explanation = sd.explanation || ''
+        solSteps = sd.solutionSteps || null
+        if (!data.correct && sd.steps) {
+          setQuotientInputs(sd.quotientDigits.map(String))
+          setProductInputs(sd.steps.map(s => String(s.product).split('')))
+          setRemainderInputs(sd.steps.map(s => new Array(Math.max(String(s.remainder).length, 1)).fill(String(s.remainder).padStart(Math.max(String(s.remainder).length, 1), '0'))))
+        }
+      } catch (_) {}
+      setSolutionSteps(solSteps)
+      const resultLine = data.correct ? '\u2713 Correct!' : `\u2717 ${data.message || 'Incorrect'}`
+      setFeedback(resultLine)
+      setResults(prev => [...prev, { question: `${question.dividend} \u00f7 ${question.divisor}`, userAnswer: quotientInputs.filter(v => v).join('') || '\u2014', correct: data.correct, correctAnswer: data.answer, time: timer.elapsed, userCarries: quotientInputs.filter(v => v).join(''), correctCarries: question.quotientDigits.join('') }])
+      if (data.correct) setScore(s => s + 1)
+    } catch (e) { console.error('Check failed:', e); setFeedback('Error checking answer') }
+  }
+
+  const handleSolve = async () => {
+    if (revealed || loading || !question) return
+    timer.stop()
+    try {
+      const sr = await fetch(`${API}/column-division-api/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
+        body: JSON.stringify({ dividend: question.dividend, divisor: question.divisor, solve: true })
+      })
+      const sd = await sr.json()
+      setQuotientInputs(sd.quotientDigits.map(String))
+      setProductInputs(sd.steps.map(s => String(s.product).split('')))
+      setRemainderInputs(sd.steps.map(s => new Array(Math.max(String(s.remainder).length, 1)).fill(String(s.remainder).padStart(Math.max(String(s.remainder).length, 1), '0'))))
+      setIsCorrect(false); setRevealed(true)
+      setSolutionSteps(sd.solutionSteps || null)
+      setFeedback(sd.explanation || `Solved \u2014 ${question.dividend} \u00f7 ${question.divisor} = ${question.answer}`)
+      setResults(prev => [...prev, { question: `${question.dividend} \u00f7 ${question.divisor}`, userAnswer: '\u2014', correct: false, correctAnswer: question.answer, time: timer.elapsed, userCarries: '\u2014', correctCarries: question.quotientDigits.join('') }])
+    } catch (e) {
+      console.error('Solve failed:', e)
+      setQuotientInputs(question.quotientDigits.map(String))
+      setProductInputs(question.steps.map(s => String(s.product).split('')))
+      setRemainderInputs(question.steps.map(s => new Array(Math.max(String(s.remainder).length, 1)).fill(String(s.remainder).padStart(Math.max(String(s.remainder).length, 1), '0'))))
+      const fallbackSteps = question.steps.map((step, i) => ({
+        stepNum: i + 1, partialDividend: step.current, divisor: question.divisor,
+        quotientDigit: question.quotientDigits[i], product: step.product,
+        difference: step.current - step.product, remainder: step.remainder,
+        isLast: step.isLast, nextDigit: step.nextDigit,
+      }))
+      setSolutionSteps(fallbackSteps)
+      setIsCorrect(false); setRevealed(true)
+      setFeedback(`Solved \u2014 ${question.dividend} \u00f7 ${question.divisor} = ${question.answer}`)
+    }
+  }
+
+  const advanceQuestion = () => {
+    if (advanceTimerRef.current) { clearTimeout(advanceTimerRef.current); advanceTimerRef.current = null }
+    setRevealed(false); setIsCorrect(null); setFeedback(''); setSolutionSteps(null); setHoveredBorrow(null)
+    setActiveBorrows(new Set()); setBorrowInputs({})
+    setQuotientInputs([]); setProductInputs([]); setRemainderInputs([])
+    if (questionNumber >= totalQ) { setFinished(true); timer.stop() }
+    else { setQuestionNumber(qn => qn + 1); timer.reset(); timer.start(); fetchQuestion() }
+  }
+
+  const diffLabels = { easy: 'Easy (3\u00f71)', medium: 'Medium (4\u00f71)', hard: 'Hard (4\u00f72)', extrahard: 'XHard (5\u00f72)' }
+
+  if (!started && !finished) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--clr-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ background: 'var(--clr-card)', border: '1.5px solid var(--clr-border)', borderRadius: '28px', boxShadow: '0 20px 40px rgba(0,0,0,.45)', padding: '48px 40px', maxWidth: '720px', width: '100%', textAlign: 'center', position: 'relative' }}>
+          <button onClick={onBack} style={{ position: 'absolute', top: '24px', left: '24px', background: 'transparent', border: '1px solid var(--clr-border)', borderRadius: '6px', padding: '6px 14px', color: 'var(--clr-text-soft)', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>{'\u2190'} Home</button>
+          <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700, fontSize: '48px', color: 'var(--clr-text)', margin: '0 0 12px', lineHeight: 1.1 }}>Column Division</h1>
+          <p style={{ color: 'var(--clr-text-soft)', fontSize: '0.9rem', margin: '0 0 24px', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>Paper-style long division with step-by-step work</p>
+
+          <div style={{ marginBottom: '20px' }}>
+            <button onClick={() => setShowHelp(h => !h)} style={{ background: showHelp ? 'var(--clr-input)' : 'transparent', border: '1px solid var(--clr-border)', borderRadius: '50px', padding: '6px 16px', color: 'var(--clr-accent)', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>{showHelp ? '\u2715 Close' : '? How to play'}</button>
+          </div>
+
+          {showHelp && (
+            <div style={{ textAlign: 'left', background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '16px', padding: '28px 28px', marginBottom: '24px', maxWidth: '580px', margin: '0 auto 24px' }}>
+              <h3 style={{ color: 'var(--clr-accent)', fontSize: '1.05rem', margin: '0 0 20px', fontFamily: 'Inter, sans-serif', fontWeight: 700, textAlign: 'center' }}>How Paper-Style Division Works</h3>
+              {[
+                { n: 1, title: 'Divide', desc: 'Find how many times the divisor goes into the current digits. Write that digit above the line.' },
+                { n: 2, title: 'Multiply', desc: 'Multiply the divisor \u00d7 quotient digit. Write the product below the current digits.' },
+                { n: 3, title: 'Subtract & bring down', desc: 'Subtract to get the remainder. Bring down the next dividend digit beside it.' },
+                { n: 4, title: 'Repeat', desc: 'Repeat until all digits are used. The final remainder is what\u2019s left.' },
+              ].map(({ n, title, desc }) => (
+                <div key={n} style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ minWidth: '28px', height: '28px', borderRadius: '50%', background: 'var(--clr-accent)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>{n}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'var(--clr-text)', fontSize: '0.85rem', fontWeight: 600, fontFamily: 'Inter, sans-serif', marginBottom: '4px' }}>{title}</div>
+                    <div style={{ color: 'var(--clr-text-soft)', fontSize: '0.82rem', fontFamily: 'Inter, sans-serif', lineHeight: '1.5' }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: '14px', marginTop: '14px' }}>
+                <div style={{ color: 'var(--clr-text)', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'Inter, sans-serif', marginBottom: '8px' }}>Fill in each row:</div>
+                <div style={{ color: 'var(--clr-text-soft)', fontSize: '0.78rem', fontFamily: 'Inter, sans-serif', lineHeight: '1.7' }}>
+                  <strong>Quotient</strong> above the line, <strong>products</strong> below the working digits, <strong>remainders</strong> after each subtraction. Tab advances to the next field.
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ color: 'var(--clr-text)', fontSize: '0.9rem', margin: '0 0 16px', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>Select Difficulty:</h3>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {['easy', 'medium', 'hard', 'extrahard'].map(d => (
+                <button key={d} onClick={() => setDifficulty(d)} style={{ background: difficulty === d ? 'var(--clr-accent)' : 'transparent', border: difficulty === d ? '1px solid var(--clr-accent)' : '1px solid var(--clr-border)', borderRadius: '50px', padding: '8px 16px', color: difficulty === d ? '#FFF' : 'var(--clr-text-soft)', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>{diffLabels[d]}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <label style={{ color: 'var(--clr-text-soft)', fontSize: '0.85rem', margin: '0 0 12px', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>How many questions? (max 100)</label>
+            <input type="text" value={numQuestions} onChange={(e) => { const v = e.target.value; if (v === '' || (/^\d+$/.test(v) && Number(v) <= 100)) setNumQuestions(v) }} style={{ background: 'var(--clr-input)', border: '1px solid var(--clr-border)', borderRadius: '6px', padding: '10px', color: 'var(--clr-text)', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.9rem', width: '100px', textAlign: 'center', outline: 'none' }} placeholder={String(DEFAULT_TOTAL)} />
+          </div>
+          <button onClick={startQuiz} style={{ background: 'var(--clr-accent)', border: 'none', borderRadius: '6px', padding: '10px 24px', color: '#FFF', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Start Quiz</button>
+        </div>
+      </div>
+    )
+  }
+
+  const digitStyle = (isRight, isWrong, big) => ({
+    width: COL, height: big ? 44 : 38, textAlign: 'center', fontSize: big ? '1.3rem' : '1.05rem', fontWeight: 700,
+    background: isRight ? 'var(--clr-correct-bg)' : isWrong ? 'var(--clr-wrong-bg)' : 'var(--clr-input)',
+    border: `2px solid ${isRight ? 'var(--clr-correct)' : isWrong ? 'var(--clr-wrong)' : 'var(--clr-border)'}`,
+    borderRadius: 8, color: isRight ? 'var(--clr-correct)' : isWrong ? 'var(--clr-wrong)' : 'var(--clr-text)',
+    fontFamily: '"Courier New", monospace', outline: 'none',
+  })
+
+  const renderCell = (col, content) => (
+    <span key={col} style={{ width: COL, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 700, fontFamily: '"Courier New", monospace', color: 'var(--clr-text)' }}>
+      {content}
+    </span>
+  )
+
+  const BorrowRow = ({ rowKey, numCols }) => {
+    const hasAny = Array.from({ length: numCols }, (_, col) => activeBorrows.has(`${rowKey}-${col}`)).some(Boolean)
+    const hasHover = Array.from({ length: numCols }, (_, col) => hoveredBorrow === `${rowKey}-${col}`).some(Boolean)
+    if (!hasAny && !hasHover) return null
+    return (
+      <div style={{ display: 'flex', height: 32, alignItems: 'center' }}>
+        <div style={{ width: BRACKET, flexShrink: 0 }} />
+        {Array.from({ length: numCols }, (_, col) => {
+          const key = `${rowKey}-${col}`
+          const isActive = activeBorrows.has(key)
+          const isHovered = hoveredBorrow === key
+          const val = borrowInputs[key] || ''
+          return (
+            <div key={col} style={{ width: COL, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              {(isActive || (isHovered && val)) ? (
+                <input ref={el => { borrowRefs.current[key] = el }}
+                  type="text" maxLength={2} readOnly={revealed}
+                  value={revealed ? val : val}
+                  onChange={e => handleBorrowInput(rowKey, col, e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape') {
+                      e.preventDefault(); hideAllBorrows()
+                    }
+                  }}
+                  style={{ width: COL - 4, height: 28, textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, background: 'var(--clr-input)', border: '1.5px dashed var(--clr-accent)', borderRadius: 6, color: 'var(--clr-accent)', fontFamily: '"Courier New", monospace', outline: 'none', padding: 0 }}
+                />
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
+    <QuizLayout title="Column Division" onBack={onBack} timer={timer}>
+      {started && !finished && <>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+          <div className="progress-pill center">Question {questionNumber}/{totalQ}</div>
+        </div>
+        {loading || !question ? <div className="question-box">Loading question\u2026</div> : (() => {
+          const numCols = question.dividendDigits.length
+          const qc = question.firstQuotientCol
+          const steps = question.steps
+
+          return (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '16px auto', fontFamily: '"Courier New", monospace', fontWeight: 700, maxWidth: 'fit-content' }}>
+
+                {/* === Quotient row === */}
+                <div style={{ display: 'flex', height: 44 }}>
+                  <div style={{ width: BRACKET, flexShrink: 0 }} />
+                  {Array.from({ length: numCols }, (_, col) => {
+                    const qIdx = col - qc
+                    if (qIdx >= 0 && qIdx < question.quotientDigits.length) {
+                      const correctDigit = String(question.quotientDigits[qIdx])
+                      const val = revealed ? correctDigit : (quotientInputs[qIdx] || '')
+                      const isR = revealed && val === correctDigit
+                      const isW = revealed && val !== correctDigit
+                      return (
+                        <input key={col} ref={el => quotientRefs.current[qIdx] = el} type="text" maxLength={1}
+                          value={val}
+                          onChange={e => handleQuotientInput(qIdx, e.target.value)}
+                          onKeyDown={e => handleKeyDown(e, 'quotient', qIdx, qIdx)}
+                          disabled={revealed}
+                          style={{ ...digitStyle(isR, isW, true), width: COL, flexShrink: 0 }}
+                        />
+                      )
+                    }
+                    return <span key={col} style={{ width: COL, flexShrink: 0 }} />
+                  })}
+                </div>
+
+                {/* === Vinculum line === */}
+                <div style={{ display: 'flex', height: 6 }}>
+                  <div style={{ width: BRACKET, flexShrink: 0 }} />
+                  <div style={{ width: numCols * COL, height: 3, background: 'var(--clr-text)', borderRadius: 2, marginTop: 1 }} />
+                </div>
+
+                {/* === Borrow row above dividend === */}
+                <BorrowRow rowKey="d" numCols={numCols} />
+
+                {/* === Divisor bracket + dividend (clickable for borrow) === */}
+                <div style={{ display: 'flex', height: 44, alignItems: 'center' }}>
+                  <div style={{ width: BRACKET, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, paddingRight: 4 }}>
+                    <span style={{ fontSize: '1.2rem', color: 'var(--clr-text)' }}>{question.divisor}</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--clr-text)', lineHeight: 1 }}>{')'}</span>
+                  </div>
+                  {question.dividendDigits.map((d, col) => {
+                    const key = `d-${col}`
+                    const struck = activeBorrows.has(key) || (revealed && borrowInputs[key])
+                    return (
+                      <span key={col}
+                        onClick={() => { if (!revealed) activateBorrow('d', col, activeBorrows.has(key)) }}
+                        onMouseEnter={() => { if (!activeBorrows.has(key) && borrowInputs[key]) setHoveredBorrow(key) }}
+                        onMouseLeave={() => setHoveredBorrow(null)}
+                        style={{
+                          width: COL, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.1rem', fontWeight: 700, fontFamily: '"Courier New", monospace',
+                          color: struck ? 'var(--clr-text-soft)' : 'var(--clr-text)',
+                          textDecoration: struck ? 'line-through' : 'none',
+                          opacity: struck ? 0.5 : 1,
+                          cursor: revealed ? 'default' : 'pointer',
+                          transition: 'all 0.15s ease', position: 'relative',
+                        }}>
+                        {d}
+                      </span>
+                    )
+                  })}
+                </div>
+
+                {/* === Steps: product, line, remainder === */}
+                {steps.map((step, j) => {
+                  const prodStr = String(step.product)
+                  const prodDigits = prodStr.split('')
+                  const prodRightCol = qc + j
+                  const prodLeftCol = prodRightCol - prodDigits.length + 1
+
+                  const isLast = j === steps.length - 1
+                  const remDigitCount = Math.max(String(step.remainder).length, 1)
+                  const remRightCol = qc + j
+                  const remStr = String(step.remainder).padStart(remDigitCount, '0')
+                  const remLeftCol = remRightCol - remDigitCount + 1
+                  const bdCol = isLast ? -1 : qc + j + 1
+
+                  return (
+                    <div key={j}>
+                      {/* Minus + Product row (bottom number — no borrow above) */}
+                      <div style={{ display: 'flex', height: 44, alignItems: 'center' }}>
+                        <div style={{ width: BRACKET, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4 }}>
+                          <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--clr-text-soft)' }}>{'\u2212'}</span>
+                        </div>
+                        {Array.from({ length: numCols }, (_, col) => {
+                          if (col >= prodLeftCol && col <= prodRightCol) {
+                            const dIdx = col - prodLeftCol
+                            const correctDigit = prodDigits[dIdx]
+                            const val = revealed ? correctDigit : (productInputs[j]?.[dIdx] || '')
+                            const isR = revealed && val === correctDigit
+                            const isW = revealed && val !== correctDigit
+                            return (
+                              <input key={col} ref={el => { if (!productRefs.current[j]) productRefs.current[j] = []; productRefs.current[j][dIdx] = el }}
+                                type="text" maxLength={1} value={val}
+                                onChange={e => handleProductInput(j, dIdx, e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'product', j, dIdx)}
+                                disabled={revealed}
+                                style={{ ...digitStyle(isR, isW, false), width: COL, flexShrink: 0 }}
+                              />
+                            )
+                          }
+                          return <span key={col} style={{ width: COL, flexShrink: 0 }} />
+                        })}
+                      </div>
+
+                      {/* Full-width separator line */}
+                      <div style={{ display: 'flex', height: 6 }}>
+                        <div style={{ width: BRACKET, flexShrink: 0 }} />
+                        <div style={{ width: numCols * COL, height: 3, background: 'var(--clr-border)', borderRadius: 2, marginTop: 1 }} />
+                      </div>
+
+                      {/* Borrow row above remainder */}
+                      <BorrowRow rowKey={`r${j}`} numCols={numCols} />
+
+                      {/* Remainder row (user types) + brought-down digit (static) */}
+                      <div style={{ display: 'flex', height: 44, alignItems: 'center' }}>
+                        <div style={{ width: BRACKET, flexShrink: 0 }} />
+                        {Array.from({ length: numCols }, (_, col) => {
+                          if (col >= remLeftCol && col <= remRightCol) {
+                            const dIdx = col - remLeftCol
+                            const correctDigit = remStr[dIdx] || '0'
+                            const val = revealed ? correctDigit : (remainderInputs[j]?.[dIdx] || '')
+                            const isR = revealed && val === correctDigit
+                            const isW = revealed && val !== correctDigit
+                            return (
+                              <input key={col} ref={el => { if (!remainderRefs.current[j]) remainderRefs.current[j] = []; remainderRefs.current[j][dIdx] = el }}
+                                type="text" maxLength={1} value={val}
+                                onChange={e => handleRemainderInput(j, dIdx, e.target.value)}
+                                onKeyDown={e => handleKeyDown(e, 'remainder', j, dIdx)}
+                                onDoubleClick={() => { if (!revealed) activateBorrow(`r${j}`, col, activeBorrows.has(`r${j}-${col}`)) }}
+                                disabled={revealed}
+                                style={{ ...digitStyle(isR, isW, false), width: COL, flexShrink: 0 }}
+                              />
+                            )
+                          }
+                          if (!isLast && col === bdCol) {
+                            const bdDigit = question.dividendDigits[col]
+                            const correctDigit = String(bdDigit)
+                            const isR = revealed
+                            const bdKey = `r${j}-${col}`
+                            const bdStruck = activeBorrows.has(bdKey) || (revealed && borrowInputs[bdKey])
+                            return <span key={col}
+                              onClick={() => { if (!revealed) activateBorrow(`r${j}`, col, activeBorrows.has(bdKey)) }}
+                              onMouseEnter={() => { if (!activeBorrows.has(bdKey) && borrowInputs[bdKey]) setHoveredBorrow(bdKey) }}
+                              onMouseLeave={() => setHoveredBorrow(null)}
+                              style={{ width: COL, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', fontWeight: 700, fontFamily: '"Courier New", monospace', color: bdStruck ? 'var(--clr-text-soft)' : 'var(--clr-accent)', opacity: bdStruck ? 0.5 : 0.7, textDecoration: bdStruck ? 'line-through' : 'none', cursor: revealed ? 'default' : 'pointer', transition: 'all 0.15s ease' }}>{bdDigit}</span>
+                          }
+                          return <span key={col} style={{ width: COL, flexShrink: 0 }} />
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {feedback && (
+                <div style={{
+                  textAlign: 'left', padding: '12px 16px', borderRadius: '8px', margin: '8px 0',
+                  background: isCorrect ? 'rgba(92, 184, 122, 0.25)' : 'rgba(224, 90, 74, 0.25)',
+                  color: isCorrect ? 'var(--clr-correct)' : 'var(--clr-wrong)',
+                  fontWeight: 600, fontSize: '0.9rem',
+                  whiteSpace: 'pre-line', lineHeight: '1.6',
+                  border: isCorrect ? '2px solid var(--clr-correct)' : '2px solid var(--clr-wrong)'
+                }}>{feedback}</div>
+              )}
+
+              {/* Step-by-step solution panel */}
+              {solutionSteps && solutionSteps.length > 0 && (
+                <div style={{
+                  textAlign: 'left', borderRadius: '12px', margin: '8px 0',
+                  background: 'var(--clr-card)', border: '1.5px solid var(--clr-border)',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    padding: '10px 16px', fontWeight: 700, fontSize: '0.95rem',
+                    color: 'var(--clr-text)', background: 'var(--clr-bg)',
+                    borderBottom: '1px solid var(--clr-border)', display: 'flex', alignItems: 'center', gap: 8
+                  }}>
+                    <span style={{ fontSize: '1.1rem' }}>{'\ud83d\udcdd'}</span>
+                    Step-by-Step Solution
+                  </div>
+                  <div style={{ padding: '8px 16px 12px' }}>
+                    {solutionSteps.map((s, i) => (
+                      <div key={i} style={{
+                        padding: '10px 0',
+                        borderBottom: i < solutionSteps.length - 1 ? '1px solid var(--clr-border)' : 'none'
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--clr-accent)', marginBottom: 6 }}>
+                          Step {s.stepNum}: {s.partialDividend} {'\u00f7'} {s.divisor}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: '0.85rem', color: 'var(--clr-text)', fontFamily: '"Courier New", monospace', paddingLeft: 12 }}>
+                          <div>
+                            <span style={{ color: 'var(--clr-text-soft)' }}>{s.quotientDigit} {'\u00d7'} {s.divisor} = </span>
+                            <span style={{ fontWeight: 700 }}>{s.product}</span>
+                          </div>
+                          <div>
+                            <span style={{ color: 'var(--clr-text-soft)' }}>{s.partialDividend} {'\u2212'} {s.product} = </span>
+                            <span style={{ fontWeight: 700 }}>{s.difference}</span>
+                          </div>
+                          {!s.isLast && s.nextDigit !== null && (
+                            <div style={{ color: 'var(--clr-text-soft)', fontStyle: 'italic', fontFamily: 'Inter, sans-serif' }}>
+                              Bring down <span style={{ fontWeight: 700, color: 'var(--clr-accent)', fontStyle: 'normal' }}>{s.nextDigit}</span> {'\u2192'} {s.remainder * 10 + s.nextDigit}
+                            </div>
+                          )}
+                          {s.isLast && (
+                            <div style={{ color: 'var(--clr-text-soft)', fontStyle: 'italic', fontFamily: 'Inter, sans-serif' }}>
+                              Remainder: <span style={{ fontWeight: 700, color: s.remainder > 0 ? 'var(--clr-accent)' : 'var(--clr-correct)', fontStyle: 'normal' }}>{s.remainder}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{
+                      marginTop: 10, padding: '8px 12px', borderRadius: '8px',
+                      background: 'var(--clr-bg)', fontWeight: 700, fontSize: '0.9rem',
+                      color: 'var(--clr-text)', textAlign: 'center'
+                    }}>
+                      {question.dividend} {'\u00f7'} {question.divisor} = {question.answer}{question.steps[question.steps.length - 1]?.remainder > 0 ? ` R${question.steps[question.steps.length - 1].remainder}` : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', margin: '12px 0', flexWrap: 'wrap' }}>
+                {!revealed && <button onClick={handleSubmit} disabled={loading} style={{ background: 'var(--clr-accent)', border: 'none', borderRadius: '8px', padding: '10px 24px', color: '#FFF', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Submit</button>}
+                {!revealed && <button onClick={handleSolve} disabled={loading} style={{ background: 'transparent', border: '1px solid var(--clr-border)', borderRadius: '8px', padding: '10px 24px', color: 'var(--clr-text-soft)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Solve</button>}
+                {revealed && <button onClick={advanceQuestion} style={{ background: 'var(--clr-accent)', border: 'none', borderRadius: '8px', padding: '10px 24px', color: '#FFF', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Next Question {'\u2192'}</button>}
+              </div>
+            </>
+          )
+        })()}
+        {results.length > 0 && <ResultsTable results={results} />}
+      </>}
+      {finished && (
+        <div style={{ textAlign: 'center', padding: '24px' }}>
+          <h2 style={{ color: 'var(--clr-text)', marginBottom: '16px' }}>Score: {score}/{totalQ}</h2>
+          <ResultsTable results={results} />
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
+            <button onClick={() => { setStarted(false); setFinished(false) }} style={{ background: 'var(--clr-accent)', border: 'none', borderRadius: '8px', padding: '10px 24px', color: '#FFF', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Play Again</button>
+          </div>
+        </div>
+      )}
+    </QuizLayout>
+  )
+}
+
+
 /**
  * ColumnSubtractionApp Component
  * Vertical column subtraction: minuend − subtrahend.
@@ -48332,6 +49707,11 @@ function ColumnSubtractionApp({ onBack, initialDifficulty, initialNumQuestions, 
   const answerRefs = useRef([])
   const borrowRefs = useRef([])
   const advanceTimerRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   useEffect(() => { if (!isGoalMode) setSessionGoal('standard') }, [isGoalMode])
 
@@ -48345,9 +49725,13 @@ function ColumnSubtractionApp({ onBack, initialDifficulty, initialNumQuestions, 
   }
 
   const fetchQuestion = async (diff) => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
     setLoading(true)
     try {
-      const r = await fetch(`${API}/column-subtraction-api/question?difficulty=${diff || difficulty}`)
+      const r = await fetch(`${API}/column-subtraction-api/question?difficulty=${diff || difficulty}`, { signal: controller.signal })
       const data = await r.json()
       setQuestion(data)
       setAnswerInputs(new Array(data.answerDigits.length).fill(''))
@@ -48357,7 +49741,10 @@ function ColumnSubtractionApp({ onBack, initialDifficulty, initialNumQuestions, 
         const lastIdx = data.answerDigits.length - 1
         if (answerRefs.current[lastIdx]) answerRefs.current[lastIdx].focus()
       }, 100)
-    } catch (e) { console.error('Fetch column subtraction question failed:', e) }
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Fetch column subtraction question failed:', e)
+    }
     setLoading(false)
   }
 
@@ -48746,7 +50133,7 @@ function AdditionApp({ onBack, completedTopics = [], goldMastery = [], markTopic
   // Mode selection: 'standard' (default), 'counting' (Visual Counting), 'scale' (Balance Scale)
   const [additionMode, setAdditionMode] = useState(initialMode || 'standard')
   // Difficulty level: 'easy' (1-digit), 'medium' (2-digit), 'hard' (3-digit), 'extrahard' (4-digit)
-  const [difficulty, setDifficulty] = useState(initialDifficulty || 'easy')
+  const [difficulty, setDifficulty] = useState(() => initialDifficulty || cjTakeReco('addition', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
   const [isAdaptive, setIsAdaptive] = useState(false)
   // Adaptive score (0-3)
@@ -48788,6 +50175,11 @@ function AdditionApp({ onBack, completedTopics = [], goldMastery = [], markTopic
   // Timer for response timing
   const timer = useTimer()
   const advanceFnRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   useEffect(() => {
     if (finished) {
@@ -48843,6 +50235,10 @@ function AdditionApp({ onBack, completedTopics = [], goldMastery = [], markTopic
   }
 
 const fetchQuestion = async (selectedDifficulty = difficulty) => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
     setLoading(true)
     setFeedback('')
     setAnswer('')
@@ -48856,43 +50252,48 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
     const sumMax = additionMode === 'counting' ? sumMaxMap[diffLevel] : null
     const sumMaxParam = sumMax ? `&sumMax=${sumMax}` : ''
 
-    const res = await fetch(`${API}/addition-api/question?digits=${digits}${sumMaxParam}`)
-    const data = await res.json()
-    setQuestion(data)
+    try {
+      const res = await fetch(`${API}/addition-api/question?digits=${digits}${sumMaxParam}`, { signal: controller.signal })
+      const data = await res.json()
+      setQuestion(data)
 
-    const targetTotal = Number(data.a) + Number(data.b)
+      const targetTotal = Number(data.a) + Number(data.b)
 
-    if (additionMode === 'counting') {
-      // Initialize apples for Visual Counting mode
-      const totalApples = Math.max(15, targetTotal + 5)
-      const initialItems = Array.from({ length: totalApples }, (_, i) => ({ id: `apple-${i}`, icon: '🍎' }))
-      setSourceItems(initialItems)
-      setTargetItems([])
-    } else if (additionMode === 'scale') {
-      // Initialize weights for Balance Scale mode
-      let initBank = []
-      if (diffLevel === 'easy') {
-        if (targetTotal >= 10) {
-          const numTens = Math.floor(targetTotal / 10) + 2;
-          const numOnes = Math.max(12, (targetTotal % 10) + 5);
-          for (let i = 0; i < numTens; i++) {
-            initBank.push({ id: `bank-10-${i}-${Math.random()}`, val: 10 });
-          }
-          for (let i = 0; i < numOnes; i++) {
-            initBank.push({ id: `bank-1-${i}-${Math.random()}`, val: 1 });
+      if (additionMode === 'counting') {
+        // Initialize apples for Visual Counting mode
+        const totalApples = Math.max(15, targetTotal + 5)
+        const initialItems = Array.from({ length: totalApples }, (_, i) => ({ id: `apple-${i}`, icon: '🍎' }))
+        setSourceItems(initialItems)
+        setTargetItems([])
+      } else if (additionMode === 'scale') {
+        // Initialize weights for Balance Scale mode
+        let initBank = []
+        if (diffLevel === 'easy') {
+          if (targetTotal >= 10) {
+            const numTens = Math.floor(targetTotal / 10) + 2;
+            const numOnes = Math.max(12, (targetTotal % 10) + 5);
+            for (let i = 0; i < numTens; i++) {
+              initBank.push({ id: `bank-10-${i}-${Math.random()}`, val: 10 });
+            }
+            for (let i = 0; i < numOnes; i++) {
+              initBank.push({ id: `bank-1-${i}-${Math.random()}`, val: 1 });
+            }
+          } else {
+            initBank = Array.from({ length: Math.max(15, targetTotal + 2) }, (_, i) => ({ id: `bank-1-${i}-${Math.random()}`, val: 1 }));
           }
         } else {
-          initBank = Array.from({ length: Math.max(15, targetTotal + 2) }, (_, i) => ({ id: `bank-1-${i}-${Math.random()}`, val: 1 }));
+          initBank = createDynamicWeightBank(targetTotal)
         }
-      } else {
-        initBank = createDynamicWeightBank(targetTotal)
+        setBankBlocks(initBank)
+        setRightBlocks([])
       }
-      setBankBlocks(initBank)
-      setRightBlocks([])
-    }
 
+      timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Failed to fetch addition question:', e)
+    }
     setLoading(false)
-    timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
   }
 
   /**
@@ -50337,7 +51738,7 @@ function GymQuiz({ title, subtitle, typeKeys, welcomeText, algebraInput, onBack 
  */
 function BasicArithApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, setTransferTopic, setMode, isGoalMode = false }) {
   // Difficulty level: 'easy', 'medium', 'hard', 'extrahard'
-  const [difficulty, setDifficulty] = useState('easy')
+  const [difficulty, setDifficulty] = useState(() => cjTakeReco('basicarith', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
   const [isAdaptive, setIsAdaptive] = useState(false)
   // Adaptive score (0-3)
@@ -50378,6 +51779,11 @@ function BasicArithApp({ onBack, completedTopics = [], goldMastery = [], markTop
   // Timer
   const timer = useTimer()
   const advanceFnRef = useRef(null)
+  // Tracks the in-flight question fetch so a newer fetchQuestion() call (or
+  // unmount) can cancel a still-pending older one — see makeQuizApp's
+  // loadQuestion() for the same pattern and the race it prevents.
+  const questionAbortRef = useRef(null)
+  useEffect(() => () => questionAbortRef.current?.abort(), [])
 
   useEffect(() => {
     if (finished) {
@@ -50415,13 +51821,22 @@ function BasicArithApp({ onBack, completedTopics = [], goldMastery = [], markTop
   }
 
 const fetchQuestion = async () => {
+    questionAbortRef.current?.abort()
+    const controller = new AbortController()
+    questionAbortRef.current = controller
+
     setLoading(true)
     setFeedback(''); setAnswer(''); setRevealed(false); setIsCorrect(null)
-    const res = await fetch(`${API}/basicarith-api/question?difficulty=${effectiveDiff()}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' } })
-    const data = await res.json()
-    setQuestion(data)
+    try {
+      const res = await fetch(`${API}/basicarith-api/question?difficulty=${effectiveDiff()}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, signal: controller.signal })
+      const data = await res.json()
+      setQuestion(data)
+      timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
+    } catch (e) {
+      if (e.name === 'AbortError') return
+      console.error('Failed to fetch basic arithmetic question:', e)
+    }
     setLoading(false)
-    timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
   }
 
   /**
@@ -50673,7 +52088,7 @@ const fetchQuestion = async () => {
  */
 function QuadraticApp({ onBack, isGoalMode = false }) {
   // Difficulty level: 'easy', 'medium', 'hard', 'extrahard'
-  const [difficulty, setDifficulty] = useState('easy')
+  const [difficulty, setDifficulty] = useState(() => cjTakeReco('quadratic', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
   const [isAdaptive, setIsAdaptive] = useState(false)
   // Adaptive score (0-3)
@@ -51198,7 +52613,7 @@ function VisualMathApp({ onBack }) {
     setLoading(true); resetInteractive()
     const mode = pickMode()
     try {
-      const r = await fetch(`/visual-math-api/question?type=${operation}&mode=${mode}&difficulty=${difficulty}`)
+      const r = await fetch(`${API}/visual-math-api/question?type=${operation}&mode=${mode}&difficulty=${difficulty}`)
       const q = await r.json()
       setQuestion(q)
     } catch (e) { console.error(e) }
@@ -52685,6 +54100,7 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
     const [correctOption, setCorrectOption] = useState('')
     const [questionSummary, setQuestionSummary] = useState({ easy: 0, medium: 0, hard: 0, extrahard: 0 })
     const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp(apiPath.split('-')[0], finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
     const advanceFnRef = useRef(null)
     const adaptScoreRef = useRef(0)
     const submittedRef = useRef(false)
@@ -52997,7 +54413,8 @@ function makeMCQuizApp({ title, subtitle, apiPath, diffLabels, tip, adaptiveOnly
           <ResultsTable results={results} />
           <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
         </div>}
-      </QuizLayout>
+      <HintModal concept={apiPath.split('-')[0]} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
     )
   }
 }
@@ -53349,7 +54766,8 @@ function TransferChallengeApp({ topicKey, onBack, completedTopics, goldMastery, 
 function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, answerField, topicKey: customTopicKey }) {
   return function GeneratedQuizApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, markGoldMastery, updateCoins, setMode, setTransferTopic, initialDifficulty, initialNumQuestions, initialStarted, isGoalMode = false }) {
     const diffs = Object.keys(diffLabels)
-    const [difficulty, setDifficulty] = useState(initialDifficulty || diffs[0])
+    // Feature CR: a just-earned Road License pre-selects the earned difficulty (one-shot; student can change it)
+    const [difficulty, setDifficulty] = useState(() => initialDifficulty || cjTakeReco(customTopicKey || apiPath.replace('-api', ''), diffs) || diffs[0])
     const topicKey = customTopicKey || apiPath.replace('-api', '')
     const [isAdaptive, setIsAdaptive] = useState(false)
     const [adaptScore, setAdaptScore] = useState(0) // 0.0 (easy) → 3.0 (extrahard)
@@ -53375,12 +54793,19 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
   }, [isGoalMode]);
     const [results, setResults] = useState([])
     const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp(apiPath.split('-')[0], finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
     const advanceFnRef = useRef(null)
     // Keep a ref for adaptive score so loadQuestion always sees latest
     const adaptScoreRef = useRef(0)
     // Guards against double-submit and double-advance race conditions
     const submittedRef = useRef(false)
     const advancedRef = useRef(false)
+    // Tracks the in-flight question fetch so a newer loadQuestion() call (or
+    // unmount) can cancel a still-pending older one — otherwise an
+    // out-of-order response can land after a newer question and silently
+    // overwrite it, or a leftover fetch can setState after unmount.
+    const questionAbortRef = useRef(null)
+    useEffect(() => () => questionAbortRef.current?.abort(), [])
 
     useEffect(() => {
       if (finished) {
@@ -53402,11 +54827,18 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
     }
 
     const loadQuestion = async () => {
+      // Cancel any still-pending question fetch before starting a new one,
+      // so an out-of-order response from the old request can never land
+      // after (and overwrite) this newer one.
+      questionAbortRef.current?.abort()
+      const controller = new AbortController()
+      questionAbortRef.current = controller
+
       setLoading(true)
       setLoadError('')
       try {
         const diff = effectiveDifficulty()
-        const r = await fetch(`${API}/${apiPath}/question?difficulty=${diff}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' } })
+        const r = await fetch(`${API}/${apiPath}/question?difficulty=${diff}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, signal: controller.signal })
         if (!r.ok) throw new Error(`Server returned ${r.status}`)
         const data = await r.json()
         // Defensive: a question must have a non-empty prompt to be displayable.
@@ -53424,6 +54856,10 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
         advancedRef.current = false
         timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(effectiveDifficulty ? effectiveDifficulty() : (difficulty || 'easy'), isAdaptive))
       } catch (e) {
+        // A cancelled-on-purpose fetch (superseded by a newer loadQuestion()
+        // call, or the component unmounted) isn't a real failure — don't
+        // show an error for it.
+        if (e.name === 'AbortError') return
         console.error(`Failed to load ${title} question:`, e)
         setQuestion(null)
         setLoadError(`Couldn't load a ${title} question (${e.message || 'unknown error'}). Tap Retry to try again.`)
@@ -53697,7 +55133,8 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
           <ResultsTable results={results} />
           <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
         </div>}
-      </QuizLayout>
+      <HintModal concept={apiPath.split('-')[0]} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
     )
   }
 }
@@ -54457,6 +55894,25 @@ const PolyGymApp = makeMCQuizApp({
 })
 
 // ───────────────────────────────────────────────────────────────────────────
+// MATRIX MYSTICS — comprehensive linear algebra MCQ test bank
+// 6 modules, 53 topics, 1855+ questions across easy/medium/hard + real app.
+// ───────────────────────────────────────────────────────────────────────────
+
+const MatrixMysticsApp = makeMCQuizApp({
+  title: 'Matrix Mystics',
+  subtitle: 'Linear Algebra — 6 modules, 53 topics',
+  apiPath: 'matrixmystics-api',
+  adaptiveOnly: true,
+  diffLabels: {
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    extrahard: 'Extra Hard',
+  },
+  tip: 'All questions are MCQ. Read carefully — options are similar length to test real understanding.',
+})
+
+// ───────────────────────────────────────────────────────────────────────────
 // GYM — unified adaptive puzzle that draws from all 7 gym families.
 // ───────────────────────────────────────────────────────────────────────────
 // Behaviour:
@@ -54647,6 +56103,7 @@ function GymApp({ onBack }) {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('gym', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const sessionGoal = 'standard'
   const isAdaptive = true
   const handleTimeout = async () => {
@@ -56323,6 +57780,7 @@ function RandomMixApp({ onBack, isGoalMode = false }) {
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('mix', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
   const submittedRef = useRef(false)
   const advancedRef = useRef(false)
@@ -56652,7 +58110,8 @@ function RandomMixApp({ onBack, isGoalMode = false }) {
             <button onClick={startQuiz}>Start Random Mix</button>
           </div>
         </div>
-      </QuizLayout>
+      <HintModal concept={'mix'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
     )
   }
 
@@ -56824,6 +58283,7 @@ function SetsApp({ onBack, isGoalMode = false }) {
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('sets', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
   const advancedRef = useRef(false)
   const submittedRef = useRef(false)
@@ -57030,7 +58490,8 @@ const loadQuestion = async () => {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'sets'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -57060,6 +58521,7 @@ function SequencesApp({ onBack, isGoalMode = false }) {
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('sequences', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
   const advancedRef = useRef(false)
   const submittedRef = useRef(false)
@@ -57258,13 +58720,14 @@ const loadQuestion = async () => {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'sequences'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
 /* ── Ratio & Proportion App ────────────────────────── */
 function RatioApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, markGoldMastery, updateCoins, setMode, setTransferTopic, isGoalMode = false }) {
-  const [difficulty, setDifficulty] = useState('easy')
+  const [difficulty, setDifficulty] = useState(() => cjTakeReco('ratio', CJ_RECO_DIFFS) || 'easy')
   const [isAdaptive, setIsAdaptive] = useState(false)
   const [adaptScore, setAdaptScore] = useState(0)
   const adaptScoreRef = useRef(0)
@@ -57298,6 +58761,7 @@ function RatioApp({ onBack, completedTopics = [], goldMastery = [], markTopicCom
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('ratio', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
   const advancedRef = useRef(false)
   const submittedRef = useRef(false)
@@ -57537,7 +59001,8 @@ const loadQuestion = async () => {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'ratio'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -58581,6 +60046,7 @@ function IndicesApp({ onBack, isGoalMode = false }) {
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('indices', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
 
   const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
@@ -58830,7 +60296,8 @@ const loadQuestion = async () => {
           <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
         </div>
       )}
-    </QuizLayout>
+    <HintModal concept={'indices'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -58872,6 +60339,7 @@ function SurdsApp({ onBack, isGoalMode = false }) {
     }
   }, [isGoalMode]);
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('surds', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
 
   const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
@@ -59154,14 +60622,15 @@ const loadQuestion = async () => {
           <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
         </div>
       )}
-    </QuizLayout>
+    <HintModal concept={'surds'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
 function FractionAddApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, markGoldMastery, updateCoins, setMode, setTransferTopic, isGoalMode = false }) {
   // ── State variables ──────────────────────────────────────────────────
   // Difficulty: 'easy' | 'medium' | 'hard' | 'extrahard'
-  const [difficulty, setDifficulty] = useState('easy')
+  const [difficulty, setDifficulty] = useState(() => cjTakeReco('fractionadd', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
   const [isAdaptive, setIsAdaptive] = useState(false)
   // Adaptive score (0-3)
@@ -59206,6 +60675,7 @@ function FractionAddApp({ onBack, completedTopics = [], goldMastery = [], markTo
   }, [isGoalMode]);
   // Timer for per-question timing
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('fractionadd', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
 
   // ── Refs for auto-advance ────────────────────────────────────────────
   const advanceFnRef = useRef(null)
@@ -59602,7 +61072,8 @@ const loadQuestion = async () => {
           <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
         </div>
       )}
-    </QuizLayout>
+    <HintModal concept={'fractionadd'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -60019,6 +61490,7 @@ function SqrtApp({ onBack, isGoalMode = false }) {
   }, [isGoalMode]);
   // Timer instance for tracking time per question
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('sqrt', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
 
   const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
@@ -60263,7 +61735,8 @@ const fetchQuestion = async (step) => {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'sqrt'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -61568,7 +63041,7 @@ const loadQuestion = async () => {
 function SimulApp({ onBack, isGoalMode = false }) {
   // ─────── Quiz State Management ──────────────────────────────────
   // Difficulty level: 'easy' (2×2) | 'hard' (3×3)
-  const [difficulty, setDifficulty] = useState('easy')
+  const [difficulty, setDifficulty] = useState(() => cjTakeReco('simul', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
   const [isAdaptive, setIsAdaptive] = useState(false)
   // Adaptive score (0-3)
@@ -61942,6 +63415,7 @@ function FuncEvalApp({ onBack, isGoalMode = false }) {
   }, [isGoalMode]);
   // Timer instance for tracking elapsed time per question
   const timer = useTimer()
+  const { hintsUsedCount, xpBreakdown, bonusLoading } = useQuizHintsAndXp('funceval', finished, score, totalQ, typeof isCorrect !== 'undefined' ? (isCorrect || false) : false, results);
   const advanceFnRef = useRef(null)
 
   const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
@@ -62171,7 +63645,8 @@ const loadQuestion = async () => {
         <ResultsTable results={results} />
         <button onClick={() => { setStarted(false); setFinished(false) }}>Play Again</button>
       </div>}
-    </QuizLayout>
+    <HintModal concept={'funceval'} questionId={question?.id || 'unknown'} questionData={question} revealed={revealed} hintsUsedCount={hintsUsedCount} xpBreakdown={xpBreakdown} bonusLoading={bonusLoading} />
+</QuizLayout>
   )
 }
 
@@ -64104,7 +65579,7 @@ function IntervalSchedulingApp() {
                   >
                     <span className="is-interval-label">{intv.start}–{intv.end}</span>
                     {step < 0 && (
-                      <button className="is-interval-remove" onClick={(e) => { e.stopPropagation(); removeInterval(intv.id) }}>×</button>
+                      <button className="is-interval-remove" onClick={(e) => { e.stopPropagation(); removeInterval(intv.id) }} aria-label="Remove interval">×</button>
                     )}
                   </div>
                 )
@@ -66873,7 +68348,9 @@ export function QuizLayout({ title, subtitle, onBack, children, timer, sessionGo
         </div>
       </div>
       <h1 style={{ fontSize: 'clamp(1.8rem, 3.8vw, 2.4rem)' }}>{title}</h1>
+      {subtitle && <p className="subtitle">{subtitle}</p>}
       {processedChildren}
+      <QuizLayoutExtension children={children} />
     </>
   )
 }
@@ -67848,9 +69325,9 @@ function ProgressTrackerApp({ onBack }) {
                 {paginated.map(r => {
                   const spd = r.timeTakenSeconds > 0 ? parseFloat(((r.correctAnswers * 60) / r.timeTakenSeconds).toFixed(1)) : 0
                   return (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--clr-border)' }}
+                    <tr key={r.id}
                       onClick={() => setSelectedPoint({ record: r, session: sortedRecords.indexOf(r) + 1 })}
-                      style={{ cursor: 'pointer' }}>
+                      style={{ borderBottom: '1px solid var(--clr-border)', cursor: 'pointer' }}>
                       <td style={{ padding: '8px 10px' }}>{formatDate(r.date)}</td>
                       <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.questionSummary?.easy || 0}</td>
                       <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.questionSummary?.medium || 0}</td>
@@ -68584,6 +70061,27 @@ function MensurationLabApp({ onBack, initialDifficulty, initialNumQuestions, ini
   };
 
   return <GenericLabApp title="Mensuration" subtitle="Geometry & Shape Puzzles" endpoint="/api/mensuration-lab" onBack={onBack} renderQuestionCustom={renderCustom} initialDifficulty={initialDifficulty} initialNumQuestions={initialNumQuestions} initialStarted={initialStarted} />;
+}
+
+
+export function getLocalXp() {
+  try {
+    const val = localStorage.getItem('tenali_xp');
+    return val ? parseInt(val, 10) : 0;
+  } catch { return 0; }
+}
+
+export function setLocalXp(val) {
+  try { localStorage.setItem('tenali_xp', val.toString()); } catch {}
+  // dispatch event to sync UI if needed
+  window.dispatchEvent(new CustomEvent('tenali_xp_update', { detail: { xp: val } }));
+}
+
+export function changeXp(delta) {
+  const current = getLocalXp();
+  const next = Math.max(0, current + delta);
+  setLocalXp(next);
+  return next;
 }
 
 export default App
