@@ -44945,7 +44945,7 @@ function App() {
           Mode is hiding, so it comes down with them. */}
       {mode === null && !focusActive && (
         <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
-          🧭 Guide
+          🧭 <span className="guide-toggle-label">Guide</span>
         </button>
       )}
       <StudyModeToggle />
@@ -45187,7 +45187,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
             ← Back to Dashboard
           </button>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px', paddingTop: isGoalSelection ? '44px' : '0' }}>
+        <div className={'home-title-row' + (isGoalSelection ? ' is-goal-selection' : '')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px' }}>
           <img src="/tenali.png" alt="Tenali Raman" style={{ width: '80px', height: 'auto', flexShrink: 0 }} />
           <div>
             <h1 style={{ margin: 0 }}>{isGoalSelection ? 'Goal Practice' : 'Tenali'}</h1>
@@ -54999,7 +54999,13 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
               color: '#A89C93', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
             }}>← Home</button>
 
-            <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700, fontSize: '48px', color: '#F4F1ED', margin: '0 0 12px', lineHeight: 1.1 }}>
+            {/* Reserve space on the right so a long title (e.g. "Circle Theorems")
+                never runs into the Word Explorer badge, which is absolutely
+                positioned at top:48px/right:40px within this same box. Symmetric
+                padding wouldn't do this — centered text keeps the same visual
+                center regardless of matched left/right padding; only reserving
+                space on the right actually pulls it clear. */}
+            <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700, fontSize: '48px', color: '#F4F1ED', margin: '0 0 12px', lineHeight: 1.1, paddingRight: topicKey ? '190px' : 0 }}>
               {title}
             </h1>
             <p style={{ color: '#988D84', fontSize: '0.9rem', margin: '0 0 40px', fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>

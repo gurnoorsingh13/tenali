@@ -296,19 +296,30 @@ export default function LearningMapApp({ onBack, onNavigate, focusTopicId, celeb
             <h2>🔗 Topic Connections</h2>
             <p>Hover a topic to trace what it needs and what it unlocks. Click any topic to jump in.</p>
           </div>
-          {mastery && (
-            <div className="learning-map-progress-stat" title={`${masteredCount} of ${totalCount} topics mastered`}>
-              <div className="learning-map-progress-bar">
-                <div className="learning-map-progress-fill" style={{ width: `${masteredPct}%` }} />
+          {/* Grouped in its own wrapping row: the global coin-balance badge
+              (HintModal.jsx) is fixed at top:64/left:16 on every screen, and
+              at in-between widths (roughly 700-1300px) this header wraps
+              before that point. Wrapping *inside* this nested container,
+              rather than directly inside .learning-map-header, means every
+              row it produces starts after this wrapper's own left padding —
+              a plain flex-wrap on the outer header can't guarantee that,
+              since a new row from wrapping always starts at the container's
+              own edge, not wherever the previous row happened to end. */}
+          <div className="learning-map-header-stats">
+            {mastery && (
+              <div className="learning-map-progress-stat" title={`${masteredCount} of ${totalCount} topics mastered`}>
+                <div className="learning-map-progress-bar">
+                  <div className="learning-map-progress-fill" style={{ width: `${masteredPct}%` }} />
+                </div>
+                <span>{masteredCount}/{totalCount} mastered · {masteredPct}%</span>
               </div>
-              <span>{masteredCount}/{totalCount} mastered · {masteredPct}%</span>
+            )}
+            {isMockMasteryActive() && <span className="dev-mock-badge" title="Mastery data is mocked via ?mockMastery= for local review, not real">🧪 mock mastery</span>}
+            <div className="learning-map-zoom">
+              <button onClick={() => setZoom((z) => Math.max(0.4, z - 0.15))}>−</button>
+              <button onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+              <button onClick={() => setZoom((z) => Math.min(1.6, z + 0.15))}>+</button>
             </div>
-          )}
-          {isMockMasteryActive() && <span className="dev-mock-badge" title="Mastery data is mocked via ?mockMastery= for local review, not real">🧪 mock mastery</span>}
-          <div className="learning-map-zoom">
-            <button onClick={() => setZoom((z) => Math.max(0.4, z - 0.15))}>−</button>
-            <button onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
-            <button onClick={() => setZoom((z) => Math.min(1.6, z + 0.15))}>+</button>
           </div>
         </div>
 

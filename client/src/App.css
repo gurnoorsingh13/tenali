@@ -7411,3 +7411,25 @@ mark.nudge-keyword {
 .progressive-hint-toggle:hover {
   background: rgba(224,123,57,0.12);
 }
+
+/* ─── Home title row — clearance for the floating top-bar chrome ─────────
+   theme toggle, a11y gear, menu, guide, coin balance, and the Explore/Focus
+   switch are all independently `position: fixed` (added piecemeal by
+   different features over time) and none of them account for where the
+   page's own title actually starts. Below 820px several of them drop onto
+   a second row (see StudyMode.css) that lands directly on top of "Tenali"
+   without this. */
+.home-title-row {
+  padding-top: 0;
+}
+.home-title-row.is-goal-selection {
+  padding-top: 44px;
+}
+@media (max-width: 820px) {
+  .home-title-row {
+    padding-top: 96px;
+  }
+  .home-title-row.is-goal-selection {
+    padding-top: 120px;
+  }
+}

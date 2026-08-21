@@ -23,10 +23,47 @@
   /* Extra right padding: the app's global theme/menu/accessibility icons
      are fixed at z-index 9999 in this corner on every screen — clear of
      them rather than fighting z-index, so they stay reachable and nothing
-     visually collides. */
-  padding: 14px 160px 14px 20px;
+     visually collides. 360, not 160: the Explore/Focus switch is anchored
+     at right:160px but is itself ~180px wide, so its actual left edge sits
+     around 340px from the viewport edge — 160px only clears its anchor
+     point, not its full rendered width, which let this header's own
+     progress-stat text run underneath it. */
+  padding: 14px 360px 14px 20px;
   border-bottom: 1px solid var(--clr-border, #444);
   flex-wrap: wrap;
+}
+
+/* Groups the progress stat, mock-mastery badge, and zoom controls so
+   whichever of them wraps to a new line — at in-between viewport widths
+   this happens well before 1300px — always starts clear of the global
+   coin-balance badge (fixed top:64/left:16 on every screen). A flex-wrap
+   on .learning-map-header alone can't guarantee this: a new row always
+   starts at the *container's* left edge, not wherever the previous row
+   happened to end, so the reserved space has to live on whichever element
+   actually owns that wrapping. */
+.learning-map-header-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+@media (max-width: 1350px) {
+  /* Only reserved in the range where this group actually wraps to a
+     second line — at wider widths it stays on one line well clear of the
+     coin badge already, and reserving space unconditionally here would
+     just shrink row one and push its text into the fixed Explore/Focus
+     toggle instead. */
+  .learning-map-header-stats {
+    padding-left: 130px;
+  }
+}
+@media (max-width: 500px) {
+  /* Below 500px the header itself stacks narrow enough that the coin
+     badge no longer shares a row with anything here — the reservation
+     would just waste space. */
+  .learning-map-header-stats {
+    padding-left: 0;
+  }
 }
 
 .learning-map-back {
@@ -102,7 +139,10 @@
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  padding: 8px 20px;
+  /* Extra left padding: the global coin-balance badge (Progressive Hints
+     system) is fixed at top:64px/left:16px on every screen — clear of it
+     rather than letting it cover the first legend item. */
+  padding: 8px 20px 8px 130px;
   border-bottom: 1px solid var(--clr-border, #444);
 }
 .learning-map-legend-item {
@@ -456,6 +496,14 @@
     transform: none;
     stroke-dashoffset: 0;
   }
+}
+
+@media (max-width: 820px) {
+  /* Same breakpoint StudyModeToggle.jsx uses to drop the Explore/Focus
+     switch onto its own centred row (top:60px) — below that width, this
+     header's own wrapped content needs to start clear of it too, or
+     whichever wraps second lands directly underneath the switch. */
+  .learning-map-header { padding-top: 100px; }
 }
 
 @media (max-width: 700px) {

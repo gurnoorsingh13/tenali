@@ -43,7 +43,7 @@ export default function StudyModeToggle() {
         className={`study-mode-option${!isFocus ? ' is-active' : ''}`}
         onClick={() => select(EXPLORE)}
       >
-        <span aria-hidden="true">🧭</span> Explore
+        <span aria-hidden="true">🧭</span> <span className="study-mode-label">Explore</span>
       </button>
       <button
         type="button"
@@ -52,7 +52,7 @@ export default function StudyModeToggle() {
         className={`study-mode-option${isFocus ? ' is-active' : ''}`}
         onClick={() => select(FOCUS)}
       >
-        <span aria-hidden="true">🎯</span> Focus
+        <span aria-hidden="true">🎯</span> <span className="study-mode-label">Focus</span>
       </button>
     </div>
   )
