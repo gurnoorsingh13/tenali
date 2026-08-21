@@ -433,6 +433,10 @@
       "kind": "sets"
     }
   },
+  "spot": {
+    "why": "The panel that took you three seconds and the one that took you thirty had the exact same single match hiding in it — your eyes just found it faster the second time. That is the actual skill underneath every 'careless mistake' correction in maths: spotting the one thing that is different, fast, before it costs you the question.",
+    "how": "You are not scanning randomly. Your eyes build a rough map of both panels and rule out whole regions at once, the same search your brain runs checking two long numbers actually match, or scanning a line of algebra for the term that does not belong. Play it enough and that search gets faster everywhere else too."
+  },
   "permcomb": {
     "why": "A six character password has about 57 billion possibilities. Add two more characters and it passes 200 trillion. Length beats cleverness, because every new character multiplies everything that came before it.",
     "how": "Permutations care about order, combinations do not. If order matters you multiply the shrinking number of choices. If it does not, you divide by the number of rearrangements you have now counted more than once. That division is the only difference between nPr and nCr.",

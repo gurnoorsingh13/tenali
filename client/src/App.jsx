@@ -59664,6 +59664,7 @@ function PercentApp({
 
     <div className="percentages-app-theme">
       <QuizLayout title="Percentages" subtitle="Find a Percentage" onBack={onBack}>
+        <WhyLearnThis topicId="percent" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -61326,6 +61327,7 @@ const generateRound = (n) => {
       {!started && !finished && (
         <div className="welcome-box">
           <p className="welcome-text">Two panels, one match. Tap the common object!</p>
+          <WhyLearnThis topicId="spot" onNavigate={typeof setMode === 'function' ? setMode : undefined} />
 
         {isGoalMode && (
         <>

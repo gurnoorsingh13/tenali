@@ -124,6 +124,7 @@ const mastery = require('./mastery');
 const events = require('./events');
 const hints = require('./hints');
 const translate = require('./translate');
+const topicGraph = require('./topicGraph');
 
 // Load static collections definitions
 let collections = [];
@@ -137,6 +138,10 @@ app.use('/api/auth', auth.router);
 app.use('/api/progress', progress.router);
 app.use('/api/mastery', mastery.router);
 app.use('/api/events', events.router);
+// Single shared source for graph/index.html and graph/path.html — no auth,
+// this is static structural data (topic names/prerequisites), not anything
+// student-specific.
+app.get('/api/topic-graph', (req, res) => res.json(topicGraph));
 app.use('/api/hints', hints);
 app.use('/api/translate', translate.router);
 const treasurehuntRouter = require('./treasurehunt/routes');
