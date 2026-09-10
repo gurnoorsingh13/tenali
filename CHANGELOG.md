@@ -19,9 +19,15 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 966 commits · 80 active days · 28 unique authors
+### 📊 Total: 967 commits · 81 active days · 28 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-10  <sub>(1 commit)</sub>
+
+- 📌 [`3738959`](https://github.com/gurnoorsingh13/tenali/commit/37389595d2052a1b3bdfc06c93b5900d536b1a22) — **github-actions[bot]** — 🤖 docs(contributors): refresh contributor stats
+    - 📁 **3 files:** `CHANGELOG.md` `+5 −2`, `CONTRIBUTORS.md` `+5 −5`, `README.md` `+4 −4`
+    - 📊 **`+14 −11`** · 3 files
 
 #### 📅 2026-09-09  <sub>(2 commits)</sub>
 
