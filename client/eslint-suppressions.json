@@ -40,23 +40,6 @@
       "count": 6
     }
   },
-  "src/BattleApp.jsx": {
-    "no-empty": {
-      "count": 2
-    },
-    "no-unused-vars": {
-      "count": 17
-    },
-    "react-hooks/immutability": {
-      "count": 1
-    },
-    "react-hooks/preserve-manual-memoization": {
-      "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "src/BearingsLabApp.jsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1

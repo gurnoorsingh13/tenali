@@ -270,16 +270,38 @@ export default function BattleApp({ onBack, initialTopic }) {
   const [sudokuSelectedCell, setSudokuSelectedCell] = useState(null)
 
   useEffect(() => {
-    socket.on('connect', () => {
-      setMyId(socket.id)
-      socket.emit('getOpenRooms')
-    })
-    socket.on('openRooms', (rooms) => setOpenRooms(rooms))
-    if (socket.connected) {
+    const onConnect = () => {
       setMyId(socket.id)
       socket.emit('getOpenRooms')
     }
+    socket.on('connect', onConnect)
+    socket.on('openRooms', (rooms) => setOpenRooms(rooms))
+    // Already connected before this effect ran, so 'connect' will not fire
+    // again: run the same handler once, just after the effect rather than
+    // synchronously inside it.
+    if (socket.connected) queueMicrotask(onConnect)
     return () => { socket.off('connect'); socket.off('openRooms') }
+  }, [])
+
+  // Declared before the effect below, whose 'opponentLeft' handler calls it.
+  // Only touches state setters, the socket and a ref, so it never changes.
+  const resetToLobby = useCallback(() => {
+    setPhase('lobby')
+    setRoomCode('')
+    setPlayers([])
+    setQuestion(null)
+    setAnswer('')
+    setScores([])
+    setRoundWinner(null)
+    setRoundPlayers([])
+    setSudokuPuzzle(null)
+    setSudokuGrid(null)
+    setSudokuRaceActive(false)
+    setSudokuWrongCount(0)
+    setSudokuSelectedCell(null)
+    setSudokuOpponentFinished(false)
+    clearInterval(timerRef.current)
+    setTimeout(() => socket.emit('getOpenRooms'), 100)
   }, [])
 
   useEffect(() => {
@@ -390,26 +412,8 @@ export default function BattleApp({ onBack, initialTopic }) {
       socket.off('cellResult'); socket.off('sudokuForcedEnd')
       clearInterval(timerRef.current)
     }
-  }, [myId, players])
+  }, [myId, players, resetToLobby])
 
-  const resetToLobby = useCallback(() => {
-    setPhase('lobby')
-    setRoomCode('')
-    setPlayers([])
-    setQuestion(null)
-    setAnswer('')
-    setScores([])
-    setRoundWinner(null)
-    setRoundPlayers([])
-    setSudokuPuzzle(null)
-    setSudokuGrid(null)
-    setSudokuRaceActive(false)
-    setSudokuWrongCount(0)
-    setSudokuSelectedCell(null)
-    setSudokuOpponentFinished(false)
-    clearInterval(timerRef.current)
-    setTimeout(() => socket.emit('getOpenRooms'), 100)
-  }, [])
 
   const handleCreate = useCallback(() => {
     setError('')
