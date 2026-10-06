@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 
 // ─── Question Bank ───────────────────────────────────────────────────────────
 // 6 modules: Direct Match, Similar Stories, Missing Info, Brackets, Both Sides, Mixed Challenge
@@ -1928,7 +1928,15 @@ export default function EquationToStory() {
   const [mascotAnim, setMascotAnim] = useState(false);
   const [floats, setFloats] = useState([]);
   const [confetti, setConfetti] = useState([]);
-  const timerRef = useState(null);
+  // Holds the countdown's interval id. This was `useState(null)` used as
+  // `timerRef[0]`, but useState returns a new array every render, so the id
+  // was lost on the next render: stopTimer() could not stop the running
+  // interval, and every restart or new question stacked another one, making
+  // the countdown run 2x, 3x... as fast.
+  const timerRef = useRef(null);
+  // Ids for the floating "+n" bubbles, counted rather than built from
+  // Date.now()/Math.random() while rendering.
+  const floatIdRef = useRef(0);
 
   // Step 2 & Step 3 interaction state
   const dragValRef = useRef(null);
@@ -1956,7 +1964,8 @@ export default function EquationToStory() {
   };
 
   const addFloat = (n) => {
-    const id = Date.now() + Math.random();
+    floatIdRef.current += 1;
+    const id = floatIdRef.current;
     setFloats(f => [...f, { id, n }]);
     setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 1000);
   };
@@ -1972,7 +1981,7 @@ export default function EquationToStory() {
   };
 
   const startTimer = (overrideModule = activeModule) => {
-    if (timerRef[0]) clearInterval(timerRef[0]);
+    if (timerRef.current) clearInterval(timerRef.current);
     const maxSecs = getTimerMax(overrideModule);
     setTimeLeft(maxSecs);
     const id = setInterval(() => {
@@ -1985,10 +1994,16 @@ export default function EquationToStory() {
         return Math.round((t - 0.1) * 10) / 10;
       });
     }, 100);
-    timerRef[0] = id;
+    timerRef.current = id;
   };
 
-  const stopTimer = () => { if (timerRef[0]) clearInterval(timerRef[0]); };
+  const stopTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+  };
+
+  // Leaving the exercise mid-question must not leave a countdown running.
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   const resetQuestionState = () => {
     setFilledSlots({});
