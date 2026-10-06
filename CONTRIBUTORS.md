@@ -50,42 +50,63 @@
 <!-- live-snapshot:start -->
 | 🏆 Commits | 🔀 Merged PRs | 👥 Contributors | 🧩 Puzzles | 📚 Vocab | 🌍 GK |
 |----------:|------------:|--------------:|---------:|-------:|----:|
-| **1018** | **79** | **26** | **69** | **7,662** | **991** |
+| **1133** | **126** | **47** | **93** | **7,662** | **991** |
 <!-- live-snapshot:end -->
 
 ## 🥇 Leaderboard
 
 <!-- live-rank:start -->
-_Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions[bot]`](https://github.com/features/actions) on every push to `main` and every 12h._
+_Live data — last regenerated 2026-10-04 · auto-refreshed by [`github-actions[bot]`](https://github.com/features/actions) on every push to `main` and every 12h._
 
 | # | 👤 Real Name | 🔗 GitHub ID | 📝 Commits | 🔀 PRs | 🏷️ Role |
 |--:|:-------------|:-------------|----------:|-----:|:--------|
 | 🥇 | **S. R. S. Iyengar**<br/><sub>↳ also commits as <b>sudarshan</b></sub> | [sudarshansudarshan](https://github.com/sudarshansudarshan) | **281** | 0  | Lead Architect · Curriculum Author · 69 puzzle families |
-| 🥈 | **Mudit Agrawal** | [muditagrawal2007](https://github.com/muditagrawal2007) | **191** | 24  | Maintainer · Battle Arena · Linear Algebra · Sudoku · Playground |
-| 🥉 | **github-actions-bot-**<br/><sub>↳ also commits as <b>github-actions[bot]</b></sub> | [github-actions-bot-](https://github.com/github-actions-bot-) | **139** | 0  | — |
-| 4. | **Jinal Gupta** | [jgupta05072003-code](https://github.com/jgupta05072003-code) | **93** | 0  | Upstream Repo Maintainer & PR Reviewer |
-| 5. | **Lakshmi Varshini Nandula ** | [varshini-nandula](https://github.com/varshini-nandula) | **43** | 1  | Profile Showcase & Offline Storage |
-| 6. | **Sameer Mishra** | [24F3005086](https://github.com/24F3005086) | **36** | 4  | i18n · Accessibility · Concept Labs |
-| 7. | **Vaibhav Satish**<br/><sub>↳ also commits as <b>Vaibhav</b></sub> | [Vaibhav-sa30](https://github.com/Vaibhav-sa30) | **35** | 2  | Vachana Literacy Lab & Vocabulary |
+| 🥈 | **Mudit Agrawal** | [muditagrawal2007](https://github.com/muditagrawal2007) | **193** | 25  | Maintainer · Battle Arena · Linear Algebra · Sudoku · Playground |
+| 🥉 | **Jinal Gupta** | [jgupta05072003-code](https://github.com/jgupta05072003-code) | **142** | 0  | Upstream Repo Maintainer & PR Reviewer |
+| 4. | **Priyanshu Kumar** | [priyanshu7725](https://github.com/priyanshu7725) | **54** | 1  | — |
+| 5. | **Vaibhav Satish**<br/><sub>↳ also commits as <b>Vaibhav</b></sub> | [Vaibhav-sa30](https://github.com/Vaibhav-sa30) | **50** | 3  | Vachana Literacy Lab & Vocabulary |
+| 6. | **Lakshmi Varshini Nandula ** | [varshini-nandula](https://github.com/varshini-nandula) | **43** | 1  | Profile Showcase & Offline Storage |
+| 7. | **Sameer Mishra** | [24F3005086](https://github.com/24F3005086) | **36** | 4  | i18n · Accessibility · Concept Labs |
 | 8. | **DIPTOSUBHRO DATTA**<br/><sub>↳ also commits as <b>Dipto Subhro</b></sub> | [diptosubhro-ctrl](https://github.com/diptosubhro-ctrl) | **33** | 1  | Tutorial System + Noise Filter Refactor |
-| 9. | **Ritish Karmakar** | [Ritish007-svg](https://github.com/Ritish007-svg) | **27** | 1  | Percentages Level-wise Explanation |
-| 10. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
-| 11. | **K C Dharshan** | [KCDharshan9](https://github.com/KCDharshan9) | **21** | 1  | Tap-to-Define Word Glossary |
-| 12. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
-| 13. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
-| 14. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
-| 15. | **shreejal-bangera**<br/><sub>↳ also commits as <b>Shreejal Bangera</b></sub> | [shreejal-bangera](https://github.com/shreejal-bangera) | **8** | 0  | — |
-| 16. | **SemiColonSlayer** | [sharonyamita-spec](https://github.com/sharonyamita-spec) | **6** | 1  | Math Detective Agency |
-| 17. | **PANDRAJU POORVI PRAVALLIKA** | [poorvipravallika06](https://github.com/poorvipravallika06) | **6** | 1  | HCF/LCM Interactive Module |
-| 18. | **Rukmender T** | [RukmenderT](https://github.com/RukmenderT) | **5** | 1  | Curiosity Mode |
-| 19. | **tanvish desai** | [tanvishdesai](https://github.com/tanvishdesai) | **4** | 1  | — |
-| 20. | **Disha Bansal** | [disha01bansal](https://github.com/disha01bansal) | **4** | 0  | — |
-| 21. | **S. Hamsalekha**<br/><sub>↳ also commits as <b>S Hamsalekha</b></sub> | [S-Hamsalekha-annamai](https://github.com/S-Hamsalekha-annamai) | **3** | 1  | Track User Progress |
-| 22. | **Krishna Gelra** | [KrishnaG-101](https://github.com/KrishnaG-101) | **3** | 1  | Language Puzzles Framework |
-| 23. | **Remy baastin rayappan** | [remy-baastin](https://github.com/remy-baastin) | **2** | 1  | — |
-| 24. | **harsh**<br/><sub>↳ also commits as <b>Harsh</b></sub> | [harsh](https://github.com/harsh) | **2** | 0  | — |
-| 25. | **Anshul Kanodia** | [AnshulKanodia](https://github.com/AnshulKanodia) | **2** | 0  | Geometry Game Restoration |
-| 26. | **Vasuki** | [vasuki-tenali](https://github.com/vasuki-tenali) | **1** | 0  | Infra contributor |
+| 9. | **bithika-jain**<br/><sub>↳ also commits as <b>Bithika-Jain</b></sub> | [bithika-jain](https://github.com/bithika-jain) | **32** | 0  | — |
+| 10. | **Ritish Karmakar** | [Ritish007-svg](https://github.com/Ritish007-svg) | **27** | 1  | Percentages Level-wise Explanation |
+| 11. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
+| 12. | **K C Dharshan** | [KCDharshan9](https://github.com/KCDharshan9) | **21** | 1  | Tap-to-Define Word Glossary |
+| 13. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
+| 14. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
+| 15. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
+| 16. | **athira**<br/><sub>↳ also commits as <b>Athira</b></sub> | [athira](https://github.com/athira) | **15** | 0  | — |
+| 17. | **jinal-gupta**<br/><sub>↳ also commits as <b>JINAL GUPTA</b></sub> | [jinal-gupta](https://github.com/jinal-gupta) | **12** | 0  | — |
+| 18. | **lalithasriharshitha**<br/><sub>↳ also commits as <b>LalithaSriHarshitha</b></sub> | [lalithasriharshitha](https://github.com/lalithasriharshitha) | **10** | 0  | — |
+| 19. | **Krishna Gelra** | [KrishnaG-101](https://github.com/KrishnaG-101) | **9** | 2  | Language Puzzles Framework |
+| 20. | **tanvish desai** | [tanvishdesai](https://github.com/tanvishdesai) | **9** | 2  | — |
+| 21. | **shreejal-bangera**<br/><sub>↳ also commits as <b>Shreejal Bangera</b></sub> | [shreejal-bangera](https://github.com/shreejal-bangera) | **8** | 0  | — |
+| 22. | **cursor-agent**<br/><sub>↳ also commits as <b>Cursor Agent</b></sub> | [cursor-agent](https://github.com/cursor-agent) | **6** | 0  | — |
+| 23. | **ayushkochhar**<br/><sub>↳ also commits as <b>AYUSHKOCHHAR</b></sub> | [ayushkochhar](https://github.com/ayushkochhar) | **6** | 0  | — |
+| 24. | **krishna009-pro**<br/><sub>↳ also commits as <b>Krishna009-pro</b></sub> | [krishna009-pro](https://github.com/krishna009-pro) | **6** | 0  | — |
+| 25. | **SemiColonSlayer** | [sharonyamita-spec](https://github.com/sharonyamita-spec) | **6** | 1  | Math Detective Agency |
+| 26. | **PANDRAJU POORVI PRAVALLIKA** | [poorvipravallika06](https://github.com/poorvipravallika06) | **6** | 1  | HCF/LCM Interactive Module |
+| 27. | **tarang-rajvanshi**<br/><sub>↳ also commits as <b>Tarang Rajvanshi</b></sub> | [tarang-rajvanshi](https://github.com/tarang-rajvanshi) | **5** | 0  | — |
+| 28. | **tenzai-aj**<br/><sub>↳ also commits as <b>Tenzai-AJ</b></sub> | [tenzai-aj](https://github.com/tenzai-aj) | **5** | 0  | — |
+| 29. | **Rukmender T** | [RukmenderT](https://github.com/RukmenderT) | **5** | 1  | Curiosity Mode |
+| 30. | **sharad**<br/><sub>↳ also commits as <b>Sharad</b></sub> | [sharad](https://github.com/sharad) | **4** | 0  | — |
+| 31. | **sharad-**<br/><sub>↳ also commits as <b>Sharad.</b></sub> | [sharad-](https://github.com/sharad-) | **4** | 0  | — |
+| 32. | **Disha Bansal** | [disha01bansal](https://github.com/disha01bansal) | **4** | 0  | — |
+| 33. | **yummypancake2607**<br/><sub>↳ also commits as <b>yummyPancake2607</b></sub> | [yummypancake2607](https://github.com/yummypancake2607) | **3** | 0  | — |
+| 34. | **pradeep-gupta7**<br/><sub>↳ also commits as <b>Pradeep-gupta7</b></sub> | [pradeep-gupta7](https://github.com/pradeep-gupta7) | **3** | 0  | — |
+| 35. | **S. Hamsalekha**<br/><sub>↳ also commits as <b>S Hamsalekha</b></sub> | [S-Hamsalekha-annamai](https://github.com/S-Hamsalekha-annamai) | **3** | 1  | Track User Progress |
+| 36. | **code-zero07**<br/><sub>↳ also commits as <b>Code-Zero07</b></sub> | [code-zero07](https://github.com/code-zero07) | **2** | 0  | — |
+| 37. | **nirmal-np**<br/><sub>↳ also commits as <b>Nirmal_np</b></sub> | [nirmal-np](https://github.com/nirmal-np) | **2** | 0  | — |
+| 38. | **disha-singh**<br/><sub>↳ also commits as <b>Disha Singh</b></sub> | [disha-singh](https://github.com/disha-singh) | **2** | 0  | — |
+| 39. | **Remy baastin rayappan** | [remy-baastin](https://github.com/remy-baastin) | **2** | 1  | — |
+| 40. | **harsh**<br/><sub>↳ also commits as <b>Harsh</b></sub> | [harsh](https://github.com/harsh) | **2** | 0  | — |
+| 41. | **Anshul Kanodia** | [AnshulKanodia](https://github.com/AnshulKanodia) | **2** | 0  | Geometry Game Restoration |
+| 42. | **dynosuprovo**<br/><sub>↳ also commits as <b>DYNOSuprovo</b></sub> | [dynosuprovo](https://github.com/dynosuprovo) | **1** | 0  | — |
+| 43. | **athira-kv**<br/><sub>↳ also commits as <b>Athira Kv</b></sub> | [athira-kv](https://github.com/athira-kv) | **1** | 0  | — |
+| 44. | **garv-arora**<br/><sub>↳ also commits as <b>Garv Arora</b></sub> | [garv-arora](https://github.com/garv-arora) | **1** | 0  | — |
+| 45. | **pradeep-gupta**<br/><sub>↳ also commits as <b>Pradeep Gupta</b></sub> | [pradeep-gupta](https://github.com/pradeep-gupta) | **1** | 0  | — |
+| 46. | **priyanshu-kumar**<br/><sub>↳ also commits as <b>Priyanshu Kumar</b></sub> | [priyanshu-kumar](https://github.com/priyanshu-kumar) | **1** | 0  | — |
+| 47. | **Vasuki** | [vasuki-tenali](https://github.com/vasuki-tenali) | **1** | 0  | Infra contributor |
 <!-- live-rank:end -->
 
 ---
@@ -136,7 +157,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <a href="https://github.com/muditagrawal2007"><img src="https://avatars.githubusercontent.com/u/228782706?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #C0C0C0;" alt="Mudit Agrawal"/></a>
         <br/><b>Mudit Agrawal</b>
         <br/><a href="https://github.com/muditagrawal2007">@muditagrawal2007</a>
-        <br/><sub>🏆 191 commits · 24 PRs merged</sub>
+        <br/><sub>🏆 193 commits · 25 PRs merged</sub>
       </td>
       <td valign="top" width="*">
         <h4>🥈 Maintainer · Battle Arena · Linear Algebra · Sudoku · Playground</h4>
@@ -163,36 +184,14 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/github-actions-bot-"><img src="https://github.com/github-actions-bot-.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="github-actions-bot-"/></a>
-        <br/><b>github-actions-bot-</b>
-        <br/><a href="https://github.com/github-actions-bot-">@github-actions-bot-</a>
-        <br/><sub>🏆 139 commits · 0 PRs merged</sub>
-        <br/><sub>🔗 also commits as: <b>github-actions[bot]</b></sub>
-      </td>
-      <td valign="top" width="*">
-        <h4>🥉 New Contributor</h4>
-        <ul>
-          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
-          <li>📊 <b>139 commits</b> across this repo's history</li>
-          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
-        </ul>
-      </td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table>
-    <tr>
-      <td align="center" width="220">
         <a href="https://github.com/jgupta05072003-code"><img src="https://avatars.githubusercontent.com/u/267273120?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #4D96FF;" alt="Jinal Gupta"/></a>
         <br/><b>Jinal Gupta</b>
         <br/><sub><i>(git: J. Gupta)</i></sub>
         <br/><a href="https://github.com/jgupta05072003-code">@jgupta05072003-code</a>
-        <br/><sub>🏆 93 commits · 0 PRs merged</sub>
+        <br/><sub>🏆 142 commits · 0 PRs merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>4. Upstream Repo Maintainer & PR Reviewer</h4>
+        <h4>🥉 Upstream Repo Maintainer & PR Reviewer</h4>
         <ul>
           <li>🔍 <b>Reviewed and merged 30+ PRs</b> into <code>vicharanashala/tenali</code></li>
           <li>🔧 <b>Hardened JWT auth</b> — centralized JWT_SECRET, removed duplicate declarations (#96)</li>
@@ -212,6 +211,54 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
+        <a href="https://github.com/priyanshu7725"><img src="https://avatars.githubusercontent.com/u/179143675?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="Priyanshu Kumar"/></a>
+        <br/><b>Priyanshu Kumar</b>
+        <br/><a href="https://github.com/priyanshu7725">@priyanshu7725</a>
+        <br/><sub>🏆 54 commits · 1 PR merged</sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>4. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>54 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/Vaibhav-sa30"><img src="https://avatars.githubusercontent.com/u/86743451?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #FF6B6B;" alt="Vaibhav Satish"/></a>
+        <br/><b>Vaibhav Satish</b>
+        <br/><a href="https://github.com/Vaibhav-sa30">@Vaibhav-sa30</a>
+        <br/><sub>🏆 50 commits · 3 PRs merged</sub>
+        <br/><sub>📍 India · 🐦 @vee42O · 🌐 https://vaibhavsatish-research.vercel.app</sub>
+        <br/><sub>🔗 also commits as: <b>Vaibhav</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>5. Vachana Literacy Lab & Vocabulary</h4>
+        <ul>
+          <li>🆕 <b>Vachana Mathematical Literacy Lab (PR #18)</b> — standalone literacy module with grid dashboard, 8+ exercises across v0.1.x</li>
+          <li>🔤 <b>Notation Literacy Exercise (PR #57)</b> — teaches math notation & root decoding with etymology references</li>
+          <li>🔍 <b>Vocabulary Explorer</b> — adaptive placement check, MCQ auto-submit, guided exploration</li>
+          <li>🧭 <b>Vocab Quiz UX</b> — numeric shortcuts, color-coded feedback, manual submit, previous-question navigation</li>
+          <li>🪟 <b>History view fix</b> — placement-test state overlap fix + previous button</li>
+          <li>♻️ <b>Modularization</b> — split Vachana Literacy Lab into separate component files</li>
+          <li>📚 <b>Exercise research docs</b> — pedagogical references + CHANGELOG entries for every v0.1.x release</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
         <a href="https://github.com/varshini-nandula"><img src="https://avatars.githubusercontent.com/u/174730796?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #CD7F32;" alt="Lakshmi Varshini Nandula "/></a>
         <br/><b>Lakshmi Varshini Nandula </b>
         <br/><a href="https://github.com/varshini-nandula">@varshini-nandula</a>
@@ -219,7 +266,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>📍 Palakollu, India</sub>
       </td>
       <td valign="top" width="*">
-        <h4>5. Profile Showcase & Offline Storage</h4>
+        <h4>6. Profile Showcase & Offline Storage</h4>
         <ul>
           <li>🏅 <b>Profile Achievement Showcase (PR #59)</b> — badge cabinet, category dropdown, circular close buttons</li>
           <li>📦 <b>Scalable MongoDB collections</b> — <code>UserStats</code>, <code>UserMilestone</code>, <code>UserTopicProgress</code>, <code>UserCollectionProgress</code></li>
@@ -245,7 +292,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 36 commits · 4 PRs merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>6. i18n · Accessibility · Concept Labs</h4>
+        <h4>7. i18n · Accessibility · Concept Labs</h4>
         <ul>
           <li>🌍 <b>Internationalization (PR #51)</b> — full i18n framework, locales directory, translation layer</li>
           <li>♿ <b>Accessibility panel (PR #50)</b> — high-contrast toggle, reduced motion, keyboard nav, ARIA roles</li>
@@ -255,33 +302,6 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
           <li>🧹 <b>ESLint cleanup</b> — removed unused vars, suppressed <code>react-refresh</code> warnings</li>
           <li>🧩 <b>MasteryBadge integration</b> — wired <code>updateBKT</code> stub into concept playgrounds</li>
           <li>🐛 <b>Bugfix sweeps</b> — translation, dark/light, mastery-badge, concept-playgrounds localization</li>
-        </ul>
-      </td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table>
-    <tr>
-      <td align="center" width="220">
-        <a href="https://github.com/Vaibhav-sa30"><img src="https://avatars.githubusercontent.com/u/86743451?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #FF6B6B;" alt="Vaibhav Satish"/></a>
-        <br/><b>Vaibhav Satish</b>
-        <br/><a href="https://github.com/Vaibhav-sa30">@Vaibhav-sa30</a>
-        <br/><sub>🏆 35 commits · 2 PRs merged</sub>
-        <br/><sub>📍 India · 🐦 @vee42O · 🌐 https://vaibhavsatish-research.vercel.app</sub>
-        <br/><sub>🔗 also commits as: <b>Vaibhav</b></sub>
-      </td>
-      <td valign="top" width="*">
-        <h4>7. Vachana Literacy Lab & Vocabulary</h4>
-        <ul>
-          <li>🆕 <b>Vachana Mathematical Literacy Lab (PR #18)</b> — standalone literacy module with grid dashboard, 8+ exercises across v0.1.x</li>
-          <li>🔤 <b>Notation Literacy Exercise (PR #57)</b> — teaches math notation & root decoding with etymology references</li>
-          <li>🔍 <b>Vocabulary Explorer</b> — adaptive placement check, MCQ auto-submit, guided exploration</li>
-          <li>🧭 <b>Vocab Quiz UX</b> — numeric shortcuts, color-coded feedback, manual submit, previous-question navigation</li>
-          <li>🪟 <b>History view fix</b> — placement-test state overlap fix + previous button</li>
-          <li>♻️ <b>Modularization</b> — split Vachana Literacy Lab into separate component files</li>
-          <li>📚 <b>Exercise research docs</b> — pedagogical references + CHANGELOG entries for every v0.1.x release</li>
         </ul>
       </td>
     </tr>
@@ -319,13 +339,35 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
+        <a href="https://github.com/bithika-jain"><img src="https://github.com/bithika-jain.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="bithika-jain"/></a>
+        <br/><b>bithika-jain</b>
+        <br/><a href="https://github.com/bithika-jain">@bithika-jain</a>
+        <br/><sub>🏆 32 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Bithika-Jain</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>9. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>32 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
         <a href="https://github.com/Ritish007-svg"><img src="https://avatars.githubusercontent.com/u/214147769?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #E67E22;" alt="Ritish Karmakar"/></a>
         <br/><b>Ritish Karmakar</b>
         <br/><a href="https://github.com/Ritish007-svg">@Ritish007-svg</a>
         <br/><sub>🏆 27 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>9. Percentages Level-wise Explanation</h4>
+        <h4>10. Percentages Level-wise Explanation</h4>
         <ul>
           <li>📈 <b>Level-wise Percentages (PR #9)</b> — diagnostic quiz for Percentages with kid-friendly UI</li>
           <li>🪜 <b>Percentages Level 1 (Find)</b> — first explanation level with hover info popups, boxed theory cards, mobile-responsive fixes</li>
@@ -350,7 +392,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>SaniyaJos</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>10. New Contributor</h4>
+        <h4>11. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>22 commits</b> across this repo's history</li>
@@ -372,7 +414,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>📍 India</sub>
       </td>
       <td valign="top" width="*">
-        <h4>11. Tap-to-Define Word Glossary</h4>
+        <h4>12. Tap-to-Define Word Glossary</h4>
         <ul>
           <li>📖 <b>Tap-to-Define Word Glossary (PR #20)</b> — Word Explorer + enriched definition popovers with SVG visuals</li>
           <li>🆕 <b>Learn These Words pre-quiz (Feature AQ)</b> — vocab warmup section</li>
@@ -397,7 +439,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>📍 Hyderabad, India · 🌐 banerjeeahana4@gmail.com</sub>
       </td>
       <td valign="top" width="*">
-        <h4>12. Goal Practice & Learning Journey</h4>
+        <h4>13. Goal Practice & Learning Journey</h4>
         <ul>
           <li>📚 <b>Goal-based Practice Sessions (PR #11)</b> — isolated goal-practice module that hides "standard mode" pills</li>
           <li>🧠 <b>Learning Intelligence Layer (LIL)</b> — architected LIL with cross-app goal-practice integration</li>
@@ -423,7 +465,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 16 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>13. New Contributor</h4>
+        <h4>14. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>16 commits</b> across this repo's history</li>
@@ -446,7 +488,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>Shubh dixit</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>14. Premium UI Suite + Word Games</h4>
+        <h4>15. Premium UI Suite + Word Games</h4>
         <ul>
           <li>🏆 <b>Premium Core Educational Suite (PR #53)</b> — UI standardization, premium dark theme, module layout improvements</li>
           <li>➕ <b>Addition crash fix</b> — fixed ReferenceError for <code>setIsGoalMode</code> and removed extra modes</li>
@@ -466,6 +508,115 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
+        <a href="https://github.com/athira"><img src="https://github.com/athira.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="athira"/></a>
+        <br/><b>athira</b>
+        <br/><a href="https://github.com/athira">@athira</a>
+        <br/><sub>🏆 15 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Athira</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>16. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>15 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/jinal-gupta"><img src="https://github.com/jinal-gupta.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jinal-gupta"/></a>
+        <br/><b>jinal-gupta</b>
+        <br/><a href="https://github.com/jinal-gupta">@jinal-gupta</a>
+        <br/><sub>🏆 12 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>JINAL GUPTA</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>17. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>12 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/lalithasriharshitha"><img src="https://github.com/lalithasriharshitha.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="lalithasriharshitha"/></a>
+        <br/><b>lalithasriharshitha</b>
+        <br/><a href="https://github.com/lalithasriharshitha">@lalithasriharshitha</a>
+        <br/><sub>🏆 10 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>LalithaSriHarshitha</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>18. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>10 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/KrishnaG-101"><img src="https://avatars.githubusercontent.com/u/155518412?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #27AE60;" alt="Krishna Gelra"/></a>
+        <br/><b>Krishna Gelra</b>
+        <br/><a href="https://github.com/KrishnaG-101">@KrishnaG-101</a>
+        <br/><sub>🏆 9 commits · 2 PRs merged</sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>19. Language Puzzles Framework</h4>
+        <ul>
+          <li>🧩 <b>Modular Language Puzzles framework (PR #35)</b> — pluggable architecture for word/letter puzzles</li>
+          <li>🆕 <b>Word Creator</b> — fill-in-the-blanks to create new words</li>
+          <li>⚡ <b>Latency optimization</b> — reduced <code>wordCreator</code> verification time</li>
+          <li>🔀 <b>Merge conflict resolution</b> — clean upstream merge</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/tanvishdesai"><img src="https://avatars.githubusercontent.com/u/143877933?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="tanvish desai"/></a>
+        <br/><b>tanvish desai</b>
+        <br/><a href="https://github.com/tanvishdesai">@tanvishdesai</a>
+        <br/><sub>🏆 9 commits · 2 PRs merged</sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>20. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>9 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
         <a href="https://github.com/shreejal-bangera"><img src="https://github.com/shreejal-bangera.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="shreejal-bangera"/></a>
         <br/><b>shreejal-bangera</b>
         <br/><a href="https://github.com/shreejal-bangera">@shreejal-bangera</a>
@@ -473,10 +624,76 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>Shreejal Bangera</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>15. New Contributor</h4>
+        <h4>21. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>8 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/cursor-agent"><img src="https://github.com/cursor-agent.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="cursor-agent"/></a>
+        <br/><b>cursor-agent</b>
+        <br/><a href="https://github.com/cursor-agent">@cursor-agent</a>
+        <br/><sub>🏆 6 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Cursor Agent</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>22. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>6 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/ayushkochhar"><img src="https://github.com/ayushkochhar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="ayushkochhar"/></a>
+        <br/><b>ayushkochhar</b>
+        <br/><a href="https://github.com/ayushkochhar">@ayushkochhar</a>
+        <br/><sub>🏆 6 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>AYUSHKOCHHAR</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>23. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>6 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/krishna009-pro"><img src="https://github.com/krishna009-pro.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="krishna009-pro"/></a>
+        <br/><b>krishna009-pro</b>
+        <br/><a href="https://github.com/krishna009-pro">@krishna009-pro</a>
+        <br/><sub>🏆 6 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Krishna009-pro</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>24. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>6 commits</b> across this repo's history</li>
           <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
@@ -496,7 +713,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub><i>(SemiColonSlayer)</i></sub>
       </td>
       <td valign="top" width="*">
-        <h4>16. Math Detective Agency</h4>
+        <h4>25. Math Detective Agency</h4>
         <ul>
           <li>🕵️ <b>Math Detective Agency (PR #54)</b> — story-based mystery math cases with chained clue progression</li>
           <li>🪪 <b>Badge detail modal</b> — CSS for badge detail modal in <code>App.css</code></li>
@@ -518,7 +735,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 6 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>17. HCF/LCM Interactive Module</h4>
+        <h4>26. HCF/LCM Interactive Module</h4>
         <ul>
           <li>🍕 <b>Interactive LCM & HCF (PR #12)</b> — dynamic quiz with stepper locks, validation popups, accordion examples, mistake redirection</li>
           <li>🎯 <b>Confidence meter</b> — confidence-based quiz progression with sequential redirection</li>
@@ -535,13 +752,57 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
+        <a href="https://github.com/tarang-rajvanshi"><img src="https://github.com/tarang-rajvanshi.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="tarang-rajvanshi"/></a>
+        <br/><b>tarang-rajvanshi</b>
+        <br/><a href="https://github.com/tarang-rajvanshi">@tarang-rajvanshi</a>
+        <br/><sub>🏆 5 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Tarang Rajvanshi</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>27. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>5 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/tenzai-aj"><img src="https://github.com/tenzai-aj.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="tenzai-aj"/></a>
+        <br/><b>tenzai-aj</b>
+        <br/><a href="https://github.com/tenzai-aj">@tenzai-aj</a>
+        <br/><sub>🏆 5 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Tenzai-AJ</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>28. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>5 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
         <a href="https://github.com/RukmenderT"><img src="https://avatars.githubusercontent.com/u/206398340?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #8E44AD;" alt="Rukmender T"/></a>
         <br/><b>Rukmender T</b>
         <br/><a href="https://github.com/RukmenderT">@RukmenderT</a>
         <br/><sub>🏆 5 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>18. Curiosity Mode</h4>
+        <h4>29. Curiosity Mode</h4>
         <ul>
           <li>🤔 <b>Curiosity Mode (PR #56)</b> — variation discovery puzzles that explore "what if" scenarios</li>
           <li>🪟 <b>Hamburger menu integration</b> — restored Curiosity Mode after upstream merges</li>
@@ -557,13 +818,36 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/tanvishdesai"><img src="https://avatars.githubusercontent.com/u/143877933?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="tanvish desai"/></a>
-        <br/><b>tanvish desai</b>
-        <br/><a href="https://github.com/tanvishdesai">@tanvishdesai</a>
-        <br/><sub>🏆 4 commits · 1 PR merged</sub>
+        <a href="https://github.com/sharad"><img src="https://github.com/sharad.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="sharad"/></a>
+        <br/><b>sharad</b>
+        <br/><a href="https://github.com/sharad">@sharad</a>
+        <br/><sub>🏆 4 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Sharad</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>19. New Contributor</h4>
+        <h4>30. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>4 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/sharad-"><img src="https://github.com/sharad-.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="sharad-"/></a>
+        <br/><b>sharad-</b>
+        <br/><a href="https://github.com/sharad-">@sharad-</a>
+        <br/><sub>🏆 4 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Sharad.</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>31. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>4 commits</b> across this repo's history</li>
@@ -584,10 +868,54 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 4 commits · 0 PRs merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>20. New Contributor</h4>
+        <h4>32. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>4 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/yummypancake2607"><img src="https://github.com/yummypancake2607.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="yummypancake2607"/></a>
+        <br/><b>yummypancake2607</b>
+        <br/><a href="https://github.com/yummypancake2607">@yummypancake2607</a>
+        <br/><sub>🏆 3 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>yummyPancake2607</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>33. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>3 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/pradeep-gupta7"><img src="https://github.com/pradeep-gupta7.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="pradeep-gupta7"/></a>
+        <br/><b>pradeep-gupta7</b>
+        <br/><a href="https://github.com/pradeep-gupta7">@pradeep-gupta7</a>
+        <br/><sub>🏆 3 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Pradeep-gupta7</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>34. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>3 commits</b> across this repo's history</li>
           <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
@@ -606,7 +934,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>S Hamsalekha</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>21. Track User Progress</h4>
+        <h4>35. Track User Progress</h4>
         <ul>
           <li>📊 <b>Track User Progress (PR #77)</b> — per-user attempt log, progress timeline, mastery milestones</li>
           <li>🗂️ <b><code>StudentAttemptLog</code></b> model in MongoDB for fine-grained analytics</li>
@@ -621,18 +949,62 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/KrishnaG-101"><img src="https://avatars.githubusercontent.com/u/155518412?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #27AE60;" alt="Krishna Gelra"/></a>
-        <br/><b>Krishna Gelra</b>
-        <br/><a href="https://github.com/KrishnaG-101">@KrishnaG-101</a>
-        <br/><sub>🏆 3 commits · 1 PR merged</sub>
+        <a href="https://github.com/code-zero07"><img src="https://github.com/code-zero07.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="code-zero07"/></a>
+        <br/><b>code-zero07</b>
+        <br/><a href="https://github.com/code-zero07">@code-zero07</a>
+        <br/><sub>🏆 2 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Code-Zero07</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>22. Language Puzzles Framework</h4>
+        <h4>36. New Contributor</h4>
         <ul>
-          <li>🧩 <b>Modular Language Puzzles framework (PR #35)</b> — pluggable architecture for word/letter puzzles</li>
-          <li>🆕 <b>Word Creator</b> — fill-in-the-blanks to create new words</li>
-          <li>⚡ <b>Latency optimization</b> — reduced <code>wordCreator</code> verification time</li>
-          <li>🔀 <b>Merge conflict resolution</b> — clean upstream merge</li>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>2 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/nirmal-np"><img src="https://github.com/nirmal-np.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="nirmal-np"/></a>
+        <br/><b>nirmal-np</b>
+        <br/><a href="https://github.com/nirmal-np">@nirmal-np</a>
+        <br/><sub>🏆 2 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Nirmal_np</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>37. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>2 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/disha-singh"><img src="https://github.com/disha-singh.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="disha-singh"/></a>
+        <br/><b>disha-singh</b>
+        <br/><a href="https://github.com/disha-singh">@disha-singh</a>
+        <br/><sub>🏆 2 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Disha Singh</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>38. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>2 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
     </tr>
@@ -649,7 +1021,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 2 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>23. New Contributor</h4>
+        <h4>39. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>2 commits</b> across this repo's history</li>
@@ -671,7 +1043,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>Harsh</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>24. New Contributor</h4>
+        <h4>40. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>2 commits</b> across this repo's history</li>
@@ -693,10 +1065,120 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>📍 india · 🌐 anshulkanodia.me</sub>
       </td>
       <td valign="top" width="*">
-        <h4>25. Geometry Game Restoration</h4>
+        <h4>41. Geometry Game Restoration</h4>
         <ul>
           <li>🔺 <b>Re-added Geometry Game (PR #8)</b> — restored the 20-July geometry game after it was lost in a merge</li>
           <li>🔀 <b>Upstream merge integration</b> for <code>patnaikArpita/Re-added-geometry-game-20July</code></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/dynosuprovo"><img src="https://github.com/dynosuprovo.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="dynosuprovo"/></a>
+        <br/><b>dynosuprovo</b>
+        <br/><a href="https://github.com/dynosuprovo">@dynosuprovo</a>
+        <br/><sub>🏆 1 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>DYNOSuprovo</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>42. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>1 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/athira-kv"><img src="https://github.com/athira-kv.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="athira-kv"/></a>
+        <br/><b>athira-kv</b>
+        <br/><a href="https://github.com/athira-kv">@athira-kv</a>
+        <br/><sub>🏆 1 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Athira Kv</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>43. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>1 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/garv-arora"><img src="https://github.com/garv-arora.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="garv-arora"/></a>
+        <br/><b>garv-arora</b>
+        <br/><a href="https://github.com/garv-arora">@garv-arora</a>
+        <br/><sub>🏆 1 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Garv Arora</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>44. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>1 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/pradeep-gupta"><img src="https://github.com/pradeep-gupta.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="pradeep-gupta"/></a>
+        <br/><b>pradeep-gupta</b>
+        <br/><a href="https://github.com/pradeep-gupta">@pradeep-gupta</a>
+        <br/><sub>🏆 1 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Pradeep Gupta</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>45. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>1 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
+        <a href="https://github.com/priyanshu-kumar"><img src="https://github.com/priyanshu-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="priyanshu-kumar"/></a>
+        <br/><b>priyanshu-kumar</b>
+        <br/><a href="https://github.com/priyanshu-kumar">@priyanshu-kumar</a>
+        <br/><sub>🏆 1 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Priyanshu Kumar</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>46. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>1 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
     </tr>
@@ -713,7 +1195,7 @@ _Live data — last regenerated 2026-10-06 · auto-refreshed by [`github-actions
         <br/><sub>🏆 1 commits · 0 PRs merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>26. Infra contributor</h4>
+        <h4>47. Infra contributor</h4>
         <ul>
           <li>🔧 <b>Single administrative / infrastructure commit</b> to the project</li>
           <li>📧 <i>Email was private — no public GitHub profile linked</i></li>

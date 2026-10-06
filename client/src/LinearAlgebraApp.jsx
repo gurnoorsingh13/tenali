@@ -28,16 +28,16 @@ const MISSIONS = [
     options: null,
     correct: 0,
     explanation: "Since Ram = 2 x Lakshman, points are (2L,L) = t(2,1). All scalar multiples lie on the same line through the origin!",
-    ggbHint: 'Type coordinates like (10,20) and (20,40). Then type: Line((0,0),(10,20)).',
+    ggbHint: 'Type coordinates like (20,10) and (40,20). Then type: Line((0,0),(20,10)).',
     ggbSteps: [
       'Click in the Input bar at bottom.',
-      'Type: (10,20) and press Enter.',
-      'Type: (20,40) and press Enter.',
-      'Type: Line((0,0),(10,20)) and press Enter.',
+      'Type: (20,10) and press Enter.',
+      'Type: (40,20) and press Enter.',
+      'Type: Line((0,0),(20,10)) and press Enter.',
       'Both points lie on same line through origin!'
     ],
     quiz: [
-      { q: "If Ram's savings = 3x Lakshman's, do points (L,R) still lie on a line through the origin?", type: 'yesno', correct: 0 },
+      { q: "If Ram's savings = 3x Lakshman's, do points (R,L) still lie on a line through the origin?", type: 'yesno', correct: 0 },
       { q: 'For points (2,1), (4,2), (6,3), is the ratio R:L always the same (2:1)?', type: 'yesno', correct: 0 },
       { q: 'Do all scalar multiples t(2,1) lie on the same line through the origin?', type: 'yesno', correct: 0 }
     ],
@@ -2585,6 +2585,15 @@ function _genericExplanation(t, d, s, step, ans) {
   }
 }
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 /* ── LinearAlgebraApp component ────────────────────── */
 function LinearAlgebraApp({ onBack }) {
   const [currentMission, setCurrentMission] = useState(() => {
@@ -2639,7 +2648,7 @@ function LinearAlgebraApp({ onBack }) {
   const [mqAdaptiveLevel, setMqAdaptiveLevel] = useState(0);
   const [mqTimer, setMqTimer] = useState(0);
   const mqTimerRef = useRef(null);
-  const mqTimerStartRef = useRef(Date.now());
+  const mqTimerStartRef = useRef(0);
   const ADAPTIVE_LEVELS = ['easy', 'medium', 'hard'];
   const effectiveMqDifficulty = mqDifficulty === 'adaptive' ? ADAPTIVE_LEVELS[Math.min(mqAdaptiveLevel, 2)] : mqDifficulty;
   const mqSubmittedRef = useRef(false);
@@ -2647,15 +2656,6 @@ function LinearAlgebraApp({ onBack }) {
   const mqAdvanceRef = useRef(null);
   const mqSeenRef = useRef(new Set());
   const [mqExplanation, setMqExplanation] = useState([]);
-
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   function shuffleQuiz(qs) {
     return shuffle(qs).map(q => {
@@ -2823,9 +2823,14 @@ function LinearAlgebraApp({ onBack }) {
     mqAdvancedRef.current = true;
     if (mqQNum >= mqTotal) setMqFinished(true); else setMqQNum(n => n + 1);
   };
-  mqAdvanceRef.current = mqAdvance;
+  useEffect(() => { mqAdvanceRef.current = mqAdvance; });
 
-  useEffect(() => { if (phase === 'missionquiz' && mqStarted && !mqFinished && mqQNum > 0) loadMqQuestion(); }, [phase, mqStarted, mqQNum, mqFinished]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (phase === 'missionquiz' && mqStarted && !mqFinished && mqQNum > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadMqQuestion();
+    }
+  }, [phase, mqStarted, mqQNum, mqFinished]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mqSubmit = async (overrideAnswer) => {
     const ans = overrideAnswer || mqAnswer;

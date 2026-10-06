@@ -26,8 +26,8 @@
 import { HintModal } from './components/HintSystem/HintModal.jsx';
 import { useQuizHintsAndXp } from './components/HintSystem/useHints.jsx';
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import ConceptualVisualDiagram from './components/ConceptualVisualDiagram';
 import VoiceAssistant from './components/VoiceAssistant';
-import { motion } from 'framer-motion';
 import OnboardingTour from './components/OnboardingTour';
 import SpatialReasoningMCQ from './SpatialReasoningMCQ';
 import ScribbleGuessApp from './ScribbleGuessApp';
@@ -35,10 +35,14 @@ import ShapeSlicer3D from './ShapeSlicer3D';
 import ShapeTranslatorApp from './ShapeTranslatorApp';
 import NetBuilderApp from './NetBuilderApp';
 import CrossSectionApp from './CrossSectionApp';
+import DailyWarmupCard from './components/DailyWarmupCard';
 
 window.React = React;
 console.log("React version:", React.version);
 import LinearAlgebraApp from './LinearAlgebraApp'
+import { TILES, FEATURED_TILES, MATH_LAB_ENTRY, GEOCRAFT_ENTRY } from './features/tiles'
+import LandingPage from './components/LandingPage/LandingPage.jsx'
+import LandingNavbar from './components/LandingPage/LandingNavbar.jsx'
 
 
 /**
@@ -77,6 +81,7 @@ import './App.css'
 import TreasureHuntApp from './treasurehunt/TreasureHuntApp.jsx'
 import EnhancedMathDetectiveApp from './detective-app'
 import GlossaryText from './components/GlossaryText'
+import LearningVisual from './components/LearningVisual'
 import KeyTerms from './components/KeyTerms'
 import WhyLearnThis from './components/WhyLearnThis'
 import topicMotivation from './data/topicMotivation.json'
@@ -105,10 +110,39 @@ import ContrastChallengeApp, { QuizLayoutExtension } from './ContrastChallengeAp
 import { VOCAB_CORPUS } from './vocabCorpus'
 import PercentExplanationApp from './PercentExplanationApp'
 import { playSound } from './audioContext'
+import { installMonstersInterceptor } from './monsters/fetchInterceptor.js';
+import MonsterToast from './monsters/MonsterToast.jsx';
+import HallPanel from './monsters/HallPanel.jsx';
+import CureFlow from './monsters/CureFlow.jsx';
+import GuidedSolver from './monsters/GuidedSolver.jsx';
+import { load as loadMonsterLog, getMonsterHealedState } from './monsters/monsterStore.js';
+import MonsterAvatar from './monsters/MonsterAvatar.jsx';
 import GeometryApp from './GeometryApp';
 import EquationSandboxApp from './lib/EquationSandboxApp.jsx';
 import QFormulaConceptApp from './lib/concept/QFormulaConceptApp.jsx';
 import SimulConceptApp from './lib/simul-concept/SimulConceptApp.jsx';
+
+// Concept Playgrounds entry points.
+//
+// modeMap renders <ActiveApp {...standardProps} />, which cannot supply the
+// topic's quiz component, so each concept app gets a thin wrapper that passes
+// it in. The quiz apps themselves are unchanged and their own tiles still work.
+// Both are login-gated: the concept session API authenticates every request.
+function QFormulaConceptMode({ onBack }) {
+  return (
+    <AuthGate>
+      <QFormulaConceptApp onBack={onBack} QFormulaApp={QFormulaApp} />
+    </AuthGate>
+  );
+}
+
+function SimulConceptMode({ onBack }) {
+  return (
+    <AuthGate>
+      <SimulConceptApp onBack={onBack} SimulQuizApp={SimulApp} />
+    </AuthGate>
+  );
+}
 import DiagnosticQuiz from './lib/DiagnosticQuiz.jsx';
 import { useI18n } from './lib/i18n.jsx';
 import CuriosityApp from './Curiosity.jsx';
@@ -125,6 +159,12 @@ import PlaygroundApp from './PlaygroundApp'
 import LocalCompilerApp from './LocalCompilerApp'
 import BattleApp from './BattleApp'
 import SudokuApp from './SudokuApp'
+import WaterJugLab from './WaterJugLab'
+import EquationCraftingLab from './EquationCraftingLab'
+import { getLearnContent } from './data/learnContent.js'
+import AnglesLearnPage from './components/learning/AnglesLearnPage'
+import GSTLearnPage from './components/learning/GSTLearnPage'
+import FractionsLearnPage from './components/learning/FractionsLearnPage'
 
 // API base URL from environment variables (Vite)
 export const API = import.meta.env.VITE_API_BASE_URL || '';
@@ -171,8 +211,8 @@ window.fetch = function (url, options) {
 };
 
 // App version — increment with each commit
-const TENALI_VERSION = '1.0.86'
-const TENALI_BUILD_DATE = '2026-05-03 18:28 IST'
+const TENALI_VERSION = '1.0.87'
+const TENALI_BUILD_DATE = '2026-07-08 12:52 IST'
 // ─── Auth helpers ───────────────────────────────────────────────────────────
 // Tiny pub/sub on top of localStorage so AuthMenu and AuthGate stay in sync.
 const AUTH_TOKEN_KEY = 'tenali-auth-token'
@@ -255,7 +295,13 @@ function AuthMenu({ t = (s) => s }) {
     window.addEventListener('keydown', onKey)
     const onNav = e => { setOpen(false) }
     window.addEventListener('tenali-navigate', onNav)
-    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('tenali-navigate', onNav) }
+    const onOpenAuth = () => setOpen(prev => !prev)
+    window.addEventListener('tenali:openAuth', onOpenAuth)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('tenali-navigate', onNav)
+      window.removeEventListener('tenali:openAuth', onOpenAuth)
+    }
   }, [])
 
   const navigateTo = (mode) => {
@@ -288,6 +334,7 @@ function AuthMenu({ t = (s) => s }) {
     <>
       <button
         type="button"
+        className="auth-menu-floating-btn"
         aria-label="Menu"
         onClick={() => setOpen(o => !o)}
         style={{
@@ -676,9 +723,9 @@ function ResultsTable({ results }) {
           {results.map((r, i) => (
             <tr key={i} className={r.correct ? 'row-correct' : 'row-wrong'}>
               <td>{i + 1}</td>
-              <td>{r.question}</td>
-              <td>{r.userAnswer}</td>
-              <td>{r.correct ? `✓ (${r.correctAnswer})` : `✗ (${r.correctAnswer})`}</td>
+              <td>{r.question || r.prompt || `Question ${i + 1}`}</td>
+              <td>{r.userAnswer || '-'}</td>
+              <td>{r.correct ? `✓ (${r.correctAnswer || r.display || ''})` : `✗ (${r.correctAnswer || r.display || 'Ans'})`}</td>
               {hasCarries && (
                 <td style={{ fontSize: '0.8rem', whiteSpace: 'pre-line' }}>
                   {r.userCarries && <span>Yours: {r.userCarries}</span>}
@@ -4898,7 +4945,7 @@ function AdaptiveMixedApp({ studentName }) {
           {question && (
             <>
               <div className="question-box" style={{ fontSize: '1.4rem' }}>
-                {question.prompt} = ?
+                {question.prompt}{question.prompt.trim().endsWith('?') ? '' : ' = ?'}
               </div>
               <p style={{ fontSize: '0.75rem', opacity: 0.5, textAlign: 'center', margin: '0.25rem 0' }}>
                 {question.type === 'fraction-add' || question.type === 'fraction-mul' ? 'Answer as simplified fraction (e.g., 3/4)' :
@@ -42423,24 +42470,132 @@ function App() {
     }
   })
 
-  // Synchronize browser URL query parameters dynamically with the active mode state
+  // Current view when mode is null: 'landing' (full landing page) or 'puzzles' (90+ puzzles grid)
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode')) return 'puzzles';
+      if (params.get('view') === 'puzzles') return 'puzzles';
+      return 'landing';
+    } catch {
+      return 'landing';
+    }
+  })
+
+  // Install monsters interceptor once on mount.
+  // It wraps window.fetch to detect wrong answers and dispatch a CustomEvent
+  // for MonsterToast (and Hall, when added). Spec §5.
+  useEffect(() => {
+    try { installMonstersInterceptor() } catch (_e) { /* never break the app */ }
+  }, [])
+
+  // Misconception Monsters — Hall modal state. Spec §6.5.
+  // The monsterLog is hydrated from localStorage on mount. Toast CTA / future
+  // header icon can flip hallOpen; HallPanel reads from monsterLog snapshot.
+  const [monsterLog, setMonsterLog] = useState(() => {
+    try { return loadMonsterLog() } catch { return null }
+  })
+  const [hallOpen, setHallOpen] = useState(false)
+  const [activeCure, setActiveCure] = useState(null)
+  const [guidedSolverMonsterId, setGuidedSolverMonsterId] = useState(null)
+  const [activeInterruption, setActiveInterruption] = useState(null)
+
+  // Track monsters triggered during the active play session
+  const sessionMonstersRef = useRef(new Set())
+  const previousModeRef = useRef(null)
+
+  // Dispatch session summary when returning to menu from active quiz
+  useEffect(() => {
+    if (previousModeRef.current && !mode) {
+      if (sessionMonstersRef.current.size > 0) {
+        const monsterIds = Array.from(sessionMonstersRef.current)
+        window.dispatchEvent(new CustomEvent('tenali:sessionSummary', {
+          detail: { monsterIds }
+        }))
+      }
+    }
+    if (mode) {
+      sessionMonstersRef.current.clear()
+    }
+    previousModeRef.current = mode
+  }, [mode])
+
+  // Listen to wrong answer events for inline card interruptions and session tracking
+  useEffect(() => {
+    function handle(e) {
+      const detail = e.detail || {}
+      if (!detail.monsterId) return
+
+      // Track this trigger for the post-game summary
+      sessionMonstersRef.current.add(detail.monsterId)
+
+      const healedState = getMonsterHealedState(detail.monsterId)
+      setActiveInterruption({
+        monsterId: detail.monsterId,
+        state: healedState,
+        isIntro: detail.isNew === true
+      })
+
+      setTimeout(() => {
+        setActiveInterruption(null)
+      }, 2500)
+    }
+    window.addEventListener('tenali:wrongAnswer', handle)
+    return () => window.removeEventListener('tenali:wrongAnswer', handle)
+  }, [])
+
+  // Keep monsterLog in sync with localStorage. The fetchInterceptor's
+  // monsterStore.append() writes to localStorage; we re-hydrate when the
+  // browser fires a 'storage' event (e.g. another tab). For same-tab writes
+  // we expose a small global hook that the interceptor can call; fallback is
+  // a window event.
+  useEffect(() => {
+    function onStorage(e) {
+      if (e && e.key === 'tenali.monsterLog.v1') {
+        try { setMonsterLog(loadMonsterLog()) } catch { }
+      }
+    }
+    function onMonsterLogChanged() {
+      try { setMonsterLog(loadMonsterLog()) } catch { }
+    }
+    function onOpenHall() {
+      setHallOpen(true)
+    }
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('tenali:monsterLogChanged', onMonsterLogChanged)
+    window.addEventListener('tenali:openHall', onOpenHall)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('tenali:monsterLogChanged', onMonsterLogChanged)
+      window.removeEventListener('tenali:openHall', onOpenHall)
+    }
+  }, [])
+
+  // Synchronize browser URL query parameters dynamically with the active mode and view state
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const currentMode = params.get('mode');
+      const currentParamView = params.get('view');
       if (mode) {
         if (currentMode !== mode) {
           window.history.replaceState({}, '', `${BASE}/?mode=${mode}`);
         }
       } else {
-        if (currentMode) {
-          window.history.replaceState({}, '', `${BASE}/`);
+        if (currentView === 'puzzles') {
+          if (currentParamView !== 'puzzles' || currentMode) {
+            window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+          }
+        } else {
+          if (currentMode || currentParamView) {
+            window.history.replaceState({}, '', `${BASE}/`);
+          }
         }
       }
     } catch (e) {
       console.error('Failed to sync URL mode:', e);
     }
-  }, [mode]);
+  }, [mode, currentView]);
 
   const { user } = useAuth()
   const [completedTopics, setCompletedTopics] = useState(() => {
@@ -43418,6 +43573,16 @@ function App() {
   // Route: /extendedeuclid → Extended Euclidean algorithm quiz
   if (pathname === '/extendedeuclid') {
     return <ExtendedEuclidApp />
+  }
+
+  // Route: /water-jug-lab → Water Jug GCD Lab
+  if (pathname === '/water-jug-lab') {
+    return <WaterJugLab onBack={() => { window.location.href = withBase('/') }} />
+  }
+
+  // Route: /equation-crafting-lab → Equation Crafting Lab
+  if (pathname === '/equation-crafting-lab') {
+    return <EquationCraftingLab onBack={() => { window.location.href = withBase('/') }} />
   }
 
   // Route: /linear → Linear Algebra flashcards (proctored quiz)
@@ -44697,11 +44862,13 @@ function App() {
     polyfactor: PolyFactorApp,     // Polynomial factoring
     primefactor: PrimeFactorApp,   // Prime factorization
     qformula: QFormulaApp,         // Quadratic formula
+    'qformula-concept': QFormulaConceptMode, // Quadratic formula — 5-stage concept lab
     simul: SimulApp,               // Simultaneous equations
+    'simul-concept': SimulConceptMode,       // Simultaneous equations — 5-stage concept lab
     funceval: FuncEvalApp,         // Function evaluation
     lineq: LineEqApp,              // Line equation
     basicarith: BasicArithApp,     // Basic arithmetic (+, −, ×)
-    fractionadd: FractionAddApp,   // Fraction addition
+    fractionadd: FractionsPage,    // Fractions (Learn -> Test)
     surds: SurdsApp,               // Surds (simplify, add, multiply, rationalise)
     indices: IndicesApp,           // Indices (laws of exponents)
     sequences: SequencesApp,       // Sequences & Series
@@ -44753,7 +44920,7 @@ function App() {
     heron: HeronApp,               // Heron's Formula
     shares: SharesApp,             // Shares & Dividends
     banking: BankingApp,           // Banking (RD)
-    gst: GSTApp,                   // GST
+    gst: GSTPage,                  // GST (Learn -> Test)
     section: SectionApp,           // Section Formula
     linprog: LinProgApp,           // Linear Programming
     circmeasure: CircMeasureApp,   // Circular Measure
@@ -44776,8 +44943,10 @@ function App() {
     polygym: PolyGymApp,           // Polynomials Gym — arithmetic → monomial algebra (MCQ)
     treasurehunt: TreasureHuntApp, // Treasure Hunt — solve & seek grid game
     // matrixmystics mode removed — Matrix Mystics content now embedded in LinearAlgebraApp's mission quiz
-    trackProgress: null,
+    trackProgress: ProgressTrackerApp,
     riddle: RiddleApp,              // Math Riddles
+    'water-jug-lab': WaterJugLab,
+    'equation-crafting-lab': EquationCraftingLab,
   }
 
   // Get the component to render (or null if mode not set)
@@ -44880,10 +45049,6 @@ function App() {
       );
     }
 
-    if (mode === 'trackProgress') {
-      return <ProgressTrackerApp onBack={() => setMode(null)} />;
-    }
-
     if (ActiveApp) {
       const appEl = (
         <ActiveApp
@@ -44926,10 +45091,20 @@ function App() {
 
     return (
       <Home
+        onBackToLanding={() => {
+          setCurrentView('landing');
+          try { window.history.replaceState({}, '', `${BASE}/`); } catch (e) {}
+        }}
         onSelect={(key) => {
+          setCurrentView('puzzles');
           if (key === 'goalpractice') {
             setMode('goalpractice');
+          } else if (key === 'angles') {
+            // PROTOTYPE: ONLY Angles enters the Learn/Test gateway
+            setIsGoalMode(false);
+            handleSelectMode(key);
           } else {
+            // All other topics bypass the gateway and go straight to quiz configuration
             setMode(key);
             setIsGoalMode(false);
           }
@@ -44938,8 +45113,510 @@ function App() {
     );
   };
 
+  // ========== LEARN / TEST GATEWAY ==========
+  const [learningPhase, setLearningPhase] = useState(() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('mode') === 'angles' ? 'select' : null;
+  } catch {
+    return null;
+  }
+})
+  const [learnData, setLearnData] = useState(null)
+  const [revealedBlocks, setRevealedBlocks] = useState(1)
+  const [blockStartTime, setBlockStartTime] = useState(Date.now())
+  const [warningMessage, setWarningMessage] = useState(null)
+
+  useEffect(() => {
+    if (mode && learningPhase === 'learn') {
+      const topicName = getModeLabel(mode)
+      setLearnData(null)
+      getLearnContent(mode, topicName).then(data => {
+        setLearnData(data)
+      })
+    }
+  }, [mode, learningPhase])
+
+
+  const getModeLabel = (key) => {
+    const labels = {
+      gk: 'General Knowledge', addition: 'Addition', quadratic: 'Quadratic Substitution',
+      multiply: 'Multiplication Tables', vocab: 'Vocabulary', spot: 'Twin Hunt',
+      sqrt: 'Square Root', polymul: 'Polynomial Multiplication', polyfactor: 'Polynomial Factoring',
+      primefactor: 'Prime Factorization', qformula: 'Quadratic Formula', simul: 'Simultaneous Equations',
+      'qformula-concept': 'Quadratics: Concept Lab', 'simul-concept': 'Sim. Equations: Concept Lab',
+      funceval: 'Functions', lineq: 'Line Equations', basicarith: 'Arithmetic',
+      fractionadd: 'Fractions', surds: 'Surds', indices: 'Indices',
+      sequences: 'Sequences & Series', ratio: 'Ratio & Proportion', percent: 'Percentages',
+      sets: 'Sets & Venn Diagrams', trig: 'Trigonometry', ineq: 'Inequalities',
+      coordgeom: 'Coordinate Geometry', prob: 'Probability', stats: 'Statistics',
+      matrix: 'Matrices', vectors: 'Vectors', dotprod: 'Dot Products',
+      transform: 'Transformations', mensur: 'Mensuration', bearings: 'Bearings',
+      log: 'Logarithms', diff: 'Differentiation', bases: 'Number Bases',
+      circleth: 'Circle Theorems', integ: 'Integration', stdform: 'Standard Form',
+      bounds: 'Bounds', sdt: 'Speed, Distance, Time', variation: 'Variation',
+      hcflcm: 'HCF & LCM', profitloss: 'Profit & Loss', rounding: 'Rounding',
+      binomial: 'Binomial Theorem', complex: 'Complex Numbers', angles: 'Angles',
+      triangles: 'Triangles', congruence: 'Congruence', pythag: "Pythagoras' Theorem",
+      polygons: 'Polygons', similarity: 'Similarity', squaring: 'Squaring (a+b)²',
+      lineareq: 'Linear Equations', decimals: 'Decimals', permcomb: 'Permutations & Combinations',
+      limits: 'Limits', invtrig: 'Inverse Trig', remfactor: 'Remainder Theorem',
+      heron: "Heron's Formula", shares: 'Shares & Dividends', banking: 'Banking (RD)',
+      gst: 'GST', section: 'Section Formula', linprog: 'Linear Programming',
+      circmeasure: 'Circular Measure', conics: 'Conic Sections', diffeq: 'Differential Equations',
+      tatsavit: 'Math Drill', randommix: 'Random Mix', custom: 'Custom Lesson',
+      gym: 'Gym', guess: 'Guess the Number',
+      gymdecimals: 'Gym Decimals', funcgym: 'Functions Gym', dotprodgym: 'Dot Products Gym',
+      fracaddgym: 'Fractions Gym', lineqgym: 'Linear Equations Gym',
+      indicesgym: 'Indices Gym', polygym: 'Polynomials Gym',
+    }
+    return labels[key] || key
+  }
+
+  const handleSelectMode = (key) => {
+    setMode(key)
+    setLearningPhase('select')
+    setRevealedBlocks(1)
+    setBlockStartTime(Date.now())
+    setWarningMessage(null)
+  }
+
+  const handleBackToHome = () => {
+    setMode(null)
+    setLearningPhase(null)
+    setRevealedBlocks(1)
+    setBlockStartTime(Date.now())
+    setWarningMessage(null)
+  }
+
+  if (mode && learningPhase === 'select') {
+    const topicName = getModeLabel(mode)
+    return (
+      <div className="app-shell">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <div className="card">
+          <div style={{ maxWidth: 640, margin: '0 auto', padding: '1.5rem 1rem', color: 'var(--clr-text)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button className="back-button" onClick={handleBackToHome}>← Home</button>
+            </div>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <h1 style={{ marginBottom: 8, fontSize: '2.5rem' }}>{topicName}</h1>
+              <p className="subtitle" style={{ fontSize: '1.2rem', opacity: 0.8 }}>
+                🤔 How would you like to proceed?
+              </p>
+            </div>
+            <div className="learn-test-selection">
+              <button className="learn-test-card learn-card" onClick={() => { setLearningPhase('learn'); setRevealedBlocks(1); setBlockStartTime(Date.now()); setWarningMessage(null); }}>
+                <span className="learn-test-icon">📖</span>
+                <span className="learn-test-label">Learn</span>
+                <span className="learn-test-desc">Understand the concepts through explanations and examples 💡</span>
+              </button>
+              <button className="learn-test-card test-card" onClick={() => setLearningPhase('test')}>
+                <span className="learn-test-icon">📝</span>
+                <span className="learn-test-label">Test</span>
+                <span className="learn-test-desc">Assess your understanding with a fast-paced quiz 🎯</span>
+              </button>
+            </div>
+            <p style={{ textAlign: 'center', marginTop: 24, fontSize: '1rem', opacity: 0.6, fontStyle: 'italic', fontWeight: '500' }}>
+              "Understand First. Test Later. Learn Better. 🌟"
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'angles' && learningPhase === 'learn') {
+    return (
+      <div className="app-shell">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <AnglesLearnPage
+          onStartTest={() => setLearningPhase('test')}
+          onBack={handleBackToHome}
+        />
+      </div>
+    )
+  }
+
+  if (mode && learningPhase === 'learn') {
+    const topicName = getModeLabel(mode)
+
+    if (!learnData) {
+      return (
+        <div className="app-shell">
+          <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <div className="card">
+            <div style={{ maxWidth: 900, margin: '0 auto', padding: '3rem', textAlign: 'center', color: 'var(--clr-text)' }}>
+              <div style={{ fontSize: '1.2rem', opacity: 0.8 }}>Loading learning content...</div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="app-shell">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+        <div className="card">
+          <div style={{ maxWidth: 900, margin: '0 auto', padding: '1.5rem 1rem', color: 'var(--clr-text)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button className="back-button" onClick={() => setLearningPhase('select')}>← Back</button>
+            </div>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <h1 style={mode === 'angles' ? { marginBottom: 12, fontSize: '2.5rem', color: 'var(--clr-heading, var(--clr-text))', fontWeight: '700' } : { marginBottom: 12, fontSize: '2.8rem', background: 'linear-gradient(to right, var(--clr-accent, #2ea043), #1f7f32)', WebkitBackgroundClip: 'text', color: 'transparent', display: 'inline-block', fontWeight: '800' }}>
+                {topicName}
+              </h1>
+              <p className="subtitle" style={mode === 'angles' ? { fontSize: '1.1rem', opacity: 0.8, color: 'var(--clr-text)' } : { fontSize: '1.2rem', opacity: 0.85, fontWeight: '500' }}>
+                📖 Master the concepts before you test yourself!
+              </p>
+            </div>
+            
+            <div className="learn-content-area" style={{ marginTop: 24 }}>
+              <h2 style={mode === 'angles' ? { marginBottom: 24, fontSize: '1.5rem', textAlign: 'center', color: 'var(--clr-text)', fontWeight: '600' } : { marginBottom: 32, fontSize: '1.8rem', textAlign: 'center', color: 'var(--clr-text)', fontWeight: '700' }}>
+                {learnData.title}
+              </h2>
+              
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '32px',
+                alignItems: 'center',
+                position: 'relative'
+              }}>
+                {/* Vertical connecting line for timeline effect */}
+                <div style={{
+                  position: 'absolute',
+                  top: '20px',
+                  bottom: '20px',
+                  left: '42px',
+                  width: '4px',
+                  background: 'linear-gradient(to bottom, rgba(46, 160, 67, 0.4), rgba(46, 160, 67, 0.05))',
+                  zIndex: 0,
+                  borderRadius: '4px'
+                }} className="timeline-line"></div>
+
+                {learnData.blocks?.slice(0, revealedBlocks).map((block, idx) => (
+                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%' }}>
+                    <div style={mode === 'angles' ? {
+                      position: 'relative',
+                      zIndex: 1,
+                      backgroundColor: 'var(--clr-bg)',
+                      padding: '1.5rem 2rem',
+                      borderRadius: '16px',
+                      border: '1px solid var(--clr-border, rgba(100, 100, 100, 0.2))',
+                      lineHeight: '1.6',
+                      fontSize: '1rem',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '16px',
+                      width: '100%',
+                    } : {
+                      position: 'relative',
+                      zIndex: 1,
+                      backgroundColor: 'var(--clr-bg)',
+                      padding: '2rem 2.5rem',
+                      borderRadius: '24px',
+                      border: '2px solid rgba(46, 160, 67, 0.15)',
+                      lineHeight: '1.75',
+                      fontSize: '1.15rem',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: '32px',
+                      alignItems: 'flex-start',
+                      boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+                      transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                      width: '100%',
+                      backdropFilter: 'blur(10px)',
+                      background: 'linear-gradient(145deg, var(--clr-bg) 0%, rgba(46, 160, 67, 0.05) 100%)'
+                    }}
+                    onMouseOver={(e) => {
+                      if (mode === 'angles') return;
+                      e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 20px 40px rgba(46, 160, 67, 0.15)';
+                      e.currentTarget.style.border = '2px solid var(--clr-accent, #2ea043)';
+                      const icon = e.currentTarget.querySelector('.block-icon-container');
+                      if(icon) icon.style.transform = 'rotate(8deg) scale(1.1)';
+                    }}
+                    onMouseOut={(e) => {
+                      if (mode === 'angles') return;
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.06)';
+                      e.currentTarget.style.border = '2px solid rgba(46, 160, 67, 0.15)';
+                      const icon = e.currentTarget.querySelector('.block-icon-container');
+                      if(icon) icon.style.transform = 'rotate(-4deg) scale(1)';
+                    }}
+                    >
+                      {mode !== 'angles' && (
+                        <div className="block-icon-container" style={{
+                          fontSize: '3.5rem',
+                          lineHeight: '1',
+                          padding: '20px',
+                          backgroundColor: 'var(--clr-card)',
+                          borderRadius: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 'inset 0 -4px 12px rgba(0,0,0,0.05), 0 8px 16px rgba(46, 160, 67, 0.15)',
+                          border: '2px solid rgba(46, 160, 67, 0.25)',
+                          minWidth: '90px',
+                          minHeight: '90px',
+                          transform: 'rotate(-4deg)',
+                          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}>
+                          {block.icon}
+                        </div>
+                      )}
+                      <div style={mode === 'angles' ? { width: '100%' } : { flex: 1, width: '100%', paddingTop: '8px' }}>
+                        <h3 style={mode === 'angles' ? { margin: '0 0 12px 0', fontSize: '1.25rem', color: 'var(--clr-heading, var(--clr-text))', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' } : { margin: '0 0 16px 0', fontSize: '1.5rem', color: 'var(--clr-accent, #2ea043)', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {mode === 'angles' && <span style={{fontSize: '1.25rem'}}>{block.icon}</span>}
+                          {block.title}
+                        </h3>
+                        
+                        {block.visual && (
+  <LearningVisual visual={block.visual} />
+)}
+
+                        {/* Safe: HTML rendered via dangerouslySetInnerHTML originates from trusted local learnContent JSON, not user input. */}
+                        <div 
+                          style={mode === 'angles' ? { whiteSpace: 'pre-wrap', opacity: 0.9, fontSize: '1rem', letterSpacing: '0', lineHeight: '1.75' } : { whiteSpace: 'pre-wrap', opacity: 0.95, fontSize: '1.1rem', letterSpacing: '0.2px' }} 
+                          dangerouslySetInnerHTML={{ __html: (() => {
+                            let html = block.content
+                              .replace(/\*\*(.*?)\*\*/g, mode === 'angles' ? '<strong>$1</strong>' : '<strong style="color: var(--clr-accent, #2ea043); font-weight: 800;">$1</strong>');
+                            if (mode === 'angles') {
+                              // Strip bullet markers and present as clean paragraphs
+                              html = html.replace(/•\s*/g, '');
+                            } else {
+                              html = html.replace(/•/g, '<span style="display: inline-block; transform: scale(1.2); margin-right: 8px;">👉</span>');
+                            }
+                            return html;
+                          })() }} 
+                        />
+                      </div>
+                    </div>
+                    {idx === revealedBlocks - 1 && revealedBlocks < learnData.blocks.length && (
+                      <button 
+                        onClick={() => {
+                          const elapsed = Date.now() - blockStartTime;
+                          const minTime = mode === 'angles' ? 40000 : 60000;
+                          if (elapsed < minTime) {
+                            setWarningMessage(mode === 'angles'
+                              ? 'Please take your time to understand this concept. Read for at least 40 seconds before proceeding.'
+                              : 'Please take your time to understand this concept. Read for at least 1 minute before proceeding.');
+                          } else {
+                            setRevealedBlocks(prev => prev + 1);
+                            setBlockStartTime(Date.now());
+                            setWarningMessage(null);
+                          }
+                        }}
+                        style={{
+                          padding: '12px 24px', borderRadius: '20px', fontSize: '1.1rem',
+                          background: 'transparent', color: 'var(--clr-text)', border: '2px solid var(--clr-accent, #2ea043)',
+                          cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s',
+                          zIndex: 2, backgroundColor: 'var(--clr-bg)'
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = 'var(--clr-accent, #2ea043)';
+                          e.currentTarget.style.color = '#fff';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = 'var(--clr-bg)';
+                          e.currentTarget.style.color = 'var(--clr-text)';
+                        }}
+                      >
+                        Got it, next step ↓
+                      </button>
+                    )}
+                    {/* Start Test button — appears inside the last block after all blocks are revealed */}
+                    {idx === revealedBlocks - 1 && revealedBlocks === learnData.blocks.length && (
+                      <button 
+                        onClick={() => {
+                          const elapsed = Date.now() - blockStartTime;
+                          const minTime = mode === 'angles' ? 40000 : 60000;
+                          if (elapsed < minTime) {
+                            setWarningMessage(mode === 'angles'
+                              ? 'Please review this section carefully. Read for at least 40 seconds before proceeding to the test.'
+                              : 'Please review the common pitfalls carefully. Read for at least 1 minute before proceeding to the test.');
+                          } else {
+                            setLearningPhase('test');
+                          }
+                        }}
+                        style={{
+                          padding: '16px 36px', borderRadius: 30, fontSize: '1.25rem',
+                          background: 'linear-gradient(135deg, #2ea043, #1f7f32)', color: 'white', border: 'none', cursor: 'pointer',
+                          fontWeight: '800', boxShadow: '0 8px 24px rgba(46, 160, 67, 0.3)',
+                          transition: 'all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                          display: 'inline-flex', alignItems: 'center', gap: '12px',
+                          zIndex: 2, marginTop: '8px'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(46, 160, 67, 0.5)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(46, 160, 67, 0.3)';
+                        }}
+                      >
+                        <span>🎯</span> Start Test <span>🚀</span>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {warningMessage && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+              }}>
+                <div style={{
+                  background: 'var(--clr-surface, #1c1c1f)',
+                  border: '1px solid var(--clr-accent, #2ea043)',
+                  borderRadius: '16px', padding: '32px', maxWidth: '400px',
+                  textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                  color: 'var(--clr-text)'
+                }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏱️</div>
+                  <h3 style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--clr-accent, #2ea043)' }}>Hold on!</h3>
+                  <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '24px', opacity: 0.9 }}>
+                    {warningMessage}
+                  </p>
+                  <button 
+                    onClick={() => setWarningMessage(null)}
+                    style={{
+                      padding: '10px 24px', borderRadius: '8px', fontSize: '1rem',
+                      background: 'var(--clr-accent, #2ea043)', color: '#fff', border: 'none',
+                      cursor: 'pointer', fontWeight: 'bold'
+                    }}
+                  >
+                    Okay, I'll keep reading
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* Start Test button is now integrated into the last learning block above */}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ========== LANDING PAGE VIEW (Default when mode === null and currentView === 'landing') ==========
+  if (mode === null && currentView === 'landing') {
+    return (
+      <div className="landing-view-wrapper">
+        <LandingPage
+          onExplorePuzzles={() => {
+            setCurrentView('puzzles');
+            try { window.history.replaceState({}, '', `${BASE}/?view=puzzles`); } catch (e) {}
+          }}
+          onSelectTopic={(topicKey) => {
+            setCurrentView('puzzles');
+            if (topicKey === 'goalpractice') {
+              setMode('goalpractice');
+            } else if (topicKey === 'angles') {
+              setIsGoalMode(false);
+              handleSelectMode(topicKey);
+            } else {
+              setMode(topicKey);
+              setIsGoalMode(false);
+            }
+          }}
+          currentView={currentView}
+          onViewChange={(v) => {
+            setCurrentView(v);
+            try {
+              if (v === 'puzzles') {
+                window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+              } else {
+                window.history.replaceState({}, '', `${BASE}/`);
+              }
+            } catch (e) {}
+          }}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+        {/* Misconception Monsters toast & hall overlays */}
+        <MonsterToast
+          onOpenHall={() => setHallOpen(true)}
+          onTap={() => setHallOpen(true)}
+        />
+        <HallPanel
+          open={hallOpen}
+          onClose={() => {
+            setHallOpen(false);
+            setGuidedSolverMonsterId(null);
+          }}
+          monsterLog={monsterLog}
+          initialSelectedId={guidedSolverMonsterId}
+          initialGuidedSolver={!!guidedSolverMonsterId}
+          onStartCure={(monsterId, topic) => {
+            setHallOpen(false);
+            setGuidedSolverMonsterId(null);
+            setActiveCure({ monsterId, topic });
+          }}
+          onOpenGuidedSolver={(monsterId) => {
+            setGuidedSolverMonsterId(monsterId);
+          }}
+          onCloseSolver={() => {
+            setGuidedSolverMonsterId(null);
+          }}
+        />
+        {activeCure && (
+          <CureFlow
+            monsterId={activeCure.monsterId}
+            topic={activeCure.topic}
+            onCancel={() => setActiveCure(null)}
+            onComplete={() => {
+              try { setMonsterLog(loadMonsterLog()); } catch {}
+              setActiveCure(null);
+              setHallOpen(true);
+            }}
+            onOpenGuidedSolver={(monsterId) => {
+              setActiveCure(null);
+              setGuidedSolverMonsterId(monsterId);
+              setHallOpen(true);
+            }}
+          />
+        )}
+        <ReflectionJournal />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={{ paddingTop: mode === null ? 0 : undefined }}>
+      {mode === null && (
+        <div style={{ marginBottom: 20, width: '100%' }}>
+          <LandingNavbar
+            currentView={currentView}
+            onViewChange={(v) => {
+              setCurrentView(v);
+              try {
+                if (v === 'puzzles') {
+                  window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+                } else {
+                  window.history.replaceState({}, '', `${BASE}/`);
+                }
+              } catch (e) {}
+            }}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
+        </div>
+      )}
       {mode === null && showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
       {/* The guided tour walks the student around the very features Focus
           Mode is hiding, so it comes down with them. */}
@@ -44949,9 +45626,54 @@ function App() {
         </button>
       )}
       <StudyModeToggle />
-      <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      {mode !== null && (
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      )}
+      <style>{`
+        .monster-interruption-popup {
+          position: fixed;
+          bottom: 24px;
+          left: 24px;
+          z-index: 1000000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          pointer-events: none;
+          animation: inline-slide-wobble 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .monster-interruption-bubble {
+          background: var(--clr-card, #2c2622);
+          color: var(--clr-text, #ede8e3);
+          border: 1.5px solid var(--clr-border, rgba(255,245,230,0.18));
+          border-radius: 12px;
+          padding: 8px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          margin-top: 6px;
+          box-shadow: var(--shadow-card);
+          white-space: nowrap;
+        }
+        @keyframes inline-slide-wobble {
+          0% { transform: translateY(60px) scale(0.5); opacity: 0; }
+          70% { transform: translateY(-5px) scale(1.05); opacity: 0.9; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+      `}</style>
+
+      {activeInterruption && (
+        <div className="monster-interruption-popup">
+          <MonsterAvatar monsterId={activeInterruption.monsterId} size={90} state={activeInterruption.state} />
+          <div className="monster-interruption-bubble">
+            {activeInterruption.isIntro
+              ? 'A new monster has breached!'
+              : activeInterruption.state === 'warning'
+                ? '⚠️ Grrr... I am stirring!'
+                : 'Struck again!'}
+          </div>
+        </div>
+      )}
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
@@ -44963,6 +45685,49 @@ function App() {
       </div>
       {renderCelebrationModal()}
       <MasteryUnlockToast onOpenMap={(id) => { setMapFocusTopicId(id); setMapCelebrateId(id); setMode('topic_map') }} />
+      {/* Misconception Monsters — toast overlay (portals to body) + Hall modal. Spec §6. */}
+      <MonsterToast
+        onOpenHall={() => setHallOpen(true)}
+        onTap={() => setHallOpen(true)}
+      />
+      <HallPanel
+        open={hallOpen}
+        onClose={() => {
+          setHallOpen(false)
+          setGuidedSolverMonsterId(null)
+        }}
+        monsterLog={monsterLog}
+        initialSelectedId={guidedSolverMonsterId}
+        initialGuidedSolver={!!guidedSolverMonsterId}
+        onStartCure={(monsterId, topic) => {
+          setHallOpen(false)
+          setGuidedSolverMonsterId(null)
+          setActiveCure({ monsterId, topic })
+        }}
+        onOpenGuidedSolver={(monsterId) => {
+          setGuidedSolverMonsterId(monsterId)
+        }}
+        onCloseSolver={() => {
+          // Clear the flag so the next Hall open (from toast, header, etc.)
+          // lands on the grid instead of reopening the same solver.
+          setGuidedSolverMonsterId(null)
+        }}
+      />
+      {activeCure && <CureFlow
+        monsterId={activeCure.monsterId}
+        topic={activeCure.topic}
+        onCancel={() => setActiveCure(null)}
+        onComplete={() => {
+          try { setMonsterLog(loadMonsterLog()) } catch { }
+          setActiveCure(null)
+          setHallOpen(true)
+        }}
+        onOpenGuidedSolver={(monsterId) => {
+          setActiveCure(null)
+          setGuidedSolverMonsterId(monsterId)
+          setHallOpen(true)
+        }}
+      />}
       <ReflectionJournal />
     </div>
   )
@@ -44976,7 +45741,7 @@ function App() {
  * @param {Object} props
  * @param {Function} props.onSelect - Callback when user selects a quiz: receives mode key (e.g., 'gk')
  */
-function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isGoalSelection = false, onBack }) {
+function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [], coins = 0, isGoalSelection = false, onBack }) {
   const [showAbout, setShowAbout] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -45004,119 +45769,16 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     })
     return () => { cancelled = true }
   }, [])
-  const featuredApps = [
-    { key: 'randommix', name: 'Random Mix', subtitle: 'Adaptive cross-topic quiz', color: 'featured' },
-    { key: 'custom', name: 'Custom Lesson', subtitle: 'Build your own mixed quiz', color: 'featured' },
-    { key: 'gym', name: 'Gym', subtitle: 'Adaptive workout across all 7 gym puzzles', color: 'featured' },
-    { key: 'treasurehunt', name: 'Treasure Hunt', subtitle: 'Solve & seek on a treasure grid', color: 'featured' },
-    { key: 'contrastlist', name: 'Contrast Challenge', subtitle: 'Distinguish similar concepts', color: 'featured' },
-    { key: 'vachana', name: 'Vachana', subtitle: 'Mathematical Literacy Lab', color: 'featured' },
-  ]
-  // Visual Learning Universe lives only in the hamburger menu
-  const mathLabEntry = { key: 'math-lab', name: '🔬 Visual Learning Universe', subtitle: 'Visual, Mensuration & Addition labs', color: 'orange' }
-  const geocraftEntry = { key: 'geocraft', name: '📐 GeoCraft', subtitle: 'Interactive Geometry Lab', color: 'featured', isRedirect: true, path: '/geocraft' }
+  const featuredApps = FEATURED_TILES
+  const mathLabEntry = MATH_LAB_ENTRY
+  const geocraftEntry = GEOCRAFT_ENTRY
 
   const hamburgerApps = [
     ...featuredApps,
     { key: 'curiosity', name: 'What If', subtitle: 'Explore "What if" variations', color: 'pink' },
   ]
 
-  // Set false to remove the Car Journey card from the home grid (hamburger-only mode).
-  const CJ_SHOW_GRID_CARD = true
-
-  // All regular quiz apps sorted alphabetically by name
-  const regularApps = [
-    { key: 'battle', name: '⚔️ Battle Arena', subtitle: 'Live fastest-finger duels', color: 'red' },
-    { key: 'detective', name: '🔍 Detective Agency', subtitle: 'Solve math mysteries and crack cases!', color: 'indigo' },
-    { key: 'comic-addition', name: 'Comic Addition', subtitle: 'Story Mode', color: 'purple' },
-    { key: 'addition', name: 'Addition', subtitle: '20-question addition practice', color: 'blue' },
-    { key: 'column-addition', name: 'Column Addition', subtitle: 'Vertical addition with carrying', color: 'blue' },
-    { key: 'column-division', name: 'Column Division', subtitle: 'Vertical division with long division', color: 'blue' },
-    { key: 'column-multiplication', name: 'Column Multiplication', subtitle: 'Vertical multiplication with carrying', color: 'blue' },
-    { key: 'column-subtraction', name: 'Column Subtraction', subtitle: 'Vertical subtraction with borrowing', color: 'blue' },
-    { key: 'angles', name: 'Angles', subtitle: 'Lines, points, parallel lines', color: 'green' },
-    { key: 'basicarith', name: 'Arithmetic', subtitle: '+, −, ×, ÷ with positive & negative', color: 'purple' },
-    { key: 'banking', name: 'Banking (RD)', subtitle: 'Interest & recurring deposits', color: 'blue' },
-    { key: 'bearings', name: 'Bearings', subtitle: 'Three-figure bearings', color: 'green' },
-    { key: 'binomial', name: 'Binomial Theorem', subtitle: 'Expansions & coefficients', color: 'purple' },
-    { key: 'bounds', name: 'Bounds', subtitle: 'Upper & lower bounds', color: 'blue' },
-    { key: 'circmeasure', name: 'Circular Measure', subtitle: 'Radians, arc length, sectors', color: 'green' },
-    { key: 'circleth', name: 'Circle Theorems', subtitle: 'Angles, tangents, cyclic quads', color: 'purple' },
-    { key: 'complex', name: 'Complex Numbers', subtitle: 'Add, multiply, modulus', color: 'blue' },
-    { key: 'congruence', name: 'Congruence', subtitle: 'SSS, SAS, ASA, RHS', color: 'green' },
-    { key: 'conics', name: 'Conic Sections', subtitle: 'Circle, parabola, ellipse, hyperbola', color: 'purple' },
-    { key: 'coordgeom', name: 'Coord. Geometry', subtitle: 'Midpoint, distance, gradient', color: 'blue' },
-    { key: 'decimals', name: 'Decimals', subtitle: 'Add, subtract, multiply, divide', color: 'blue' },
-    { key: 'diff', name: 'Differentiation', subtitle: 'Power rule, turning points', color: 'purple' },
-    { key: 'diffeq', name: 'Differential Eq.', subtitle: 'Order, degree, solve DEs', color: 'green' },
-    { key: 'dotprod', name: 'Dot Products', subtitle: 'Vectors, matrices, fill blanks', color: 'blue' },
-    { key: 'fractionadd', name: 'Fractions', subtitle: 'Add, subtract, multiply & divide', color: 'green' },
-    { key: 'funceval', name: 'Functions', subtitle: 'Evaluate f(x), f(x,y), f(x,y,z)', color: 'green' },
-    { key: 'gk', name: 'GK', subtitle: 'General Knowledge questions', color: 'purple' },
-    { key: 'gst', name: 'GST', subtitle: 'Goods & Services Tax', color: 'purple' },
-    { key: 'hcflcm', name: 'HCF & LCM', subtitle: 'Highest common factor & LCM', color: 'blue' },
-    { key: 'idlivada', name: 'Idli Vada Sambhar', subtitle: 'Multiples, common multiples & LCM game', color: 'orange' },
-    { key: 'heron', name: "Heron's Formula", subtitle: 'Triangle area from sides', color: 'blue' },
-    { key: 'indices', name: 'Indices', subtitle: 'Laws of exponents', color: 'purple' },
-    { key: 'ineq', name: 'Inequalities', subtitle: 'Linear & quadratic inequalities', color: 'green' },
-    { key: 'integ', name: 'Integration', subtitle: 'Reverse differentiation & areas', color: 'blue' },
-    { key: 'invtrig', name: 'Inverse Trig', subtitle: 'arcsin, arccos, arctan', color: 'green' },
-    { key: 'limits', name: 'Limits', subtitle: 'Evaluate limits', color: 'purple' },
-    { key: 'linearalgebra', name: 'Linear Algebra', subtitle: '56 missions across 6 modules', color: 'orange' },
-    { key: 'lineareq', name: 'Linear Equations', subtitle: 'Solve for x in one variable', color: 'blue' },
-    { key: 'lineq', name: 'Line Equation', subtitle: 'Find m and c from two points', color: 'green' },
-    { key: 'linprog', name: 'Linear Programming', subtitle: 'Optimize objective functions', color: 'green' },
-    { key: 'log', name: 'Logarithms', subtitle: 'Evaluate, simplify, solve', color: 'purple' },
-    { key: 'matrix', name: 'Matrices', subtitle: 'Add, multiply, determinant', color: 'blue' },
-    { key: 'mensur', name: 'Mensuration', subtitle: 'Area, volume, surface area', color: 'green' },
-    { key: 'multiply', name: 'Multiplication', subtitle: 'Practice any times table (2–19)', color: 'purple' },
-    { key: 'bases', name: 'Number Bases', subtitle: 'Binary, decimal, hexadecimal', color: 'green' },
-    { key: 'basic-arith-lab', name: 'Origin', subtitle: 'Practice +, -, ×, ÷ with varied templates', color: 'blue' },
-    { key: 'percent', name: 'Percentages', subtitle: 'Find, increase, reverse, compound', color: 'blue' },
-    { key: 'permcomb', name: 'Perm. & Comb.', subtitle: 'Permutations & combinations', color: 'purple' },
-    { key: 'polyfactor', name: 'Poly Factor', subtitle: 'Factor a quadratic expression', color: 'green' },
-    { key: 'polymul', name: 'Poly Multiply', subtitle: 'Multiply two polynomials', color: 'blue' },
-    { key: 'polygons', name: 'Polygons', subtitle: 'Interior & exterior angles', color: 'purple' },
-    { key: 'primefactor', name: 'Prime Factors', subtitle: 'Break a number into primes', color: 'green' },
-    { key: 'prob', name: 'Probability', subtitle: 'Single & combined events', color: 'blue' },
-    { key: 'profitloss', name: 'Profit & Loss', subtitle: 'Cost price, discounts, markup', color: 'purple' },
-    { key: 'pythag', name: "Pythagoras' Theorem", subtitle: 'Hypotenuse, legs, 3D', color: 'green' },
-    { key: 'quadratic', name: 'Quadratic', subtitle: 'Find y for y = ax² + bx + c', color: 'blue' },
-    { key: 'qformula', name: 'Quadratics (Formula)', subtitle: 'Find roots of ax² + bx + c = 0', color: 'purple' },
-    { key: 'ratio', name: 'Ratio', subtitle: 'Ratio & proportion', color: 'green' },
-    { key: 'remfactor', name: 'Remainder Theorem', subtitle: 'Remainder & factor theorem', color: 'blue' },
-    { key: 'rounding', name: 'Rounding', subtitle: 'D.P., sig. figs, estimation', color: 'blue' },
-    { key: 'section', name: 'Section Formula', subtitle: 'Midpoint, section, centroid', color: 'green' },
-    { key: 'sequences', name: 'Sequences', subtitle: 'Arithmetic & geometric sequences', color: 'purple' },
-    { key: 'shares', name: 'Shares & Dividends', subtitle: 'Shares, dividends, returns', color: 'purple' },
-    { key: 'sets', name: 'Sets', subtitle: 'Union, intersection, Venn diagrams', color: 'blue' },
-    { key: 'similarity', name: 'Similarity', subtitle: 'Scale factor, area & volume ratios', color: 'green' },
-    { key: 'squaring', name: 'Squaring', subtitle: 'Square numbers using (a+b)²', color: 'purple' },
-    { key: 'simul', name: 'Sim. Equations', subtitle: '2×2 (easy) or 3×3 (hard)', color: 'purple' },
-    { key: 'sdt', name: 'Speed, Distance, Time', subtitle: 'Rate problems & conversions', color: 'blue' },
-    { key: 'sqrt', name: 'Square Root', subtitle: 'Nearest-integer square root drill', color: 'green' },
-    { key: 'stdform', name: 'Standard Form', subtitle: 'Scientific notation operations', color: 'purple' },
-    { key: 'stats', name: 'Statistics', subtitle: 'Mean, median, mode, range', color: 'blue' },
-    { key: 'sudoku', name: 'Sudoku', subtitle: '9x9 number puzzle — fill every row, column & box', color: 'teal' },
-    { key: 'surds', name: 'Surds', subtitle: 'Simplify, add, multiply, rationalise', color: 'green' },
-    { key: 'tatsavit', name: 'Tatsavit', subtitle: 'Algebra simplification drill', color: 'blue' },
-    ...(CJ_SHOW_GRID_CARD ? [{ key: 'carjourney', name: 'The Car Journey', subtitle: '16-stop math road trip — counting to calculus', color: 'orange' }] : []),
-    { key: 'transform', name: 'Transformations', subtitle: 'Reflect, rotate, translate, enlarge', color: 'purple' },
-    { key: 'triangles', name: 'Triangles', subtitle: 'Angle sum, isosceles, exterior', color: 'blue' },
-    { key: 'trig', name: 'Trigonometry', subtitle: 'SOH-CAH-TOA, sine/cosine rule', color: 'green' },
-    { key: 'variation', name: 'Variation', subtitle: 'Direct & inverse proportion', color: 'purple' },
-    { key: 'vectors', name: 'Vectors', subtitle: 'Add, scale, magnitude', color: 'blue' },
-    { key: 'vocab', name: 'Vocabulary', subtitle: 'Match words to definitions', color: 'green' },
-    { key: 'spot', name: 'Twin Hunt', subtitle: 'Find the common object', color: 'purple' },
-    { key: 'gymdecimals', name: 'Gym Decimals', subtitle: 'Signed decimal × decimal — 1-digit MCQ', color: 'purple' },
-    { key: 'guess', name: 'Guess the Number', subtitle: 'Binary magic trick — mind-reading game', color: 'blue' },
-    { key: 'funcgym', name: 'Functions Gym', subtitle: 'Evaluate small polynomials (MCQ)', color: 'blue' },
-    { key: 'dotprodgym', name: 'DotProducts Gym', subtitle: '2D/3D dot products (MCQ)', color: 'green' },
-    { key: 'fracaddgym', name: 'Fractions-add-gym', subtitle: 'Add single-digit fractions (MCQ)', color: 'purple' },
-    { key: 'lineqgym', name: 'LinearEquations-Gym', subtitle: 'Solve linear equations (MCQ)', color: 'blue' },
-    { key: 'indicesgym', name: 'Indices-Gym', subtitle: 'Index laws (MCQ)', color: 'green' },
-    { key: 'polygym', name: 'Polynomials Gym', subtitle: 'Arithmetic → monomial algebra (MCQ)', color: 'blue' },
-  ] // end regularApps (MatrixMystics tile removed — uses LinearAlgebraApp via linearalgebra mode)
+  const regularApps = TILES
 
   // Combined list for search filtering
   const allApps = [...hamburgerApps, ...regularApps]
@@ -45138,18 +45800,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   const isSearching = search.trim() !== ''
   const matchFilter = (a) => a.name.toLowerCase().includes(search.toLowerCase()) || a.subtitle.toLowerCase().includes(search.toLowerCase())
   
-  // Under Goal Practice mode, we include Random Mix & Custom Lesson at the top of the grid list (omitting Gym since it does not support goals)
-  const goalFeatured = [
-    { key: 'randommix', name: 'Random Mix', subtitle: 'Adaptive cross-topic quiz', color: 'featured' },
-    { key: 'custom', name: 'Custom Lesson', subtitle: 'Build your own mixed quiz', color: 'featured' },
-  ]
-  
-  const filteredGoalFeatured = isSearching ? goalFeatured.filter(matchFilter) : goalFeatured
-  const filteredFeatured = isSearching ? featuredApps.filter(matchFilter) : featuredApps
   const filteredRegular = isSearching ? regularApps.filter(matchFilter) : regularApps
-  
-  // Decide which items to show on the main grid list
-  const displayGridApps = isGoalSelection ? filteredRegular : [...filteredRegular]
   const filteredHamburgerApps = isSearching ? hamburgerApps.filter(matchFilter) : hamburgerApps
 
   // Grid layout tracking (for responsive display)
@@ -45171,7 +45822,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
   }, [])
 
   // Calculate number of rows for display (for grid dimension label at bottom)
-  const rows = Math.ceil(displayGridApps.length / (cols || 1))
+  const rows = Math.ceil(filteredRegular.length / (cols || 1))
 
   return (
     <>
@@ -45187,12 +45838,23 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
             ← Back to Dashboard
           </button>
         )}
-        <div className={'home-title-row' + (isGoalSelection ? ' is-goal-selection' : '')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px' }}>
+        {!isGoalSelection && onBackToLanding && (
+          <button onClick={onBackToLanding} style={{
+            position: 'absolute', top: '8px', left: '0', display: 'flex', alignItems: 'center', gap: '6px',
+            background: 'var(--clr-card)', border: '1.5px solid var(--clr-border)', color: 'var(--clr-text)',
+            padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontFamily: 'var(--font-body)',
+            fontSize: '0.85rem', fontWeight: '500', transition: 'all var(--transition)'
+          }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+             onMouseLeave={e => e.target.style.background = 'var(--clr-card)'}>
+            ← Overview
+          </button>
+        )}
+        <div className={'home-title-row' + ((isGoalSelection || onBackToLanding) ? ' is-goal-selection' : '')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px' }}>
           <img src="/tenali.png" alt="Tenali Raman" style={{ width: '80px', height: 'auto', flexShrink: 0 }} />
           <div>
-            <h1 style={{ margin: 0 }}>{isGoalSelection ? 'Goal Practice' : 'Tenali'}</h1>
+            <h1 style={{ margin: 0 }}>{isGoalSelection ? 'Goal Practice' : 'Tenali Puzzles & Games'}</h1>
             <p className="subtitle" style={{ margin: 0 }}>
-              {isGoalSelection ? 'Select a topic to practice with custom goals' : 'Choose a learning game to begin'}
+              {isGoalSelection ? 'Select a topic to practice with custom goals' : 'Explore 90+ algorithmically generated math and reasoning games'}
             </p>
           </div>
         </div>
@@ -45313,7 +45975,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
               <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Run code in 50+ languages</span>
             </button>
 
-            <button onClick={() => { setMenuOpen(false); window.location.href = window.location.pathname.replace(/\/$/, '') + '/language'; }} style={{
+            <button onClick={() => { setMenuOpen(false); onSelect('language'); }} style={{
               display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
               background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
               fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
@@ -45321,6 +45983,16 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
                onMouseLeave={e => e.target.style.background = 'none'}>
               <strong style={{ color: 'var(--clr-accent)' }}>Language Puzzles</strong>
               <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Fill in the blanks to create new words</span>
+            </button>
+
+            <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('tenali:openHall')) }} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text)',
+              fontFamily: 'var(--font-body)', fontSize: '0.95rem', transition: 'background var(--transition)'
+            }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+              onMouseLeave={e => e.target.style.background = 'none'}>
+              <strong style={{ color: 'var(--clr-accent)' }}>{'\uD83D\uDC7E'} Hall of Silly Mistakes</strong>
+              <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Review your misconception monsters</span>
             </button>
             </div>}
           </div>}
@@ -45397,6 +46069,9 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
       )}
       {focusHome && <FocusHome onSelect={onSelect} />}
       {!focusHome && <>
+      {!search && !isGoalSelection && (
+        <DailyWarmupCard completedTopics={completedTopics} apiBase={API} onSelectTopic={onSelect} />
+      )}
       <div className="search-bar-row">
         <input
           id="tour-search-bar"
@@ -45408,11 +46083,11 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
         />
       </div>
       <div id="tour-home-grid" className="menu-grid" ref={gridRef}>
-        {displayGridApps.map((app) => {
+        {filteredRegular.map((app) => {
           const isGold = goldMastery && goldMastery.includes(app.key)
           const isCompleted = isStage3Completed(app.key, completedTopics)
           return (
-            <button key={app.key} className={`menu-card ${isGold ? 'gold-card' : app.color}`} onClick={() => onSelect(app.key)}>
+            <button key={app.key} className={`menu-card ${isGold ? 'gold-card' : app.color}`} onClick={() => { if (app.isRedirect) { window.location.href = app.path; } else { onSelect(app.key); } }}>
               <span className="menu-title">
                 {app.name}
                 {isGold && <span className="badge-indicator">🥇</span>}
@@ -47622,7 +48297,7 @@ function GKApp({ onBack, markTopicCompleted, isGoalMode = false }) {
     const res = await fetch(`${API}/gk-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  id: question.id, answerOption: option, sessionGoal }) })
     const data = await res.json()
     setIsCorrect(data.correct)
-    if (data.correct) setScore((s) => s + 1)
+    if (data.correct) setScore((s) => s + 1);
     // Show feedback with explanation
     (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
@@ -50130,6 +50805,7 @@ function ColumnSubtractionApp({ onBack, initialDifficulty, initialNumQuestions, 
  * @param {Function} props.onBack - Callback to return to home menu
  */
 function AdditionApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, setTransferTopic, setMode, initialMode, initialDifficulty, initialNumQuestions, initialStarted, isGoalMode = false }) {
+  const [showComicAddition, setShowComicAddition] = useState(false)
   // Mode selection: 'standard' (default), 'counting' (Visual Counting), 'scale' (Balance Scale)
   const [additionMode, setAdditionMode] = useState(initialMode || 'standard')
   // Difficulty level: 'easy' (1-digit), 'medium' (2-digit), 'hard' (3-digit), 'extrahard' (4-digit)
@@ -50511,6 +51187,10 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
   const diffLabels = { easy: 'Easy — 1 digit', medium: 'Medium — 2 digits', hard: 'Hard — 3 digits', extrahard: 'Extra Hard — 4 digits' }
   const curAdaptLevel = adaptiveLevel(adaptScore)
 
+  if (showComicAddition) {
+    return <ComicAdditionApp onBack={() => setShowComicAddition(false)} />
+  }
+
   if (!started && !finished) {
     return (
       <div style={{ minHeight: '100vh', background: '#181512', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, sans-serif' }}>
@@ -50580,6 +51260,13 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
             padding: '10px 24px', color: '#FFF', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
           }}>
             Start Quiz
+          </button>
+
+          <button type="button" onClick={() => setShowComicAddition(true)} style={{
+            marginTop: '16px', background: 'transparent', border: '1px solid #5B5048', borderRadius: '6px',
+            padding: '10px 24px', color: '#C9BFB6', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
+          }}>
+            Comic Addition — Story Mode
           </button>
         </div>
         {isStage3Completed('addition', completedTopics) && (
@@ -51737,6 +52424,7 @@ function GymQuiz({ title, subtitle, typeKeys, welcomeText, algebraInput, onBack 
  * @param {Function} props.onBack - Callback to return to home menu
  */
 function BasicArithApp({ onBack, completedTopics = [], goldMastery = [], markTopicCompleted, setTransferTopic, setMode, isGoalMode = false }) {
+  const [showCarJourney, setShowCarJourney] = useState(false)
   // Difficulty level: 'easy', 'medium', 'hard', 'extrahard'
   const [difficulty, setDifficulty] = useState(() => cjTakeReco('basicarith', CJ_RECO_DIFFS) || 'easy')
   // Adaptive mode enabled?
@@ -51910,7 +52598,7 @@ const fetchQuestion = async () => {
       const res = await fetch(`${API}/basicarith-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  a: question.a, b: question.b, op: question.op, answer: Number(answer), sessionGoal }) })
       const data = await res.json()
       setIsCorrect(data.correct)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -51976,6 +52664,10 @@ const fetchQuestion = async () => {
 
   const diffLabels = { easy: 'Easy — 1 digit', medium: 'Medium — 2 digits', hard: 'Hard — 3 digits', extrahard: 'Extra Hard — 4 digits' }
   const curAdaptLevel = adaptiveLevel(adaptScore)
+
+  if (showCarJourney) {
+    return <CarJourneyApp onBack={() => setShowCarJourney(false)} setMode={setMode} />
+  }
 
   return (
     <QuizLayout title="Origin" subtitle="Add, subtract, multiply & divide positive & negative numbers" onBack={onBack} timer={started && !finished ? timer : null}>
@@ -52044,6 +52736,12 @@ const fetchQuestion = async () => {
           <input className="answer-input question-count-input" type="text" value={numQuestions} onChange={e => { const v = e.target.value; if (v === '' || (/^\d+$/.test(v) && Number(v) <= 100)) setNumQuestions(v) }} />
         </div>
         <div className="button-row"><button onClick={startQuiz}>Start Quiz</button></div>
+        <button type="button" onClick={() => setShowCarJourney(true)} style={{
+          marginTop: '16px', background: 'transparent', border: '1px solid var(--clr-border)', borderRadius: '6px',
+          padding: '10px 24px', color: 'var(--clr-text-soft)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer'
+        }}>
+          The Car Journey — 16-stop math road trip
+        </button>
       </div>}
       {started && !finished && <>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
@@ -52228,7 +52926,7 @@ const fetchQuestion = async (selectedDifficulty = difficulty) => {
       const termA = a * xSq
       const termB = b * x
       const sign = (v) => v >= 0 ? `+ ${v}` : `− ${Math.abs(v)}`
-      const reasoning = `y = ${a}(${x})² ${sign(b)}(${x}) ${sign(c)}\n= ${a}(${xSq}) ${sign(termB)} ${sign(c)}\n= ${termA} ${sign(termB)} ${sign(c)}\n= ${data.correctAnswer}`
+      const reasoning = `y = ${a}(${x})² ${sign(b)}(${x}) ${sign(c)}\n= ${a}(${xSq}) ${sign(termB)} ${sign(c)}\n= ${termA} ${sign(termB)} ${sign(c)}\n= ${data.correctAnswer}`;
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -53795,7 +54493,7 @@ const loadQuestion = async (excludeIds) => {
     const res = await fetch(`${API}/vocab-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  id: question.id, answerOption: option, sessionGoal }) })
     const data = await res.json()
     setIsCorrect(data.correct)
-    if (data.correct) setScore((s) => s + 1)
+    if (data.correct) setScore((s) => s + 1);
     // Show feedback with correct answer text
     (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
@@ -54015,6 +54713,87 @@ const loadQuestion = async (excludeIds) => {
 }
 
 /* ── Fraction Addition App ────────────────────────────────────── */
+function FractionsPage(props) {
+  const [learningPhase, setLearningPhase] = useState('select'); // 'select', 'learn', 'test'
+  const [showIdliVada, setShowIdliVada] = useState(false);
+
+  const [showQuizBelow, setShowQuizBelow] = useState(false);
+  const quizRef = useRef(null);
+
+  const startQuizBelow = () => {
+    setShowQuizBelow(true);
+    setTimeout(() => {
+      quizRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  if (showIdliVada) {
+    return <IdliVadaSambharApp onBack={() => setShowIdliVada(false)} />
+  }
+
+  if (learningPhase === 'select') {
+    return (
+      <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '40px' }}>
+        <div className="card" style={{ maxWidth: 900, width: '90%', padding: '3rem', color: 'var(--clr-text)', textAlign: 'center', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', background: 'var(--clr-card)' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button className="kid-btn-secondary" onClick={props.onBack} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', border: 'none', background: 'rgba(0,0,0,0.05)', cursor: 'pointer', color: 'var(--clr-text)' }}>
+              ← Back to Home
+            </button>
+          </div>
+          <h1 style={{ marginBottom: 12, fontSize: '2.8rem', color: '#3182CE', fontWeight: '800' }}>
+            Fractions
+          </h1>
+          <p style={{ fontSize: '1.25rem', opacity: 0.8, fontWeight: '500', marginBottom: 40 }}>
+            Parts of a whole and more!
+          </p>
+          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => setLearningPhase('learn')} style={{ flex: '1 1 250px', maxWidth: '300px', padding: '30px', borderRadius: '16px', background: 'var(--clr-card)', border: '2px solid #48BB78', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'transform 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '3rem' }}>📖</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--clr-text)' }}>Learn</span>
+              <span style={{ color: 'var(--clr-text-soft)' }}>Understand fractions through play</span>
+            </button>
+            <button onClick={() => setLearningPhase('test')} style={{ flex: '1 1 250px', maxWidth: '300px', padding: '30px', borderRadius: '16px', background: 'var(--clr-card)', border: '2px solid #0275d8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'transform 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '3rem' }}>📝</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--clr-text)' }}>Test</span>
+              <span style={{ color: 'var(--clr-text-soft)' }}>Test what you know</span>
+            </button>
+          </div>
+          <button type="button" onClick={() => setShowIdliVada(true)} style={{
+            marginTop: '28px', background: 'transparent', border: '1px solid #d99b2b', borderRadius: '12px',
+            padding: '12px 24px', color: 'var(--clr-text)', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer'
+          }}>
+            Idli Vada Sambhar — multiples & LCM game
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (learningPhase === 'learn') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <FractionsLearnPage 
+          onStartTest={startQuizBelow} 
+          onBack={props.onBack} 
+        />
+        {showQuizBelow && (
+          <div ref={quizRef} className="fade-in" style={{ paddingBottom: '40px', marginTop: '20px' }}>
+            <div style={{ textAlign: 'center', margin: '40px 0 20px', padding: '20px', borderTop: '2px dashed rgba(0,0,0,0.1)' }}>
+               <h2 style={{ color: 'var(--clr-text)', fontSize: '2rem' }}>📝 Fractions Quiz</h2>
+               <p style={{ color: 'var(--clr-text-soft)' }}>Your learning is above. Good luck on the test!</p>
+            </div>
+            <FractionAddApp {...props} onBack={props.onBack} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (learningPhase === 'test') {
+    return <FractionAddApp {...props} onBack={props.onBack} />;
+  }
+}
+
 /**
  * FractionAddApp Component
  * Fraction addition quiz with three difficulty levels.
@@ -54785,6 +55564,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
     const [loading, setLoading] = useState(false)
     const [loadError, setLoadError] = useState('')
     const [revealed, setRevealed] = useState(false)
+    const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState('')
   const [sessionGoal, setSessionGoal] = useState(isGoalMode ? 'speed' : 'standard')
   useEffect(() => {
     if (!isGoalMode) {
@@ -54800,6 +55580,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
     // Guards against double-submit and double-advance race conditions
     const submittedRef = useRef(false)
     const advancedRef = useRef(false)
+    const promotionTriggeredRef = useRef(false)
     // Tracks the in-flight question fetch so a newer loadQuestion() call (or
     // unmount) can cancel a still-pending older one — otherwise an
     // out-of-order response can land after a newer question and silently
@@ -54838,20 +55619,54 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
       setLoadError('')
       try {
         const diff = effectiveDifficulty()
-        const r = await fetch(`${API}/${apiPath}/question?difficulty=${diff}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, signal: controller.signal })
-        if (!r.ok) throw new Error(`Server returned ${r.status}`)
-        const data = await r.json()
-        // Defensive: a question must have a non-empty prompt to be displayable.
-        // If the API returns malformed data (missing prompt), surface a clear
-        // error instead of rendering an empty quiz pane.
-        if (!data || typeof data !== 'object' || !data.prompt) {
-          throw new Error('Question payload is missing a prompt')
+        const isMilestone = (questionNumber > 0 && questionNumber % 5 === 0) || promotionTriggeredRef.current
+        promotionTriggeredRef.current = false
+
+        const headers = { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }
+
+        let data = null
+        if (isMilestone) {
+          try {
+            const excludeList = results.map(r => r.id || '').filter(Boolean).join(',')
+            const cr = await fetch(`${API}/conceptual-api/question?topic=${apiPath.replace('-api', '')}&difficulty=${diff}&exclude=${excludeList}&goal=${sessionGoal}`, {
+              headers,
+              signal: controller.signal
+            })
+            if (cr.ok) {
+              data = await cr.json()
+            } else {
+              console.warn(`Conceptual question not found or failed for topic: ${apiPath.replace('-api', '')}. Falling back to standard question.`)
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') console.error('Failed to fetch conceptual question, falling back:', err)
+          }
+        }
+
+        if (!data) {
+          const r = await fetch(`${API}/${apiPath}/question?difficulty=${diff}&goal=${sessionGoal}`, {
+            headers,
+            signal: controller.signal
+          })
+          if (!r.ok) throw new Error(`Server returned ${r.status}`)
+          data = await r.json()
+        }
+
+        // Map conceptual question schema to prompt if conceptual
+        if (data && data.isConceptual && data.question) {
+          data.prompt = data.question
+        }
+        if (!data || typeof data !== 'object') {
+          throw new Error('Question payload is invalid')
+        }
+        if (data.isConceptual && !data.prompt) {
+          throw new Error('Conceptual question payload is missing a prompt')
         }
         setQuestion(data)
         setAnswer('')
         setFeedback('')
         setIsCorrect(null)
         setRevealed(false)
+        setRevealedCorrectAnswer('')
         submittedRef.current = false
         advancedRef.current = false
         timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(effectiveDifficulty ? effectiveDifficulty() : (difficulty || 'easy'), isAdaptive))
@@ -54871,6 +55686,7 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
       setTotalQ(t); setScore(0); setQuestionNumber(1); setResults([]); setStarted(true); setFinished(false)
       setAdaptScore(0); adaptScoreRef.current = 0
       submittedRef.current = false; advancedRef.current = false
+      promotionTriggeredRef.current = false
     }
     useEffect(() => { if (started && !finished && questionNumber > 0) loadQuestion() }, [started, questionNumber])
     const advance = () => {
@@ -54910,34 +55726,50 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
       if (submittedRef.current) return  // prevent double-submit (rapid Enter presses)
       submittedRef.current = true
       const timeTaken = timer.stop()
-      const payload = { ...question, [answerField || 'userAnswer']: answer.trim() }
+      const payload = question.isConceptual
+        ? { id: question.id, answerOption: answer.trim() }
+        : { ...question, [answerField || 'userAnswer']: answer.trim() }
+      const checkPath = question.isConceptual ? 'conceptual-api' : apiPath
       try {
-        const r = await fetch(`${API}/${apiPath}/check`, {
+        const r = await fetch(`${API}/${checkPath}/check`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : ''
+          },
           body: JSON.stringify({ ...payload, sessionGoal })
         })
         const data = await r.json()
+        const qPrompt = question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : title)
+        const corrAns = data.display || data.correctAnswerText || (data.correctAnswer !== undefined ? String(data.correctAnswer) : '') || data.answer || ''
         setIsCorrect(data.correct); setRevealed(true)
+        if (data.correctAnswer) setRevealedCorrectAnswer(data.correctAnswer)
         if (data.correct) setScore(s => s + 1)
         const coinMsg = (data.lil?.coinsEarned ?? 0) > 0 ? ` (+${data.lil.coinsEarned}🪙)` : ''
         if (!data.correct && sessionGoal === 'perfect') {
           // Perfect Solve: any wrong answer immediately ends the quiz
-          setFeedback(`❌ Wrong answer — Perfect Solve ended! Correct: ${data.display || ''}`)
+          setFeedback(`❌ Wrong answer — Perfect Solve ended! Correct: ${corrAns}`)
           timer.reset()
           setFinished(true)
-          setResults(prev => [...prev, { prompt: question.prompt, userAnswer: answer.trim(), correctAnswer: data.display, correct: false, time: timeTaken }])
+          setResults(prev => [...prev, { id: question.id, prompt: qPrompt, question: qPrompt, userAnswer: answer.trim(), correctAnswer: corrAns, correct: false, time: timeTaken }])
           return
         }
-        setFeedback(data.correct ? `✅ Correct!${coinMsg} ${data.display || ''}` : `❌ Incorrect. Answer: ${data.display || ''}`)
-        setResults(prev => [...prev, { prompt: question.prompt, userAnswer: answer.trim(), correctAnswer: data.display, correct: data.correct, time: timeTaken }])
+        setFeedback(data.correct ? `✅ Correct!${coinMsg} ${corrAns}` : `❌ Incorrect. Answer: ${corrAns}`)
+        setResults(prev => [...prev, { id: question.id, prompt: qPrompt, question: qPrompt, userAnswer: answer.trim(), correctAnswer: corrAns, correct: data.correct, time: timeTaken }])
         // Smooth adaptive adjustment
         if (isAdaptive) {
+          const oldStage = Math.min(3, Math.max(0, Math.floor(adaptScoreRef.current)))
           setAdaptScore(prev => {
             const next = data.correct
               ? Math.min(3, prev + 0.25)  // gentle climb on correct
               : Math.max(0, prev - 0.35)  // slightly steeper drop on wrong
             adaptScoreRef.current = next
+            
+            // Check for promotion
+            const newStage = Math.min(3, Math.max(0, Math.floor(next)))
+            if (newStage > oldStage) {
+              promotionTriggeredRef.current = true
+            }
             return next
           })
         }
@@ -54948,19 +55780,26 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
       if (!question || revealed) return
       submittedRef.current = true
       timer.stop()
-      const payload = { ...question, [answerField || 'userAnswer']: '', solve: true }
+      const payload = question.isConceptual
+        ? { id: question.id, answerOption: '', solve: true }
+        : { ...question, [answerField || 'userAnswer']: '', solve: true }
+      const checkPath = question.isConceptual ? 'conceptual-api' : apiPath
       try {
-        const r = await fetch(`${API}/${apiPath}/check`, {
+        const r = await fetch(`${API}/${checkPath}/check`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : ''
+          },
           body: JSON.stringify({ ...payload, sessionGoal })
         })
         const data = await r.json()
         setIsCorrect(false); setRevealed(true)
-        const display = data.display || data.correctAnswer || data.answer || ''
+        const qPrompt = question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : title)
+        const display = data.display || data.correctAnswerText || (data.correctAnswer !== undefined ? String(data.correctAnswer) : '') || data.answer || ''
         const explanation = data.explanation || ''
         setFeedback(`Solution: ${display}${explanation ? '\n' + explanation : ''}`)
-        setResults(prev => [...prev, { prompt: question.prompt, userAnswer: '(solved)', correctAnswer: display, correct: false, time: 0 }])
+        setResults(prev => [...prev, { id: question.id, prompt: qPrompt, question: qPrompt, userAnswer: '(solved)', correctAnswer: display, correct: false, time: 0 }])
       } catch (e) { submittedRef.current = false; console.error(`Failed to solve ${title}:`, e) }
     }
 
@@ -54975,6 +55814,21 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
         setAdaptScore(prev => { const next = Math.max(0, prev - 0.35); adaptScoreRef.current = next; return next })
       }
     }
+
+    useEffect(() => {
+      if (!question || !question.options || revealed) return
+      const h = (e) => {
+        const key = e.key.toUpperCase()
+        if (['A', 'B', 'C', 'D'].includes(key)) {
+          setAnswer(key)
+        } else if (['1', '2', '3', '4'].includes(key)) {
+          const idx = Number(key) - 1
+          setAnswer(['A', 'B', 'C', 'D'][idx])
+        }
+      }
+      window.addEventListener('keydown', h)
+      return () => window.removeEventListener('keydown', h)
+    }, [question, revealed])
 
     const handleKeyDown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (!revealed) handleSubmit() } }
     const getPlaceholder = () => {
@@ -55107,7 +55961,63 @@ function makeQuizApp({ title, subtitle, apiPath, diffLabels, placeholders, tip, 
             <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <GlossaryText text={question.prompt} />
             </div>
-            <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={getPlaceholder()} onKeyDown={handleKeyDown} autoFocus />
+            <ConceptualVisualDiagram visualType={question.visualType} visualData={question.visualData} />
+            {question.options ? (
+              <div className="mcq-options-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', margin: '20px auto', padding: '0 10px' }}>
+                {question.options.map((opt, idx) => {
+                  const letter = ['A', 'B', 'C', 'D'][idx]
+                  const isSelected = answer === letter
+                  const isCorrectChoice = revealed && (letter === (revealedCorrectAnswer || question.answerOption))
+                  const isWrongChoice = revealed && isSelected && !isCorrect
+                  
+                  let cardClass = "mcq-option-card"
+                  if (isSelected) cardClass += " selected"
+                  if (isCorrectChoice) cardClass += " correct"
+                  if (isWrongChoice) cardClass += " wrong"
+                  
+                  return (
+                    <div
+                      key={letter}
+                      className={cardClass}
+                      onClick={() => { if (!revealed) setAnswer(letter) }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '12px 16px',
+                        border: isSelected ? '2px solid var(--clr-accent)' : '1px solid var(--clr-border)',
+                        borderRadius: '8px',
+                        cursor: revealed ? 'not-allowed' : 'pointer',
+                        background: isCorrectChoice ? 'rgba(76, 175, 80, 0.15)' : isWrongChoice ? 'rgba(244, 67, 54, 0.15)' : isSelected ? 'var(--clr-bg-soft)' : 'var(--clr-bg-card)',
+                        borderColor: isCorrectChoice ? 'var(--clr-correct)' : isWrongChoice ? 'var(--clr-wrong)' : isSelected ? 'var(--clr-accent)' : 'var(--clr-border)',
+                        transition: 'all 0.2s ease',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: isCorrectChoice ? 'var(--clr-correct)' : isWrongChoice ? 'var(--clr-wrong)' : isSelected ? 'var(--clr-accent)' : 'var(--clr-text-soft)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px',
+                        fontSize: '0.85rem',
+                        fontWeight: 'bold',
+                        color: isCorrectChoice ? 'var(--clr-correct)' : isWrongChoice ? 'var(--clr-wrong)' : isSelected ? 'var(--clr-accent)' : 'var(--clr-text-soft)',
+                        background: isSelected ? 'rgba(var(--clr-accent-rgb), 0.1)' : 'transparent'
+                      }}>
+                        {letter}
+                      </div>
+                      <span style={{ fontSize: '1rem', color: 'var(--clr-text)' }}>{opt}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <input className="answer-input" type="text" value={answer} onChange={e => { if (!revealed) setAnswer(e.target.value) }} disabled={revealed} placeholder={getPlaceholder()} onKeyDown={handleKeyDown} autoFocus />
+            )}
           </div>}
           {!question && loading && <div style={{ textAlign: 'center', padding: '24px', color: 'var(--clr-text-soft)' }}>Loading question…</div>}
           {!question && !loading && loadError && (
@@ -55363,7 +56273,7 @@ const loadQuestion = async () => {
       const r = await fetch(`${API}/dotprod-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({ ...payload, sessionGoal }) })
       const data = await r.json()
       setIsCorrect(data.correct); setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -55639,7 +56549,7 @@ const BasesApp = makeQuizApp({
 })
 
 const CircleThApp = makeQuizApp({
-  title: 'Circle Theorems', subtitle: 'Angles, tangents, cyclic quads', apiPath: 'circle-api', topicKey: 'circle-theorems',
+  title: 'Circle Theorems', subtitle: 'Angles, tangents, cyclic quads', apiPath: 'circleth-api', topicKey: 'circle-theorems',
   diffLabels: { easy: 'Easy — Semicircle', medium: 'Medium — Centre/Circum', hard: 'Hard — Cyclic quad', extrahard: 'Extra Hard — Tangent' },
   placeholders: 'e.g. 45',
 })
@@ -56576,6 +57486,76 @@ const GSTApp = makeQuizApp({
   placeholders: 'e.g. 180',
 })
 
+function GSTPage(props) {
+  const [learningPhase, setLearningPhase] = useState('select'); // 'select', 'learn', 'test'
+  
+  const [showQuizBelow, setShowQuizBelow] = useState(false);
+  const quizRef = useRef(null);
+
+  const startQuizBelow = () => {
+    setShowQuizBelow(true);
+    setTimeout(() => {
+      quizRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  if (learningPhase === 'select') {
+    return (
+      <div className="app-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '40px' }}>
+        <div className="card" style={{ maxWidth: 900, width: '90%', padding: '3rem', color: 'var(--clr-text)', textAlign: 'center', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', background: 'var(--clr-card)' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button className="kid-btn-secondary" onClick={props.onBack} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', border: 'none', background: 'rgba(0,0,0,0.05)', cursor: 'pointer', color: 'var(--clr-text)' }}>
+              ← Back to Home
+            </button>
+          </div>
+          <h1 style={{ marginBottom: 12, fontSize: '2.8rem', color: 'var(--clr-accent, #FF7E67)', fontWeight: '800' }}>
+            GST
+          </h1>
+          <p style={{ fontSize: '1.25rem', opacity: 0.8, fontWeight: '500', marginBottom: 40 }}>
+            Goods & Services Tax
+          </p>
+          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => setLearningPhase('learn')} style={{ flex: '1 1 250px', maxWidth: '300px', padding: '30px', borderRadius: '16px', background: 'var(--clr-card)', border: '2px solid #2ea043', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'transform 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '3rem' }}>📖</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--clr-text)' }}>Learn</span>
+              <span style={{ color: 'var(--clr-text-soft)' }}>Understand GST concepts step by step</span>
+            </button>
+            <button onClick={() => setLearningPhase('test')} style={{ flex: '1 1 250px', maxWidth: '300px', padding: '30px', borderRadius: '16px', background: 'var(--clr-card)', border: '2px solid #0275d8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'transform 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '3rem' }}>📝</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--clr-text)' }}>Test</span>
+              <span style={{ color: 'var(--clr-text-soft)' }}>Jump straight to the GST quiz</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (learningPhase === 'learn') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <GSTLearnPage 
+          onStartTest={startQuizBelow} 
+          onBack={props.onBack} 
+        />
+        {showQuizBelow && (
+          <div ref={quizRef} className="fade-in" style={{ paddingBottom: '40px', marginTop: '20px' }}>
+            <div style={{ textAlign: 'center', margin: '40px 0 20px', padding: '20px', borderTop: '2px dashed rgba(0,0,0,0.1)' }}>
+               <h2 style={{ color: 'var(--clr-text)', fontSize: '2rem' }}>📝 GST Quiz</h2>
+               <p style={{ color: 'var(--clr-text-soft)' }}>Your learning is above. Good luck on the test!</p>
+            </div>
+            <GSTApp {...props} onBack={props.onBack} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (learningPhase === 'test') {
+    return <GSTApp {...props} onBack={props.onBack} />;
+  }
+}
+
 const SectionApp = makeQuizApp({
   title: 'Section Formula', subtitle: 'Midpoint, section, centroid', apiPath: 'section-api', topicKey: 'section-formula',
   diffLabels: { easy: 'Easy — Midpoint', medium: 'Medium — Internal division', hard: 'Hard — Find ratio', extrahard: 'Extra Hard — Centroid' },
@@ -57349,7 +58329,7 @@ const loadQuestion = async () => {
       const r = await fetch(`${API}/squaring-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  ...question, userAnswer, sessionGoal }) })
       const data = await r.json()
       setIsCorrect(data.correct); setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -57739,7 +58719,7 @@ const RANDOM_MIX_TOPICS = [
   { key: 'log', name: 'Logarithms', api: 'log-api' },
   { key: 'diff', name: 'Differentiation', api: 'diff-api' },
   { key: 'bases', name: 'Number Bases', api: 'bases-api' },
-  { key: 'circleth', name: 'Circle Theorems', api: 'circle-api' },
+  { key: 'circleth', name: 'Circle Theorems', api: 'circleth-api' },
   { key: 'integ', name: 'Integration', api: 'integ-api' },
   { key: 'stdform', name: 'Standard Form', api: 'stdform-api' },
   { key: 'bounds', name: 'Bounds', api: 'bounds-api' },
@@ -58362,7 +59342,7 @@ const loadQuestion = async () => {
       const r = await fetch(`${API}/sets-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({ ...payload, sessionGoal }) })
       const data = await r.json()
       setIsCorrect(data.correct); setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -58593,7 +59573,7 @@ const loadQuestion = async () => {
       const r = await fetch(`${API}/sequences-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({ ...payload, sessionGoal }) })
       const data = await r.json()
       setIsCorrect(data.correct); setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -58847,7 +59827,7 @@ const loadQuestion = async () => {
       const data = await r.json()
       setIsCorrect(data.correct)
       setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -60133,9 +61113,9 @@ const loadQuestion = async () => {
       const data = await r.json()
       setIsCorrect(data.correct)
       setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
 
-      const prompt = question.prompt
+      const prompt = question.prompt;
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -60459,9 +61439,9 @@ const loadQuestion = async () => {
       const data = await r.json()
       setIsCorrect(data.correct)
       setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
 
-      const prompt = getPrompt(question)
+      const prompt = getPrompt(question);
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -60672,6 +61652,7 @@ function FractionAddApp({ onBack, completedTopics = [], goldMastery = [], markTo
   const [loading, setLoading] = useState(false)
   // Whether answer has been revealed (submitted)
   const [revealed, setRevealed] = useState(false)
+  const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState('')
   // Results log for ResultsTable
   const [results, setResults] = useState([])
   const [sessionGoal, setSessionGoal] = useState(isGoalMode ? 'speed' : 'standard')
@@ -60687,7 +61668,9 @@ function FractionAddApp({ onBack, completedTopics = [], goldMastery = [], markTo
   // ── Refs for auto-advance ────────────────────────────────────────────
   const advanceFnRef = useRef(null)
 
-  const effectiveDiff = () => (isAdaptive) ? adaptiveLevel(adaptScoreRef.current) : difficulty
+  const promotionTriggeredRef = useRef(false)
+
+  const effectiveDiff = () => isAdaptive ? adaptiveLevel(adaptScoreRef.current) : difficulty
 
   /**
    * loadQuestion(): Fetch a new fraction-add question from the API.
@@ -60716,13 +61699,45 @@ function FractionAddApp({ onBack, completedTopics = [], goldMastery = [], markTo
 const loadQuestion = async () => {
     setLoading(true)
     try {
-      const r = await fetch(`${API}/fractionadd-api/question?difficulty=${effectiveDiff()}&goal=${sessionGoal}`, { headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' } })
-      const data = await r.json()
+      const diff = effectiveDiff()
+      const isMilestone = (questionNumber > 0 && questionNumber % 5 === 0) || promotionTriggeredRef.current
+      promotionTriggeredRef.current = false
+
+      const headers = { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }
+
+      let data = null
+      if (isMilestone) {
+        try {
+          const excludeList = results.map(r => r.id || '').filter(Boolean).join(',')
+          const cr = await fetch(`${API}/conceptual-api/question?topic=fractionadd&difficulty=${diff}&exclude=${excludeList}&goal=${sessionGoal}`, { headers })
+          if (cr.ok) {
+            data = await cr.json()
+          } else {
+            console.warn('Conceptual question not found or failed for topic: fractionadd. Falling back to standard question.')
+          }
+        } catch (err) {
+          console.error('Failed to fetch conceptual question, falling back:', err)
+        }
+      }
+
+      if (!data) {
+        const r = await fetch(`${API}/fractionadd-api/question?difficulty=${diff}&goal=${sessionGoal}`, {
+          headers: { 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }
+        })
+        if (!r.ok) throw new Error(`Server returned ${r.status}`)
+        data = await r.json()
+      }
+
+      // Map conceptual question schema to prompt if conceptual
+      if (data && data.isConceptual && data.question) {
+        data.prompt = data.question
+      }
       setQuestion(data)
       setAnswer('')
       setFeedback('')
       setIsCorrect(null)
       setRevealed(false)
+      setRevealedCorrectAnswer('')
       timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
     } catch (e) {
       console.error('Failed to load fraction question:', e)
@@ -60742,6 +61757,7 @@ const loadQuestion = async () => {
     setResults([])
     setAdaptScore(0)
     adaptScoreRef.current = 0
+    promotionTriggeredRef.current = false
     setStarted(true)
     setFinished(false)
   }
@@ -60779,6 +61795,20 @@ const loadQuestion = async () => {
     return () => window.removeEventListener('keydown', handleKey)
   }, [revealed, isCorrect, questionNumber])
 
+  // Keyboard listener for option selection (A, B, C, D) in conceptual mode
+  useEffect(() => {
+    if (!started || finished || !question || !question.isConceptual || revealed) return
+    const handleKey = (e) => {
+      const key = e.key.toUpperCase()
+      if (['A', 'B', 'C', 'D'].includes(key)) {
+        e.preventDefault()
+        setAnswer(key)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [started, finished, question, revealed])
+
   /**
    * parseAnswer(str): Parse user's answer string into {whole, num, den}
    * Accepts formats: "3/4", "2 3/4", "5", "2 5"
@@ -60805,6 +61835,50 @@ const loadQuestion = async () => {
    */
   const handleSubmit = async () => {
     if (!question || revealed) return
+
+    if (question.isConceptual) {
+      if (!answer) return
+      const timeTaken = timer.stop()
+      try {
+        const r = await fetch(`${API}/conceptual-api/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: question.id, answerOption: answer.trim() })
+        })
+        const data = await r.json()
+        setIsCorrect(data.correct)
+        setRevealed(true)
+        if (data.correctAnswer) setRevealedCorrectAnswer(data.correctAnswer)
+        if (data.correct) setScore(s => s + 1)
+
+        setFeedback(data.correct ? 'Correct!' : `Incorrect. Correct answer is option ${data.correctAnswer}. ${data.explanation || ''}`)
+        setResults(prev => [...prev, {
+          question: question.prompt,
+          userAnswer: answer.trim(),
+          correctAnswer: data.correctAnswer,
+          correct: data.correct,
+          time: timeTaken,
+          id: question.id
+        }])
+
+        if (isAdaptive) {
+          const oldStage = Math.min(3, Math.max(0, Math.floor(adaptScoreRef.current)))
+          setAdaptScore(prev => {
+            const next = data.correct ? Math.min(3, prev + 0.25) : Math.max(0, prev - 0.35)
+            adaptScoreRef.current = next
+            const newStage = Math.min(3, Math.max(0, Math.floor(next)))
+            if (newStage > oldStage) {
+              promotionTriggeredRef.current = true
+            }
+            return next
+          })
+        }
+      } catch (e) {
+        console.error('Failed to check conceptual fraction answer:', e)
+      }
+      return
+    }
+
     const parsed = parseAnswer(answer)
     if (!parsed || parsed.den === 0) return
 
@@ -60831,11 +61905,11 @@ const loadQuestion = async () => {
 
       setIsCorrect(data.correct)
       setRevealed(true)
-      if (data.correct) setScore(s => s + 1)
+      if (data.correct) setScore(s => s + 1);
 
       const prompt = question.mixed
         ? `${question.w1} ${question.n1}/${question.d1} ${op} ${question.w2} ${question.n2}/${question.d2}`
-        : `${question.n1}/${question.d1} ${op} ${question.n2}/${question.d2}`
+        : `${question.n1}/${question.d1} ${op} ${question.n2}/${question.d2}`;
 
       (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
@@ -60851,13 +61925,23 @@ const loadQuestion = async () => {
 
       setResults(prev => [...prev, {
         prompt,
+        question: prompt,
         userAnswer: answer.trim(),
         correctAnswer: data.display,
         correct: data.correct,
         time: timeTaken
       }])
       if (isAdaptive) {
-        setAdaptScore(prev => { const next = data.correct ? Math.min(3, prev + 0.25) : Math.max(0, prev - 0.35); adaptScoreRef.current = next; return next })
+        const oldStage = Math.min(3, Math.max(0, Math.floor(adaptScoreRef.current)))
+        setAdaptScore(prev => {
+          const next = data.correct ? Math.min(3, prev + 0.25) : Math.max(0, prev - 0.35)
+          adaptScoreRef.current = next
+          const newStage = Math.min(3, Math.max(0, Math.floor(next)))
+          if (newStage > oldStage) {
+            promotionTriggeredRef.current = true
+          }
+          return next
+        })
       }
     } catch (e) {
       console.error('Failed to check fraction answer:', e)
@@ -60867,6 +61951,40 @@ const loadQuestion = async () => {
   const handleSolve = async () => {
     if (!question || revealed) return
     timer.stop()
+
+    if (question.isConceptual) {
+      try {
+        const r = await fetch(`${API}/conceptual-api/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: question.id, answerOption: '' })
+        })
+        const data = await r.json()
+        setIsCorrect(false)
+        setRevealed(true)
+        if (data.correctAnswer) setRevealedCorrectAnswer(data.correctAnswer)
+        setFeedback(`Solution: Correct option is ${data.correctAnswer}. ${data.explanation || ''}`)
+        setResults(prev => [...prev, {
+          question: question.prompt,
+          userAnswer: '(solved)',
+          correctAnswer: data.correctAnswer,
+          correct: false,
+          time: 0,
+          id: question.id
+        }])
+        if (isAdaptive) {
+          setAdaptScore(prev => {
+            const next = Math.max(0, prev - 0.35)
+            adaptScoreRef.current = next
+            return next
+          })
+        }
+      } catch (e) {
+        console.error('Failed to solve conceptual question:', e)
+      }
+      return
+    }
+
     const op = question.op || '+'
     const prompt = question.mixed
       ? `${question.w1} ${question.n1}/${question.d1} ${op} ${question.w2} ${question.n2}/${question.d2}`
@@ -60878,9 +61996,13 @@ const loadQuestion = async () => {
       const display = data.display || data.correctAnswer || data.answer || ''
       const explanation = data.explanation || ''
       setFeedback(`Solution: ${display}${explanation ? '\n' + explanation : ''}`)
-      setResults(prev => [...prev, { prompt, userAnswer: '(solved)', correctAnswer: display, correct: false, time: 0 }])
+      setResults(prev => [...prev, { prompt, question: prompt, userAnswer: '(solved)', correctAnswer: display, correct: false, time: 0 }])
       if (isAdaptive) {
-        setAdaptScore(prev => Math.max(0, prev - 0.35))
+        setAdaptScore(prev => {
+          const next = Math.max(0, prev - 0.35)
+          adaptScoreRef.current = next
+          return next
+        })
       }
     } catch (e) { console.error('Failed to solve fraction:', e) }
   }
@@ -61020,37 +62142,98 @@ const loadQuestion = async () => {
         </div>
         {isAdaptive && <DifficultySlider pct={adaptivePct(adaptScore)} onChange={(p) => { const v = (p / 100) * 3; setAdaptScore(v); adaptScoreRef.current = v }} />}
         {question && (
-          <div className="fraction-problem">
-            {/* Render the problem: n1/d1 (op) n2/d2 or mixed numbers (op) mixed numbers.
-                The operator comes from the server (default '+' for back-compat). */}
-            {question.mixed ? (
-              <div className="fraction-expression">
-                {formatMixed(question.w1, question.n1, question.d1)}
-                <span className="frac-operator">{question.op || '+'}</span>
-                {formatMixed(question.w2, question.n2, question.d2)}
-                <span className="frac-operator">=</span>
-              </div>
-            ) : (
-              <div className="fraction-expression">
-                {formatFraction(question.n1, question.d1)}
-                <span className="frac-operator">{question.op || '+'}</span>
-                {formatFraction(question.n2, question.d2)}
-                <span className="frac-operator">=</span>
-              </div>
-            )}
+          question.isConceptual ? (
+            <div style={{ textAlign: 'center', width: '100%' }}>
+              <div className="question-prompt" style={{ fontSize: '1.3rem', margin: '20px 0', lineHeight: '1.6' }}>{question.prompt}</div>
+              <ConceptualVisualDiagram visualType={question.visualType} visualData={question.visualData} />
+              {question.options && (
+                <div className="mcq-options-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', margin: '20px auto', padding: '0 10px' }}>
+                  {question.options.map((opt, idx) => {
+                    const letter = ['A', 'B', 'C', 'D'][idx]
+                    const isSelected = answer === letter
+                    const isCorrectChoice = revealed && (letter === (revealedCorrectAnswer || question.answerOption))
+                    const isWrongChoice = revealed && isSelected && !isCorrect
 
-            {/* Single text input — type answer as "3/4" or "2 3/4" */}
-            <input
-              className="answer-input"
-              type="text"
-              value={answer}
-              onChange={e => { if (!revealed) setAnswer(e.target.value) }}
-              disabled={revealed}
-              placeholder={question.mixed ? 'e.g. 2 3/4' : 'e.g. 3/4'}
-              onKeyDown={handleKeyDown}
-              autoFocus
-            />
-          </div>
+                    let cardClass = "mcq-option-card"
+                    if (isSelected) cardClass += " selected"
+                    if (isCorrectChoice) cardClass += " correct"
+                    if (isWrongChoice) cardClass += " wrong"
+
+                    return (
+                      <div
+                        key={letter}
+                        className={cardClass}
+                        onClick={() => { if (!revealed) setAnswer(letter) }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '12px 16px',
+                          border: isSelected ? '2px solid var(--clr-accent)' : '1px solid var(--clr-border)',
+                          borderRadius: '8px',
+                          cursor: revealed ? 'not-allowed' : 'pointer',
+                          background: isCorrectChoice ? 'rgba(76, 175, 80, 0.15)' : isWrongChoice ? 'rgba(244, 67, 54, 0.15)' : isSelected ? 'var(--clr-bg-soft)' : 'var(--clr-bg-card)',
+                          borderColor: isCorrectChoice ? 'var(--clr-correct)' : isWrongChoice ? 'var(--clr-wrong)' : isSelected ? 'var(--clr-accent)' : 'var(--clr-border)',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span className="option-badge" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          marginRight: '12px',
+                          fontWeight: 'bold',
+                          fontSize: '0.9rem',
+                          background: isCorrectChoice ? 'var(--clr-correct)' : isWrongChoice ? 'var(--clr-wrong)' : isSelected ? 'var(--clr-accent)' : 'var(--clr-bg-soft)',
+                          color: (isCorrectChoice || isWrongChoice || isSelected) ? '#fff' : 'var(--clr-fg)',
+                        }}>
+                          {letter}
+                        </span>
+                        <span className="option-text" style={{ flex: 1, fontSize: '0.95rem', fontWeight: isSelected ? '600' : 'normal', color: 'var(--clr-fg)' }}>
+                          {opt}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="fraction-problem">
+              {/* Render the problem: n1/d1 (op) n2/d2 or mixed numbers (op) mixed numbers.
+                  The operator comes from the server (default '+' for back-compat). */}
+              {question.mixed ? (
+                <div className="fraction-expression">
+                  {formatMixed(question.w1, question.n1, question.d1)}
+                  <span className="frac-operator">{question.op || '+'}</span>
+                  {formatMixed(question.w2, question.n2, question.d2)}
+                  <span className="frac-operator">=</span>
+                </div>
+              ) : (
+                <div className="fraction-expression">
+                  {formatFraction(question.n1, question.d1)}
+                  <span className="frac-operator">{question.op || '+'}</span>
+                  {formatFraction(question.n2, question.d2)}
+                  <span className="frac-operator">=</span>
+                </div>
+              )}
+
+              {/* Single text input — type answer as "3/4" or "2 3/4" */}
+              <input
+                className="answer-input"
+                type="text"
+                value={answer}
+                onChange={e => { if (!revealed) setAnswer(e.target.value) }}
+                disabled={revealed}
+                placeholder={question.mixed ? 'e.g. 2 3/4' : 'e.g. 3/4'}
+                onKeyDown={handleKeyDown}
+                autoFocus
+              />
+            </div>
+          )
         )}
 
         {renderFeedback(feedback, isCorrect)}
@@ -61201,9 +62384,12 @@ function TwinHuntApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/twinhunt-api/check`, {
         method: 'POST',
@@ -61211,10 +62397,19 @@ function TwinHuntApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const generateRound = (n) => {
@@ -61513,9 +62708,12 @@ function SqrtApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/sqrt-api/check`, {
         method: 'POST',
@@ -61523,10 +62721,19 @@ function SqrtApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const fetchQuestion = async (step) => {
@@ -61748,6 +62955,25 @@ const fetchQuestion = async (step) => {
   )
 }
 
+function coeffsToPolyStr(coeffs) {
+  const parts = [];
+  const numCoeffs = coeffs.map(Number);
+  for (let i = numCoeffs.length - 1; i >= 0; i--) {
+    const c = numCoeffs[i];
+    if (c === 0 && numCoeffs.length > 1) continue;
+    const sup = (n) => String(n).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join('');
+    const varPart = i === 0 ? '' : i === 1 ? 'x' : `x${sup(i)}`;
+    if (parts.length === 0) {
+      parts.push(c === 1 && i > 0 ? varPart : c === -1 && i > 0 ? `-${varPart}` : `${c}${varPart}`);
+    } else {
+      const sign = c > 0 ? '+' : '-';
+      const abs = Math.abs(c);
+      parts.push(`${sign} ${abs === 1 && i > 0 ? varPart : `${abs}${varPart}`}`);
+    }
+  }
+  return parts.join(' ') || '0';
+}
+
 /* ── Polynomial Multiplication App ──────────────────── */
 /**
  * PolyMulApp Component
@@ -61817,9 +63043,12 @@ function PolyMulApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/polymul-api/check`, {
         method: 'POST',
@@ -61827,10 +63056,19 @@ function PolyMulApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -61873,11 +63111,14 @@ const loadQuestion = async () => {
     // Require all coefficient fields to be filled
     if (userCoeffs.some(c => c === '')) return
     const timeTaken = timer.stop()
+    // Build polynomial string from user's coefficients for the monster interceptor
+    // e.g. userCoeffs=['2','3'] => '3x + 2' (sent as userAnswer, read by Bracketeer classifier)
+    const userAnswerStr = coeffsToPolyStr(userCoeffs)
     // POST to backend to validate polynomial multiplication result
-    const res = await fetch(`${API}/polymul-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  p1: question.p1, p2: question.p2, userCoeffs: userCoeffs.map(Number), sessionGoal }) })
+    const res = await fetch(`${API}/polymul-api/check`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' }, body: JSON.stringify({  p1: question.p1, p2: question.p2, userCoeffs: userCoeffs.map(Number), userAnswer: userAnswerStr, sessionGoal }) })
     const data = await res.json()
     setIsCorrect(data.correct)
-    if (data.correct) setScore(s => s + 1)
+    if (data.correct) setScore(s => s + 1);
     (() => {
         const _ci = data.lil?.coinsEarned > 0 ? ` (+${data.lil.coinsEarned} coins!)` : ''
         if (data.correct) {
@@ -62136,9 +63377,12 @@ function PolyFactorApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/polyfactor-api/check`, {
         method: 'POST',
@@ -62146,10 +63390,19 @@ function PolyFactorApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -62440,9 +63693,12 @@ function PrimeFactorApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/primefactor-api/check`, {
         method: 'POST',
@@ -62450,10 +63706,19 @@ function PrimeFactorApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -62788,9 +64053,12 @@ function QFormulaApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/qformula-api/check`, {
         method: 'POST',
@@ -62798,10 +64066,19 @@ function QFormulaApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -63113,9 +64390,12 @@ function SimulApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/simul-api/check`, {
         method: 'POST',
@@ -63123,10 +64403,19 @@ function SimulApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -63437,9 +64726,12 @@ function FuncEvalApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/funceval-api/check`, {
         method: 'POST',
@@ -63447,10 +64739,19 @@ function FuncEvalApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -63728,9 +65029,12 @@ function LineEqApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/lineq-api/check`, {
         method: 'POST',
@@ -63738,10 +65042,19 @@ function LineEqApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const loadQuestion = async () => {
@@ -64088,7 +65401,7 @@ function fetchQuestionForType(type, difficulty, qIndex = 0, sessionGoal = 'stand
     log: `${API}/log-api/question?difficulty=${difficulty}`,
     diff: `${API}/diff-api/question?difficulty=${difficulty}`,
     bases: `${API}/bases-api/question?difficulty=${difficulty}`,
-    circleth: `${API}/circle-api/question?difficulty=${difficulty}`,
+    circleth: `${API}/circleth-api/question?difficulty=${difficulty}`,
     integ: `${API}/integ-api/question?difficulty=${difficulty}`,
     stdform: `${API}/stdform-api/question?difficulty=${difficulty}`,
     bounds: `${API}/bounds-api/question?difficulty=${difficulty}`,
@@ -64130,7 +65443,6 @@ function fetchQuestionForType(type, difficulty, qIndex = 0, sessionGoal = 'stand
 }
 
 function getApiPathForType(type) {
-  if (type === 'circleth') return 'circle-api'
   return `${type}-api`
 }
 
@@ -64300,22 +65612,33 @@ function CustomApp({ onBack, isGoalMode = false }) {
   
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
-    if (phase === 'finished') return
+    if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
-      const apiPath = getApiPathForType(curType || 'basicarith')
       const r = await fetch(`${API}/${apiPath}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': authGetToken() ? `Bearer ${authGetToken()}` : '' },
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setPhase('finished'); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const startQuiz = async () => {
@@ -64820,7 +66143,7 @@ const startQuiz = async () => {
       case 'remfactor': case 'heron': case 'shares': case 'banking': case 'gst':
       case 'section': case 'linprog': case 'circmeasure': case 'conics': case 'diffeq': {
         if (answer === '') return
-        const apiMap = { trig: 'trig-api', ineq: 'ineq-api', coordgeom: 'coordgeom-api', prob: 'prob-api', stats: 'stats-api', matrix: 'matrix-api', vectors: 'vectors-api', dotprod: 'dotprod-api', transform: 'transform-api', mensur: 'mensur-api', bearings: 'bearings-api', log: 'log-api', diff: 'diff-api', bases: 'bases-api', circleth: 'circle-api', integ: 'integ-api', stdform: 'stdform-api', bounds: 'bounds-api', sdt: 'sdt-api', variation: 'variation-api', hcflcm: 'hcflcm-api', profitloss: 'profitloss-api', rounding: 'rounding-api', binomial: 'binomial-api', complex: 'complex-api', angles: 'angles-api', triangles: 'triangles-api', congruence: 'congruence-api', pythag: 'pythag-api', polygons: 'polygons-api', similarity: 'similarity-api', squaring: 'squaring-api', tatsavit: 'tatsavit-api', lineareq: 'lineareq-api', decimals: 'decimals-api', permcomb: 'permcomb-api', limits: 'limits-api', invtrig: 'invtrig-api', remfactor: 'remfactor-api', heron: 'heron-api', shares: 'shares-api', banking: 'banking-api', gst: 'gst-api', section: 'section-api', linprog: 'linprog-api', circmeasure: 'circmeasure-api', conics: 'conics-api', diffeq: 'diffeq-api' }
+        const apiMap = { trig: 'trig-api', ineq: 'ineq-api', coordgeom: 'coordgeom-api', prob: 'prob-api', stats: 'stats-api', matrix: 'matrix-api', vectors: 'vectors-api', dotprod: 'dotprod-api', transform: 'transform-api', mensur: 'mensur-api', bearings: 'bearings-api', log: 'log-api', diff: 'diff-api', bases: 'bases-api', circleth: 'circleth-api', integ: 'integ-api', stdform: 'stdform-api', bounds: 'bounds-api', sdt: 'sdt-api', variation: 'variation-api', hcflcm: 'hcflcm-api', profitloss: 'profitloss-api', rounding: 'rounding-api', binomial: 'binomial-api', complex: 'complex-api', angles: 'angles-api', triangles: 'triangles-api', congruence: 'congruence-api', pythag: 'pythag-api', polygons: 'polygons-api', similarity: 'similarity-api', squaring: 'squaring-api', tatsavit: 'tatsavit-api', lineareq: 'lineareq-api', decimals: 'decimals-api', permcomb: 'permcomb-api', limits: 'limits-api', invtrig: 'invtrig-api', remfactor: 'remfactor-api', heron: 'heron-api', shares: 'shares-api', banking: 'banking-api', gst: 'gst-api', section: 'section-api', linprog: 'linprog-api', circmeasure: 'circmeasure-api', conics: 'conics-api', diffeq: 'diffeq-api' }
         const genPayload = { ...question, userAnswer: answer.trim() }
         res = await fetch(`${API}/${apiMap[curType]}/check`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(genPayload) })
         data = await res.json()
@@ -67483,9 +68806,12 @@ function RiyaApp({ onBack, isGoalMode = false }) {
   const handleTimeout = async () => {
     if (typeof revealed !== 'undefined' && revealed) return
     if (typeof finished !== 'undefined' && finished) return
+    if (typeof phase !== 'undefined' && phase === 'finished') return
     try { if (typeof setIsCorrect !== 'undefined') setIsCorrect(false) } catch(_) {}
     try { if (typeof setRevealed !== 'undefined') setRevealed(true) } catch(_) {}
-    try { if (typeof setFeedback !== 'undefined') setFeedback('⏰ Time\'s up! Speed run requires a quick answer.') } catch(_) {}
+    try { if (typeof setFeedback !== 'undefined') setFeedback("⏰ Time's up!") } catch(_) {}
+    const timeTaken = timer.stop ? timer.stop() : 0
+    const qPrompt = question ? (question.prompt || question.question || (question.n1 !== undefined ? `${question.n1} ${question.op || '+'} ${question.n2}` : 'Question')) : 'Question'
     try {
       const r = await fetch(`${API}/riya-api/check`, {
         method: 'POST',
@@ -67493,10 +68819,19 @@ function RiyaApp({ onBack, isGoalMode = false }) {
         body: JSON.stringify({ ...(typeof question !== 'undefined' ? question : {}), userAnswer: '', answer: '', sessionGoal })
       })
       const d = await r.json()
-      if (sessionGoal === 'perfect') {
-        try { setFinished(true); timer.reset() } catch(_) {}
+      const corrAns = d.display || d.correctAnswer || d.answer || '—'
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: corrAns, correct: false, time: timeTaken }])
       }
-    } catch(e) { console.error('handleTimeout error:', e) }
+      if (sessionGoal === 'perfect') {
+        try { if (typeof setFinished === 'function') setFinished(true); if (typeof setPhase === 'function') setPhase('finished'); timer.reset() } catch(_) {}
+      }
+    } catch(e) {
+      console.error('handleTimeout error:', e)
+      if (typeof setResults === 'function') {
+        setResults(prev => [...prev, { prompt: qPrompt, question: qPrompt, userAnswer: '(timeout)', correctAnswer: '—', correct: false, time: timeTaken }])
+      }
+    }
   }
 
 const startQuiz = () => {
