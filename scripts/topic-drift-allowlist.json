@@ -15,6 +15,7 @@
     "realworld": "Hamburger menu item (Real World hub).",
     "riddle": "Hamburger menu item. Ship-or-retire is tracked in #247.",
     "trackProgress": "Opened from the account menu (navigateTo('trackProgress')).",
+    "basic-arith-lab": "Origin: opened from inside Basic Arithmetic once #209 lands; the mode key also serves ?mode= links.",
     "visual-math-lab-redux": "Linked from the Visual Learning Universe hub (math-lab). Ship-or-retire is tracked in #248.",
     "missionquiz": "Part of the Linear Algebra lab, which is moving to its own branch (#224, #225).",
     "visual-math": "No way in from the UI today. Ship-or-retire is tracked in #218."
