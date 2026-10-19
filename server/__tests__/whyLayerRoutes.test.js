@@ -73,6 +73,8 @@ describe('POST /api/events', () => {
     const names = [
       'why_panel_opened', 'why_deeper_opened', 'prereq_chip_clicked',
       'unlock_chip_clicked', 'checkpoint_passed_or_failed',
+      'study_mode_changed', 'focus_topics_set', 'focus_topic_started', 'focus_ladder_opened',
+      'focus_ladder_topic_started', 'focus_timer_started', 'focus_bar_next',
     ];
     for (const eventType of names) {
       const res = await post({ eventType, topicId: 'ratio' });

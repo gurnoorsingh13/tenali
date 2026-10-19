@@ -155,6 +155,10 @@ import DiagnosticQuiz from './lib/DiagnosticQuiz.jsx';
 import { useI18n } from './lib/i18n.jsx';
 import CuriosityApp from './Curiosity.jsx';
 import WhyMathApp from './WhyMathApp';
+import StudyModeToggle from './components/StudyModeToggle';
+import FocusHome from './components/FocusHome';
+import { useStudyMode, isFocusModeActive } from './lib/studyMode';
+import FocusSessionBar from './components/FocusSessionBar';
 import ProctoredQuiz from './proctor/ProctoredQuiz'
 import useProctor from './proctor/useProctor'
 import ProctorDashboard from './proctor/ProctorDashboard'
@@ -42204,6 +42208,11 @@ function App() {
   const [diagnosticState, setDiagnosticState] = useState({});
   const { t } = useI18n();
 
+  // Focus Mode (see lib/studyMode.js) — a self-serve switch that strips the
+  // shell down to the topics a student said they're revising. Read here so
+  // the app-shell chrome can hide the onboarding tour alongside it.
+  const { isFocusActive: focusActive } = useStudyMode();
+
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
   const [mode, setMode] = useState(() => {
     try {
@@ -42220,6 +42229,9 @@ function App() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('mode')) return 'puzzles';
       if (params.get('view') === 'puzzles') return 'puzzles';
+      // Mid-revision in Focus Mode: open on the revision board, not the
+      // marketing landing page (where the Focus switch is not even shown).
+      if (isFocusModeActive()) return 'puzzles';
       return 'landing';
     } catch {
       return 'landing';
@@ -45376,11 +45388,20 @@ function App() {
           />
         </div>
       )}
-      {mode === null && showTour && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
-      {mode === null && (
+      {mode === null && showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
+      {/* The guided tour walks the student around the very features Focus
+          Mode is hiding, so it comes down with them. */}
+      {mode === null && !focusActive && (
         <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
           🧭 Guide
         </button>
+      )}
+      {/* Under the landing navbar the switch joins the page flow; on quiz
+          screens there is no navbar, so it stays pinned top-right. */}
+      {mode === null ? (
+        <div className="study-mode-toggle-row"><StudyModeToggle inline /></div>
+      ) : (
+        <StudyModeToggle />
       )}
       {mode !== null && (
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
@@ -45440,6 +45461,20 @@ function App() {
         )}
       </div>
       {renderCelebrationModal()}
+      {focusActive && mode !== null && (
+        <>
+          <div className="focus-bar-spacer" aria-hidden="true" />
+          <FocusSessionBar
+            mode={mode}
+            onGo={(id) => setMode(id)}
+            onBoard={() => {
+              setMode(null);
+              setCurrentView('puzzles');
+              try { window.history.replaceState({}, '', `${BASE}/?view=puzzles`); } catch { /* history unavailable */ }
+            }}
+          />
+        </>
+      )}
       {/* Misconception Monsters — toast overlay (portals to body) + Hall modal. Spec §6. */}
       <MonsterToast
         onOpenHall={() => setHallOpen(true)}
@@ -45504,6 +45539,12 @@ function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [pmOpen, setPmOpen] = useState(false)
+  const { isFocus } = useStudyMode()
+
+  // Goal Practice reuses <Home/> as a topic picker with its own back button;
+  // handing it the Focus board instead would break that flow, so Focus Mode
+  // only takes over the real home screen.
+  const focusHome = isFocus && !isGoalSelection
   const featuredApps = FEATURED_TILES
   const mathLabEntry = MATH_LAB_ENTRY
   const geocraftEntry = GEOCRAFT_ENTRY
@@ -45593,8 +45634,9 @@ function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [
             </p>
           </div>
         </div>
-        {/* Hamburger menu — top right */}
-        <div ref={menuRef} style={{ position: 'absolute', top: '8px', right: '0' }}>
+        {/* Hamburger menu — top right. Hidden in Focus Mode: every item in
+            it is a side quest, so there's nothing left worth keeping open. */}
+        {!focusHome && <div ref={menuRef} style={{ position: 'absolute', top: '8px', right: '0' }}>
           <button onClick={() => setMenuOpen(o => !o)} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '8px',
             display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center'
@@ -45716,7 +45758,7 @@ function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [
               <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--clr-text-soft)', marginTop: '2px' }}>Review your misconception monsters</span>
             </button>
             </div>}
-          </div>
+          </div>}
       </div>
 
       {showAbout && (
@@ -45736,6 +45778,8 @@ function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [
           </div>
         </>
       )}
+      {focusHome && <FocusHome onSelect={onSelect} />}
+      {!focusHome && <>
       {!search && !isGoalSelection && (
         <div className="why-math-banner-row">
           <button className="why-math-banner-btn" onClick={() => onSelect('why_math')}>
@@ -45800,6 +45844,7 @@ function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [
         })}
       </div>
       <div className="grid-dimension">{rows} × {cols}</div>
+      </>}
       <PmGoalModal open={pmOpen} onClose={() => setPmOpen(false)} onSelect={onSelect} />
     </>
   )

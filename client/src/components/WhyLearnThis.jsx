@@ -33,6 +33,7 @@ import { useState, useEffect } from 'react'
 import topicMotivation from '../data/topicMotivation.json'
 import { getPrerequisites, getUnlocks, getTopicLabel } from '../lib/prerequisiteGraph'
 import { fetchMasterySet, unlockReadiness, isMockMasteryActive, logEvent } from '../lib/masteryClient'
+import { useStudyMode } from '../lib/studyMode'
 import WhyDemo from '../lib/whyDemos.jsx'
 
 const MAX_CHIPS = 5
@@ -178,6 +179,7 @@ function changeMode(topicId) {
 export default function WhyLearnThis({ topicId, onNavigate = changeMode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [mastered, setMastered] = useState(null) // null = not loaded or unavailable
+  const { isFocusActive } = useStudyMode()
 
   useEffect(() => {
     if (!isOpen || mastered !== null) return
@@ -210,6 +212,11 @@ export default function WhyLearnThis({ topicId, onNavigate = changeMode }) {
     readFailed = true
   }
   if (readFailed) return null
+
+  // Focus Mode hides this outright. The "Builds on / Unlocks" chips are
+  // navigation into other topics, which is precisely what a student
+  // revising for an exam turned Focus Mode on to avoid.
+  if (isFocusActive) return null
 
   if (!why) return null
 

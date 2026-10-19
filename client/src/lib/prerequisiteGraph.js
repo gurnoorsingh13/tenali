@@ -317,3 +317,50 @@ export function getTopicCategory(topicKey) {
   return nodeMap[topicKey]?.cat || 'other'
 }
 
+/**
+ * Goal-directed path: given a destination topic and a student's mastered
+ * set, compute exactly what's left between "what they already know" and
+ * that goal — not a single linear chain (the graph is a DAG, a topic can
+ * have several prerequisite branches), but the full set of not-yet-mastered
+ * ancestors, topologically ordered into one valid learning sequence so a
+ * student can just work top to bottom.
+ *
+ * Already-mastered ancestors are included too (marked `mastered: true`),
+ * so the checklist reads as "your whole path," not just the remaining gap
+ * — the point is to show how far they've already come, not just what's left.
+ *
+ * @param {string} goalId
+ * @param {Set<string>} masteredSet
+ * @returns {{ steps: Array<{id:string,label:string,mastered:boolean}>, remaining: number, alreadyThere: boolean }}
+ */
+export function computeGoalPath(goalId, masteredSet) {
+  const mastered = masteredSet || new Set()
+
+  // Full ancestor closure of the goal (including the goal itself).
+  const closure = new Set()
+  const stack = [goalId]
+  while (stack.length) {
+    const cur = stack.pop()
+    if (closure.has(cur)) continue
+    closure.add(cur)
+    for (const p of getPrerequisites(cur)) stack.push(p)
+  }
+
+  // Topological order via longest-chain depth, same technique used for the
+  // map's column layout — ties broken alphabetically for a stable order.
+  const depthCache = {}
+  function depthOf(id) {
+    if (depthCache[id] !== undefined) return depthCache[id]
+    depthCache[id] = 0
+    const prereqs = getPrerequisites(id).filter((p) => closure.has(p))
+    const d = prereqs.length === 0 ? 0 : 1 + Math.max(...prereqs.map(depthOf))
+    depthCache[id] = d
+    return d
+  }
+  const ordered = [...closure].sort((a, b) => depthOf(a) - depthOf(b) || getTopicLabel(a).localeCompare(getTopicLabel(b)))
+
+  const steps = ordered.map((id) => ({ id, label: getTopicLabel(id), mastered: mastered.has(id) }))
+  const remaining = steps.filter((s) => !s.mastered).length
+
+  return { steps, remaining, alreadyThere: remaining === 0 }
+}
