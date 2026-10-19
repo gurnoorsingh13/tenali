@@ -81,3 +81,12 @@ describe('POST /api/events', () => {
   });
 });
 
+describe('POST /api/events from the Learning Path Explore view', () => {
+  test('its event names pass validation', async () => {
+    const app = buildApp();
+    for (const eventType of ['explore_node_clicked', 'explore_practise_clicked', 'explore_goal_set']) {
+      const res = await request(app).post('/api/events').set(auth).send({ eventType, topicId: 'ratio' });
+      expect(res.status, eventType).toBe(200);
+    }
+  });
+});
