@@ -20,17 +20,25 @@ import { getPrerequisites, getTopicIdFromApiPath } from './prerequisiteGraph';
 
 const API = import.meta.env.VITE_API_BASE_URL || '';
 
+// The app rewrites the URL to `?mode=...` on every navigation (no router,
+// just a synced query string), which wipes out `?mockMastery=` after the
+// very first click. So the value is captured into localStorage once, when
+// this module loads (dev builds only), not during a render.
+function captureMockFromUrl() {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('mockMastery');
+    if (fromUrl) window.localStorage.setItem('tenali-mock-mastery', fromUrl);
+  } catch {
+    /* no window or storage: nothing to capture */
+  }
+}
+if (import.meta.env.DEV && typeof window !== 'undefined') captureMockFromUrl();
+
+/** Read-only: safe to call during render. */
 export function getMockMasterySet() {
   if (!import.meta.env.DEV) return null;
   try {
-    // The app rewrites the URL to `?mode=...` on every navigation (no
-    // router, just a synced query string), which wipes out `?mockMastery=`
-    // after the very first click. Capture it into localStorage the moment
-    // it's seen so it survives every navigation after that, not just the
-    // first render.
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get('mockMastery');
-    if (fromUrl) window.localStorage.setItem('tenali-mock-mastery', fromUrl);
+    const fromUrl = new URLSearchParams(window.location.search).get('mockMastery');
     const raw = fromUrl || window.localStorage.getItem('tenali-mock-mastery');
     if (!raw) return null;
     return new Set(raw.split(',').map((s) => s.trim()).filter(Boolean));

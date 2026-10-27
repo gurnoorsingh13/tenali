@@ -78,8 +78,14 @@ const addition = () => (
 const multiply = () => (
   <SliderDemo label="Columns" min={1} max={12} initial={8}
     visual={(n) => <CellGrid rows={7} cols={n} h={80} fill={(r, c) => (c < 4 ? B : P)} />}
-    format={(n) => ({ big: `7 x ${n} = ${7 * n}`,
-      caption: `Split the block: 7 x 4 is ${28}, and 7 x ${n - 4 > 0 ? n - 4 : 0} is ${7 * Math.max(0, n - 4)}. Together that makes ${7 * n}. Splitting into easy pieces is the trick!` })} />
+    format={(n) => {
+      // Split at the fourth column: 7 x k plus 7 x (n - k) is always 7 x n.
+      const k = Math.min(4, n)
+      return { big: `7 x ${n} = ${7 * n}`,
+        caption: n > k
+          ? `Split the block: 7 x ${k} is ${7 * k}, and 7 x ${n - k} is ${7 * (n - k)}. Together that makes ${7 * n}. Splitting into easy pieces is the trick!`
+          : `7 x ${n} is ${7 * n}. Slide past 4 columns and the block splits into two easy pieces!` }
+    }} />
 )
 
 const rounding = () => (

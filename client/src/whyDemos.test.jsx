@@ -12,10 +12,8 @@
  * to string needs no DOM and no testing library, which keeps it runnable in
  * this checkout.
  *
- * What it does not cover: dragging. Exercising the full slider range needs
- * a real DOM and @testing-library/react, neither of which is installed
- * here, so the maths at the extremes of each range is still only checked by
- * hand.
+ * Dragging every slider through its full range, and checking the maths
+ * shown at each value, is covered by whyDemoSweep.test.jsx.
  */
 
 import { describe, test, expect } from 'vitest';
