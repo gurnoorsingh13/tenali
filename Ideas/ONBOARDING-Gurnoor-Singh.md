@@ -36,7 +36,7 @@ I understand Tenali as **one Node/Express server that generates and checks quest
 
 **Main entities**
 
-- **Puzzle type.** The basic unit. Each type is an API prefix such as `/addition-api` with `GET /question` (generate) and `POST /check` (grade). `server/index.js` mounts **93** of these `*-api` prefixes (lines 162 to 1224). Most of them point at routers in `server/routes/` (19 files), for example `app.use('/addition-api', arithmeticRouter)` at `server/index.js:566`.
+- **Puzzle type.** The basic unit. Each type is an API prefix such as `/addition-api` with `GET /question` (generate) and `POST /check` (grade). `server/index.js` mounts **93** of these `*-api` prefixes (lines 163 to 1226 at `dc9f17a5`, which is also current `main`). Most of them point at routers in `server/routes/` (19 files), for example `app.use('/addition-api', arithmeticRouter)` at `server/index.js:567`.
 - **Topic and prerequisite graph.** 69 topics with "this needs that" edges. This drives the `/graph` and `/path` pages and the Learning Journey order.
 - **Student records** in MongoDB: `User`, `Progress`, `UserStats`, `UserTopicProgress` and others in `server/auth.js`, plus `Attempt`, `ConceptMastery` and `LearningEvent` in `server/lil/models.js`.
 - **Learning Journey.** A sequenced route through topics with checkpoints (`/api/learning-journey/*`, `server/index.js:1134-1206`, data in `server/lil/learning_journey/`).
@@ -63,7 +63,7 @@ The server is close to stateless for questions. Everything about the current que
 **Architecture**
 
 - `client/src/App.jsx` is a single file of **71,159 lines**. It holds `App`, `makeQuizApp`, `modeMap`, the home screen and most quiz components. Some apps have been split into their own files (`LcmHcfApp.jsx`, `BattleApp.jsx`, `PercentExplanationApp.jsx`, `client/src/monsters/`, `client/src/vachana/`, `client/src/proctor/`, `client/src/components/LandingPage/`).
-- `server/index.js` is **3,133 lines** now. Most question endpoints have been moved into `server/routes/` (arithmetic, algebra, geometry, calculus, trig, stats and others), and `index.js` mostly mounts them.
+- `server/index.js` is **3,160 lines** at `dc9f17a5` (3,133 at `f6df9ab0`). Most question endpoints have been moved into `server/routes/` (arithmetic, algebra, geometry, calculus, trig, stats and others), and `index.js` mostly mounts them.
 - The prerequisite graph exists as three copies: `graph/index.html`, `graph/path.html` and `client/src/lib/prerequisiteGraph.js` (see 4.2).
 
 **Authentication and authorisation**
@@ -303,6 +303,14 @@ I proposed the features in 5.8 to the maintainer and was asked to submit them as
 - Extends the existing `PathMap` with a whole-graph Explore view next to its goal path, instead of adding a second map. It shows real mastery when signed in. Signed out, or if that read fails, it uses what PathMap already counts as done, and says which one it is showing.
 
 **How I worked:**
-- Every PR passes client lint with no new errors, and the client and server test suites.
+- Lint: every PR adds **no new lint errors against the baseline** in `client/eslint-suppressions.json`. The Client lint job itself still fails on `main` (and so on every PR) because two suppressions for `BattleApp.jsx` no longer match any error; #450 prunes them and makes the job blocking. Measured on `main` at `dc9f17a5`:
+
+  ```
+  $ cd client && npm run lint
+  ✖ 121 problems (0 errors, 121 warnings)
+  There are suppressions left that do not occur anymore. Consider re-running the command with `--prune-suppressions`.
+  exit code 2
+  ```
+- Tests: the client suite (`npm test`) passes on each PR, and so does the full server suite run against a real MongoDB 7 (198 tests on `main`, 204 to 212 on the PRs that add server tests). The exact counts are in each PR description.
 - I tested each feature in the browser, at desktop and phone widths, before submitting.
 - I used AI agents and LLMs throughout this work, for reading the codebase, drafting code and tests, and reviewing changes. I directed the work, checked the output, and tested every change myself before submitting.
