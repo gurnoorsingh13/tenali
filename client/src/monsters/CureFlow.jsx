@@ -40,7 +40,8 @@ function answersMatch(submitted, expected) {
 }
 
 function historyQuestions(monsterId, topic) {
-  const state = load();
+  // Called from useMemo during render, so read without writing anything.
+  const state = load({ persist: false });
   return (state.log || [])
     .filter(entry => entry.monsterId === monsterId && (!topic || entry.topic === topic))
     .filter(entry => entry.question && entry.correctAnswer != null && entry.correctAnswer !== '')
@@ -95,14 +96,14 @@ function getHardcodedFallbackQuestion(monsterId, index) {
  * monster's fallback questions to make up the set.
  */
 function prepareQuestions(monsterId, topic) {
+  // historyQuestions returns at most QUESTION_COUNT, and the fallbacks fill
+  // the rest (an unknown monster falls back to the bracketeer list), so a
+  // run always has exactly QUESTION_COUNT questions.
   const prepared = historyQuestions(monsterId, topic);
   for (let i = prepared.length; i < QUESTION_COUNT; i += 1) {
     prepared.push(getHardcodedFallbackQuestion(monsterId, i));
   }
-  while (prepared.length < QUESTION_COUNT && prepared.length > 0) {
-    prepared.push({ ...prepared[0], id: `repeat-${prepared.length}` });
-  }
-  return prepared.slice(0, QUESTION_COUNT);
+  return prepared;
 }
 
 /** Healing particles bursting from the card when a cure succeeds. */
@@ -265,7 +266,6 @@ export function CureFlow({ monsterId, topic, onComplete, onCancel, onOpenGuidedS
   // Questions come straight from the stored mistake log and the fallbacks,
   // so they are worked out during render rather than copied into state.
   const questions = useMemo(() => prepareQuestions(monsterId, topic), [monsterId, topic]);
-  const error = questions.length < QUESTION_COUNT ? 'Not enough questions are available for this cure yet.' : '';
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
@@ -278,7 +278,7 @@ export function CureFlow({ monsterId, topic, onComplete, onCancel, onOpenGuidedS
   }, []);
 
   function submit() {
-    if (!answer.trim() || feedback || !questions[index]) return;
+    if (!answer.trim() || feedback) return;
     const isCorrect = answersMatch(answer, questions[index].correctAnswer);
     const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
     setCorrectCount(nextCorrectCount);
@@ -326,8 +326,7 @@ export function CureFlow({ monsterId, topic, onComplete, onCancel, onOpenGuidedS
 
         <p className="monster-cure-kicker">Cure run · {getMonsterName(monsterId)}</p>
         <h2 className="monster-cure-title">Practice the pattern, not the panic.</h2>
-        {error && <><p>{error}</p><div className="monster-cure-actions"><button className="monster-cure-secondary" onClick={onCancel}>Back to Hall</button></div></>}
-        {!error && !finished && questions[index] && <>
+        {!finished && <>
           <div className="monster-cure-progress">Question {index + 1} of {QUESTION_COUNT} · {correctCount} correct</div>
           <div className="monster-cure-track"><span style={{ width: `${((index + 1) / QUESTION_COUNT) * 100}%` }} /></div>
           <div className="monster-cure-question">{questions[index].prompt}</div>
