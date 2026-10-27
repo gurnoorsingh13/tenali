@@ -44813,6 +44813,7 @@ function App() {
           markGoldMastery={markGoldMastery}
           updateCoins={updateCoins}
           setMode={setMode}
+          onSelectTopic={enterTopic}
           setTransferTopic={setTransferTopic}
           onBack={journeyContext ? async () => {
             const isCompleted = !!document.querySelector('.final-score');
@@ -44934,6 +44935,20 @@ function App() {
     setRevealedBlocks(1)
     setBlockStartTime(Date.now())
     setWarningMessage(null)
+  }
+
+  // Open a topic from inside another screen (e.g. the Learning Path's
+  // Explore view): clear the current topic's Learn/Test state, then enter
+  // the topic the way the home grid does.
+  const enterTopic = (key) => {
+    setLearningPhase(null)
+    setRevealedBlocks(1)
+    setBlockStartTime(Date.now())
+    setWarningMessage(null)
+    setIsGoalMode(false)
+    setCurrentView('puzzles')
+    if (key === 'angles') handleSelectMode(key)
+    else setMode(key)
   }
 
   const handleBackToHome = () => {

@@ -35,6 +35,7 @@ import {
   allPrerequisites,
   allUnlocks,
   buildLayout,
+  findRoot,
   completedTopics,
 } from './lib/pathMapExplore';
 import { fetchMasterySet, isMockMasteryActive, logEvent } from './lib/masteryClient';
@@ -43,7 +44,6 @@ import './PathMapExplore.css';
 
 const CAT_NAMES = { arith: 'Arithmetic', numth: 'Number Theory', alg: 'Algebra', geom: 'Geometry', calc: 'Calculus', stats: 'Stats & Prob', vecmat: 'Vectors & Matrices' };
 
-const ROOT_ID = 'basicarith';
 const TOUR_SEEN_KEY = 'tenali-graph-tour-seen';
 const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 const MIN_ZOOM = 0.35;
@@ -58,6 +58,7 @@ const phoneFreeHeight = (el) => Math.max(90, window.innerHeight * (1 - SHEET_SHA
 
 export default function PathMapExplore({ known, goalId, onSetGoal, onShowGoalView, onPractise, onBack }) {
   const layout = useMemo(() => buildLayout(), []);
+  const rootId = useMemo(() => findRoot(layout.ids), [layout]);
   const [hovered, setHovered] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   // Phones start zoomed out so more than two columns fit on screen.
@@ -95,7 +96,7 @@ export default function PathMapExplore({ known, goalId, onSetGoal, onShowGoalVie
   // Open where every path begins (Basic Arithmetic), or on the current goal.
   useEffect(() => {
     const el = viewportRef.current;
-    const p = layout.pos[goalId] || layout.pos[ROOT_ID];
+    const p = layout.pos[goalId] || layout.pos[rootId];
     if (!el || !p) return;
     el.scrollTo({ left: Math.max(0, (p.x + NODE_W / 2) * zoomRef.current - el.clientWidth / 2), top: Math.max(0, (p.y + NODE_H / 2) * zoomRef.current - el.clientHeight / 2) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,7 +144,7 @@ export default function PathMapExplore({ known, goalId, onSetGoal, onShowGoalVie
     } catch { /* localStorage unavailable: just skip the nudge */ }
     const t = window.setTimeout(() => {
       setShowTour(true);
-      scrollToNode(ROOT_ID);
+      scrollToNode(rootId);
     }, 500);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -475,7 +476,7 @@ export default function PathMapExplore({ known, goalId, onSetGoal, onShowGoalVie
                           (selectedId === id ? ' is-selected' : '') +
                           (ready ? ' is-in' : '') +
                           (id === goalId ? ' is-goal-node' : '') +
-                          (showTour && id === ROOT_ID ? ' is-tour-target' : '')
+                          (showTour && id === rootId ? ' is-tour-target' : '')
                         }
                         style={{ '--node-delay': `${p.depth * 110}ms`, '--cat-color': pmCatColor[catOf(id)] }}
                         tabIndex={0}
@@ -511,7 +512,7 @@ export default function PathMapExplore({ known, goalId, onSetGoal, onShowGoalVie
 
         {showTour && !selected && (
           <div className="learning-map-tour-nudge">
-            <p>👋 New here? Every path starts at <strong>Basic Arithmetic</strong>, glowing on the left. Tap it to see where it leads!</p>
+            <p>👋 New here? Every path starts at <strong>{labelOf(rootId)}</strong>, glowing on the left. Tap it to see where it leads!</p>
             <button className="learning-map-tour-dismiss" onClick={dismissTour}>Got it →</button>
           </div>
         )}

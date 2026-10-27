@@ -718,7 +718,7 @@ function PmModuleGrid({ path, goalIds, onSetGoal }) {
 }
 
 // ─── PathMap main component ───────────────────────────────────
-function PathMap({ onBack }) {
+function PathMap({ onBack, onSelectTopic }) {
   const { goalIds, known, path, setGoal, clearGoal, toggleKnown, pmStatus } = usePathmapState();
   // 'goal': pick a goal and follow its path. 'explore': every topic on one
   // map (PathMapExplore), which hands a chosen goal back to this view.
@@ -763,7 +763,12 @@ function PathMap({ onBack }) {
         goalId={goalIds[0] || null}
         onSetGoal={(id) => setGoal([id])}
         onShowGoalView={() => setView('goal')}
-        onPractise={(id) => window.dispatchEvent(new CustomEvent('tenali-change-mode', { detail: id }))}
+        onPractise={(id) => {
+          // App's onSelectTopic resets the per-topic Learn/Test state the
+          // way the home grid does; the event is only a fallback.
+          if (onSelectTopic) onSelectTopic(id);
+          else window.dispatchEvent(new CustomEvent('tenali-change-mode', { detail: id }));
+        }}
         onBack={() => setView('goal')}
       />
     );

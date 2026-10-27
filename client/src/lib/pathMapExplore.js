@@ -46,6 +46,22 @@ export function allUnlocks(id) {
   return out;
 }
 
+/**
+ * Where every path begins: the topic with no prerequisites that the most
+ * other topics build on (Basic Arithmetic today). Worked out from the graph
+ * so a change to graph-data.json cannot leave the map opening on nothing.
+ */
+export function findRoot(ids) {
+  const roots = ids.filter((id) => prereqsOf(id).length === 0)
+  let best = null
+  let bestSize = -1
+  for (const id of roots) {
+    const size = allUnlocks(id).size
+    if (size > bestSize) { best = id; bestSize = size }
+  }
+  return best
+}
+
 export function buildLayout() {
   const ids = pmNodes.map((n) => n.id).filter((id) => catOf(id) !== 'other');
 
