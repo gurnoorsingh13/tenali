@@ -42211,7 +42211,8 @@ function App() {
   // Focus Mode (see lib/studyMode.js) — a self-serve switch that strips the
   // shell down to the topics a student said they're revising. Read here so
   // the app-shell chrome can hide the onboarding tour alongside it.
-  const { isFocusActive: focusActive } = useStudyMode();
+  // focusOn: the switch is on (picker or board); focusActive: topics chosen.
+  const { isFocus: focusOn, isFocusActive: focusActive } = useStudyMode();
 
   // Currently selected quiz mode (null = home menu, or key like 'gk', 'addition', etc.)
   const [mode, setMode] = useState(() => {
@@ -45388,10 +45389,10 @@ function App() {
           />
         </div>
       )}
-      {mode === null && showTour && !focusActive && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
+      {mode === null && showTour && !focusOn && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
       {/* The guided tour walks the student around the very features Focus
           Mode is hiding, so it comes down with them. */}
-      {mode === null && !focusActive && (
+      {mode === null && !focusOn && (
         <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
           🧭 Guide
         </button>
@@ -45466,7 +45467,17 @@ function App() {
           <div className="focus-bar-spacer" aria-hidden="true" />
           <FocusSessionBar
             mode={mode}
-            onGo={(id) => setMode(id)}
+            onGo={(id) => {
+              // Enter the next topic the same way the home grid does, after
+              // clearing the per-topic Learn/Test state of the current one.
+              setLearningPhase(null);
+              setRevealedBlocks(1);
+              setBlockStartTime(Date.now());
+              setWarningMessage(null);
+              setIsGoalMode(false);
+              if (id === 'angles') handleSelectMode(id);
+              else setMode(id);
+            }}
             onBoard={() => {
               setMode(null);
               setCurrentView('puzzles');

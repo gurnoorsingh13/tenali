@@ -36,8 +36,15 @@ const CHANGE_EVENT = 'tenali-study-mode-change'
 export const EXPLORE = 'explore'
 export const FOCUS = 'focus'
 
+// The state, kept in memory only when localStorage refused a write (Safari
+// private browsing, a full quota). Without it the hook would re-read
+// storage, find nothing, and snap back to Explore. A change made in another
+// tab clears it, so that tab's values are read instead.
+let memory = { mode: null, topics: null }
+
 /** Current mode. Defaults to Explore — Focus is always an opt-in. */
 export function getStudyMode() {
+  if (memory.mode) return memory.mode
   try {
     return window.localStorage.getItem(MODE_KEY) === FOCUS ? FOCUS : EXPLORE
   } catch {
@@ -55,30 +62,35 @@ const KNOWN_TOPICS = new Set(getAllTopicKeys())
  * renamed or removed; unknown ids and repeats are dropped rather than shown
  * as a card that opens a blank screen.
  */
+const cleanTopics = (list) =>
+  Array.isArray(list) ? [...new Set(list.filter((t) => typeof t === 'string' && KNOWN_TOPICS.has(t)))] : []
+
 export function getFocusTopics() {
+  if (memory.topics) return memory.topics
   try {
     const raw = window.localStorage.getItem(TOPICS_KEY)
     if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return [...new Set(parsed.filter((t) => typeof t === 'string' && KNOWN_TOPICS.has(t)))]
+    return cleanTopics(JSON.parse(raw))
   } catch {
     return []
   }
 }
 
 function write(mode, topics) {
+  const next = { mode, topics: topics ? cleanTopics(topics) : getFocusTopics() }
   try {
     window.localStorage.setItem(MODE_KEY, mode)
-    if (topics) window.localStorage.setItem(TOPICS_KEY, JSON.stringify(topics))
+    // Always the full list: it may only have been in memory until now.
+    window.localStorage.setItem(TOPICS_KEY, JSON.stringify(next.topics))
+    memory = { mode: null, topics: null } // storage has it
   } catch {
-    /* non-fatal — the mode just won't survive a reload */
+    // Storage refused the write: keep the state in memory for this page,
+    // so the change still shows; it just won't survive a reload.
+    memory = next
   }
-  // Dispatch regardless of whether the write landed, so the current page
-  // still reflects the change even when storage is unavailable.
-  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, {
-    detail: { mode, topics: topics || getFocusTopics() },
-  }))
+  // Every hook re-reads through getStudyMode()/getFocusTopics(), which
+  // check memory first, so the UI follows the change either way.
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: next }))
 }
 
 export function setStudyMode(mode) {
@@ -114,11 +126,13 @@ export function useStudyMode() {
 
   useEffect(() => {
     const sync = () => setState({ mode: getStudyMode(), topics: getFocusTopics() })
+    // Another tab wrote to storage: its values win over this page's copy.
+    const fromOtherTab = () => { memory = { mode: null, topics: null }; sync() }
     window.addEventListener(CHANGE_EVENT, sync)
-    window.addEventListener('storage', sync)
+    window.addEventListener('storage', fromOtherTab)
     return () => {
       window.removeEventListener(CHANGE_EVENT, sync)
-      window.removeEventListener('storage', sync)
+      window.removeEventListener('storage', fromOtherTab)
     }
   }, [])
 

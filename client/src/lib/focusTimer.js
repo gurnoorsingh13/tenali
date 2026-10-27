@@ -35,15 +35,25 @@ const FINISHED = new Set(['focus-done', 'break-done'])
 
 /* ── storage ─────────────────────────────────────────────────────────── */
 
+// Kept in memory only when localStorage refused a write, as in
+// studyMode.js, so the timer still starts and counts; storage normally
+// carries it across a reload. A change from another tab clears it (see
+// useFocusTimer).
+const memory = { timerSet: false, timer: null, sessions: null }
+
+function validTimer(t) {
+  if (!t || typeof t !== 'object') return null
+  if (RUNNING.has(t.phase) && Number.isFinite(t.endsAt) && Number.isFinite(t.minutes)) return t
+  if (FINISHED.has(t.phase) && Number.isFinite(t.minutes)) return t
+  return null
+}
+
 export function readTimer() {
+  if (memory.timerSet) return memory.timer
   try {
     const raw = window.localStorage.getItem(TIMER_KEY)
     if (!raw) return null
-    const t = JSON.parse(raw)
-    if (!t || typeof t !== 'object') return null
-    if (RUNNING.has(t.phase) && Number.isFinite(t.endsAt) && Number.isFinite(t.minutes)) return t
-    if (FINISHED.has(t.phase) && Number.isFinite(t.minutes)) return t
-    return null
+    return validTimer(JSON.parse(raw))
   } catch {
     return null
   }
@@ -53,8 +63,12 @@ function writeTimer(t) {
   try {
     if (t) window.localStorage.setItem(TIMER_KEY, JSON.stringify(t))
     else window.localStorage.removeItem(TIMER_KEY)
+    memory.timerSet = false
+    memory.timer = null
   } catch {
-    /* storage unavailable: the timer just will not survive a reload */
+    // Storage refused: keep the timer in memory for this page.
+    memory.timerSet = true
+    memory.timer = validTimer(t)
   }
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: t }))
 }
@@ -66,19 +80,25 @@ const dayKey = (now) => {
 
 /** How many focus sessions were finished today (local time). */
 export function sessionsToday(now = Date.now()) {
-  try {
-    const s = JSON.parse(window.localStorage.getItem(SESSIONS_KEY) || 'null')
-    return s && s.day === dayKey(now) && Number.isFinite(s.count) ? s.count : 0
-  } catch {
-    return 0
+  let s = memory.sessions
+  if (!s) {
+    try {
+      s = JSON.parse(window.localStorage.getItem(SESSIONS_KEY) || 'null')
+    } catch {
+      s = null
+    }
   }
+  return s && s.day === dayKey(now) && Number.isFinite(s.count) ? s.count : 0
 }
 
 function addSession(now) {
   const count = sessionsToday(now) + 1
   try {
     window.localStorage.setItem(SESSIONS_KEY, JSON.stringify({ day: dayKey(now), count }))
-  } catch { /* non-fatal */ }
+    memory.sessions = null
+  } catch {
+    memory.sessions = { day: dayKey(now), count }
+  }
   return count
 }
 
@@ -134,11 +154,13 @@ export function useFocusTimer() {
 
   useEffect(() => {
     const sync = () => { setTimer(readTimer()); setToday(sessionsToday()); setNow(Date.now()) }
+    // Another tab wrote to storage: its values win over this page's copy.
+    const fromOtherTab = () => { memory.timerSet = false; memory.timer = null; memory.sessions = null; sync() }
     window.addEventListener(CHANGE_EVENT, sync)
-    window.addEventListener('storage', sync)
+    window.addEventListener('storage', fromOtherTab)
     return () => {
       window.removeEventListener(CHANGE_EVENT, sync)
-      window.removeEventListener('storage', sync)
+      window.removeEventListener('storage', fromOtherTab)
     }
   }, [])
 

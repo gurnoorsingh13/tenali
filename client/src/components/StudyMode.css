@@ -431,7 +431,9 @@ button.focus-picker-all:hover {
   z-index: 2;
   margin: 0 -8px;
   padding: 12px 8px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--clr-card) 75%, transparent);
+  /* Solid, with a thin divider, so the topic list never shows through. */
+  background: var(--clr-card);
+  border-top: 1px solid var(--clr-border);
 }
 
 /* ── Board cards: emoji from the Why content ───────────────────────────── */

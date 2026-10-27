@@ -411,6 +411,15 @@ export default function FocusHome({ onSelect }) {
   const [mastered, setMastered] = useState(null) // null = loading, signed out or unavailable
   const [masteryError, setMasteryError] = useState(false)
   const [signedOut, setSignedOut] = useState(false)
+  // Bumped on sign-in / sign-out, so the board picks up the new progress
+  // without a reload.
+  const [authVersion, setAuthVersion] = useState(0)
+
+  useEffect(() => {
+    const onAuth = () => setAuthVersion((n) => n + 1)
+    window.addEventListener('tenali-auth-change', onAuth)
+    return () => window.removeEventListener('tenali-auth-change', onAuth)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -423,7 +432,7 @@ export default function FocusHome({ onSelect }) {
       })
       .catch(() => { if (!cancelled) setMasteryError(true) })
     return () => { cancelled = true }
-  }, [focusTopics])
+  }, [focusTopics, authVersion])
 
   if (editing || focusTopics.length === 0) {
     return (
