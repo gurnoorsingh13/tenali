@@ -6,7 +6,8 @@
  * A topic is declared in three hand-maintained places:
  *   1. modeMap   — client/src/App.jsx, the screen each mode key opens
  *   2. tiles     — client/src/features/tiles.js, what the home screen shows
- *   3. server    — server/index.js, the app.use('/<key>-api', ...) mounts
+ *   3. server    — server/index.js, the '/<key>-api' routes (app.use mounts
+ *                  and direct app.get/app.post routes)
  *
  * Checks:
  *   A. every modeMap key has a tile, or an allowlisted reason it does not
@@ -21,6 +22,12 @@
  * line of reason each. An allowlist entry that is no longer needed (say a
  * tile was added for it) is reported as a warning, not a failure, so a
  * correct PR elsewhere never turns this check red.
+ *
+ * A guard that silently checks less is worse than none, so each reader
+ * fails loudly instead of guessing: modeMap is read by matching braces, and
+ * any key-looking line it could not parse is an error; any server route
+ * whose '-api' path is not a plain string literal is an error; and tiles.js
+ * must stay importable with no installed dependencies.
  *
  * Usage:  node scripts/check-topic-drift.mjs [--root <repo dir>]
  * No dependencies: Node built-ins only, so CI needs no npm install.
@@ -38,24 +45,90 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 /* ── 1. modeMap keys, parsed from App.jsx ─────────────────────────────── */
 
+// Blank out comments, and unless keepStrings is set the punctuation inside
+// strings too (keeping newlines, quotes and word characters), so braces in
+// them cannot end a block early and commented-out routes are not counted.
+function maskCode(src, { keepStrings = false } = {}) {
+  let out = '';
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    const n = src[i + 1];
+    if (c === '/' && n === '/') {
+      while (i < src.length && src[i] !== '\n') { out += ' '; i++; }
+      out += src[i] ?? '';
+    } else if (c === '/' && n === '*') {
+      out += '  '; i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) { out += src[i] === '\n' ? '\n' : ' '; i++; }
+      out += '  '; i++;
+    } else if (c === "'" || c === '"' || c === '`') {
+      out += c; i++;
+      while (i < src.length && src[i] !== c) {
+        if (src[i] === '\\') { out += '  '; i += 2; continue; }
+        out += keepStrings || src[i] === '\n' || /[\w-]/.test(src[i]) ? src[i] : ' ';
+        i++;
+      }
+      out += src[i] ?? '';
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
 function readModeMap() {
-  const lines = read('client/src/App.jsx').split('\n');
-  const start = lines.findIndex((l) => /const modeMap = \{/.test(l));
-  if (start < 0) throw new Error('Could not find `const modeMap = {` in client/src/App.jsx');
+  const src = read('client/src/App.jsx');
+  const masked = maskCode(src);
+  const open = masked.search(/const modeMap = \{/);
+  if (open < 0) throw new Error('Could not find `const modeMap = {` in client/src/App.jsx');
+  // Walk to the brace that closes `const modeMap = {`, tracking depth.
+  const body0 = masked.indexOf('{', open) + 1;
+  let depth = 1;
+  let end = body0;
+  for (; end < masked.length && depth > 0; end++) {
+    if (masked[end] === '{') depth++;
+    else if (masked[end] === '}') depth--;
+  }
+  if (depth !== 0) throw new Error('modeMap in client/src/App.jsx has no closing brace');
+  const block = masked.slice(body0, end - 1);
+
+  // Keys are the `key:` at the start of an entry at depth 0 of the block.
   const keys = new Set();
-  for (let i = start + 1; i < lines.length; i++) {
-    const line = lines[i].replace(/\/\/.*$/, '');
-    if (/^\s*\}/.test(line)) break;
-    const m = /^\s*(?:'([\w-]+)'|"([\w-]+)"|([A-Za-z_$][\w$]*))\s*:/.exec(line);
-    if (m) keys.add(m[1] || m[2] || m[3]);
+  const keyRe = /(?:^|[,{\n])\s*(?:'([\w-]+)'|"([\w-]+)"|([A-Za-z_$][\w$]*))\s*:/y;
+  let d = 0;
+  for (let k = 0; k < block.length; k++) {
+    const c = block[k];
+    if (c === '{' || c === '(' || c === '[') d++;
+    else if (c === '}' || c === ')' || c === ']') d--;
+    if (d === 0 && (k === 0 || c === ',' || c === '\n')) {
+      keyRe.lastIndex = k === 0 ? 0 : k;
+      const m = keyRe.exec(block);
+      if (m) keys.add(m[1] || m[2] || m[3]);
+    }
   }
   if (keys.size === 0) throw new Error('modeMap parsed as empty; has its format changed?');
+
+  // Fail loudly if a line inside the block looks like an entry we did not read.
+  const looksLikeKey = [...block.matchAll(/^\s*(?:'([\w-]+)'|"([\w-]+)"|([A-Za-z_$][\w$]*))\s*:/gm)].map((m) => m[1] || m[2] || m[3]);
+  const missed = looksLikeKey.filter((k) => !keys.has(k));
+  if (missed.length) {
+    throw new Error(`modeMap: ${missed.length} key-looking line(s) were not parsed (${missed.join(', ')}); the parser no longer matches App.jsx, so the check would silently cover less.`);
+  }
   return keys;
 }
 
 /* ── 2. tile keys, imported from tiles.js (pure data) ─────────────────── */
 
 async function readTiles() {
+  // CI imports tiles.js with no npm install, which only works while it is
+  // plain ESM data. Say so clearly instead of failing on a missing module.
+  const pkg = JSON.parse(read('client/package.json'));
+  if (pkg.type !== 'module') {
+    throw new Error('client/package.json no longer has "type": "module", so tiles.js cannot be imported directly; update readTiles() in scripts/check-topic-drift.mjs.');
+  }
+  const imports = read('client/src/features/tiles.js').match(/^\s*import\s.+$/gm);
+  if (imports) {
+    throw new Error(`client/src/features/tiles.js now imports other modules (${imports[0].trim()}), which the drift check cannot load without installing dependencies; keep it pure data or update readTiles().`);
+  }
   const mod = await import(pathToFileURL(join(ROOT, 'client/src/features/tiles.js')).href);
   const entries = [
     ...(mod.TILES || []),
@@ -69,8 +142,22 @@ async function readTiles() {
 /* ── 3. server mounts, parsed from index.js ───────────────────────────── */
 
 function readServerMounts() {
-  const src = read('server/index.js');
-  return new Set([...src.matchAll(/app\.use\(\s*['"`]\/([\w-]+)-api\/?['"`]/g)].map((m) => m[1]));
+  const src = maskCode(read('server/index.js'), { keepStrings: true });
+  const prefixes = new Set();
+  const unreadable = [];
+  // Every app.use/get/post/... call whose first argument mentions -api.
+  for (const m of src.matchAll(/app\.(use|get|post|put|patch|delete|all)\(\s*([^,)]*)/g)) {
+    const arg = m[2].trim();
+    if (!/-api\b/.test(arg)) continue;
+    const lit = /^(['"])\/([\w-]+)-api(?:\/[\w/-]*)?\1$/.exec(arg);
+    if (lit) prefixes.add(lit[2]);
+    else unreadable.push(`app.${m[1]}(${arg}`);
+  }
+  if (unreadable.length) {
+    throw new Error(`server/index.js: ${unreadable.length} -api route(s) use a path that is not a plain string (${unreadable.slice(0, 3).join('; ')}), so the check cannot tell which prefix they serve.`);
+  }
+  if (prefixes.size === 0) throw new Error('No -api routes found in server/index.js; has its format changed?');
+  return prefixes;
 }
 
 /* ── compare ──────────────────────────────────────────────────────────── */
@@ -126,7 +213,10 @@ const stale = (name, keys, stillNeeded) => {
 stale('noTile', noTile, (k) => modes.has(k) && !tiles.has(k));
 stale('clientOnly', clientOnly, (k) => modes.has(k) && !server.has(serverFor(k)));
 stale('serverOnly', serverOnly, (p) => server.has(p) && !usedPrefixes.has(p));
-stale('aliases', aliases, (k) => modes.has(k) && server.has(aliases[k]) && !server.has(k));
+for (const [k, target] of Object.entries(aliases)) {
+  if (!server.has(target)) warnings.push(`alias "${k}" -> "${target}" points nowhere: server/index.js has no "/${target}-api" route.`);
+  else if (!modes.has(k) || server.has(k)) warnings.push(`"${k}" in "aliases" is no longer needed and can be removed from the allowlist.`);
+}
 
 /* ── report ───────────────────────────────────────────────────────────── */
 

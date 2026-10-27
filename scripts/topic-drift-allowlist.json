@@ -49,6 +49,7 @@
 
   "serverOnly": {
     "concept": "Orphan route; remove or wire up is tracked in #249.",
+    "conceptual": "Conceptual variants served inside the standard quiz screens: makeQuizApp in App.jsx fetches /conceptual-api/question?topic=<key> for every topic, so it has no mode of its own.",
     "darts": "Dart Board inside the Coordinate Geometry screen calls it.",
     "matrixmystics": "Matrix Mystics is moving to its own branch (#221, #222, #223, #225).",
     "transfer": "Learning Transfer Challenges, called from App.jsx outside modeMap."

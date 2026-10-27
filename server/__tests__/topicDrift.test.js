@@ -89,4 +89,63 @@ describe('topic drift check', () => {
     expect(r.code).toBe(0);
     expect(r.out).toMatch(/"riddle" in "noTile" is no longer needed/);
   });
+
+  // ── allowlists and aliases ─────────────────────────────────────────────
+  test('fails when a client-only entry is removed from the allowlist', () => {
+    edit(dir, 'scripts/topic-drift-allowlist.json', (s) => s.replace(/\n\s*"battle": "[^"]*",/, ''));
+    const r = run(dir);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/C {2}"battle" is in modeMap but no server route "\/battle-api"/);
+  });
+
+  test('fails when a server-only entry is removed from the allowlist', () => {
+    edit(dir, 'scripts/topic-drift-allowlist.json', (s) => s.replace(/\n\s*"darts": "[^"]*",/, ''));
+    const r = run(dir);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/D {2}server mounts "\/darts-api" but no modeMap key uses it/);
+  });
+
+  test('warns when a client-only screen gains a server route', () => {
+    edit(dir, 'server/index.js', (s) => `${s}\napp.use('/battle-api', (req, res) => res.end());\n`);
+    const r = run(dir);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/"battle" in "clientOnly" is no longer needed/);
+  });
+
+  test('an alias whose route is gone says it points nowhere', () => {
+    edit(dir, 'server/index.js', (s) => s.replace(/^app\.use\('\/wordcreator-api'.*$/m, ''));
+    const r = run(dir);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/alias "language" -> "wordcreator" points nowhere/);
+    expect(r.out).not.toMatch(/"language" in "aliases" is no longer needed/);
+  });
+
+  // ── fail loudly instead of checking less ───────────────────────────────
+  test('a comment line starting with } inside modeMap does not end it early', () => {
+    edit(dir, 'client/src/App.jsx', (s) => s.replace('const modeMap = {', 'const modeMap = {\n    /*\n} not the end of modeMap\n    */'));
+    const r = run(dir);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/Topic drift check: 112 modeMap keys/);
+  });
+
+  test('fails loudly when a modeMap line looks like a key but cannot be parsed', () => {
+    edit(dir, 'client/src/App.jsx', (s) => s.replace('const modeMap = {', "const modeMap = {\n    wrapped: wrap({\n      inner: BattleApp,\n    }),"));
+    const r = run(dir);
+    expect(r.code).not.toBe(0);
+    expect(r.out).toMatch(/modeMap: 1 key-looking line\(s\) were not parsed \(inner\)/);
+  });
+
+  test('fails loudly on an -api route whose path is not a plain string', () => {
+    edit(dir, 'server/index.js', (s) => `${s}\nconst p = 'built';\napp.use('/' + p + '-api', (req, res) => res.end());\n`);
+    const r = run(dir);
+    expect(r.code).not.toBe(0);
+    expect(r.out).toMatch(/-api route\(s\) use a path that is not a plain string/);
+  });
+
+  test('fails with a clear message if tiles.js starts importing modules', () => {
+    edit(dir, 'client/src/features/tiles.js', (s) => `import something from './elsewhere.js';\n${s}`);
+    const r = run(dir);
+    expect(r.code).not.toBe(0);
+    expect(r.out).toMatch(/tiles\.js now imports other modules/);
+  });
 });
