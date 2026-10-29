@@ -1,8 +1,11 @@
 # Backend server — kept for Render deployment (Express serves React frontend)
 #
-# Preview branch only: the build command also installs server/ dependencies and
-# pins NODE_VERSION, matching upstream PR #474. Without the server install,
-# `node server/index.js` exits with "Cannot find module 'express-rate-limit'".
+# Preview branch only:
+# - the build also installs server/ dependencies and pins NODE_VERSION,
+#   matching upstream PR #474. Without that, `node server/index.js` exits
+#   with "Cannot find module 'express-rate-limit'".
+# - the client step uses --include=dev: with NODE_ENV=production set, npm ci
+#   skips devDependencies, and vite is one ("vite: not found").
 services:
   - type: web
     name: tenali
@@ -10,6 +13,6 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 24.22.1
-    buildCommand: npm ci && cd client && npm ci && npm run build && cd ../server && npm ci --omit=dev
+    buildCommand: npm ci && cd client && npm ci --include=dev && npm run build && cd ../server && npm ci --omit=dev
     startCommand: node server/index.js
     healthCheckPath: /api/health
