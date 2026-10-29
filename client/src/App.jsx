@@ -53707,6 +53707,9 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
   }, [isGoalMode]);
   const l3TimerRef = useRef(null)
   const l3DeadlineRef = useRef(0)
+  // Always points at the latest handleLevel3Timeout so the countdown interval
+  // never runs a stale closure (e.g. question === null on the first question).
+  const l3TimeoutRef = useRef(null)
   const timer = useTimer()
 
   useEffect(() => {
@@ -53725,15 +53728,19 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
   }, [phase, score, results.length, level, markTopicCompleted])
 
   // ─── Helpers ──────────────────────────────────────────────────────────
-  const nextQuestion = (planArr, index) => {
+  // `lvl` is passed explicitly by the level launchers: they call setLevel() and
+  // nextQuestion() in the same tick, so the `level` state here is still stale.
+  const nextQuestion = (planArr, index, lvl = level) => {
     const q = planArr[index]
     setQuestion({ table: q.table, multiplier: q.multiplier, prompt: `${q.table} × ${q.multiplier}` })
     setAnswer('')
     setFeedback('')
     setRevealed(false)
     setIsCorrect(null)
-    timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
-    if (level === 3) startLevel3Countdown()
+    // Count-up timer only: MultiplyApp has no handleTimeout/difficulty/isAdaptive,
+    // and Level 3 runs its own countdown below.
+    timer.start()
+    if (lvl === 3) startLevel3Countdown()
   }
 
   const startLevel3Countdown = () => {
@@ -53747,7 +53754,7 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
         clearInterval(l3TimerRef.current)
         l3TimerRef.current = null
         // Timeout = wrong answer; record and advance immediately.
-        handleLevel3Timeout()
+        l3TimeoutRef.current?.()
       }
     }, 200)
   }
@@ -53768,7 +53775,7 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
     setRoundTotalTime(0); setRoundQuestionsCount(0)
     setSourceTables(MULT_TABLES.slice())
     setPhase('quiz')
-    nextQuestion(p, 0)
+    nextQuestion(p, 0, 1)
   }
 
   const beginLevel2Setup = () => {
@@ -53793,7 +53800,7 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
     setRoundTotalTime(0); setRoundQuestionsCount(0)
     setSourceTables(tables)
     setPhase('quiz')
-    nextQuestion(initial, 0)
+    nextQuestion(initial, 0, 2)
   }
 
   const startLevel3 = () => {
@@ -53805,7 +53812,7 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
     setPhase('quiz')
     const first = buildExtensionBatch(MULT_TABLES, 1)[0]
     setPlan([first])
-    nextQuestion([first], 0)
+    nextQuestion([first], 0, 3)
   }
 
   // ─── Submission paths ─────────────────────────────────────────────────
@@ -53927,6 +53934,8 @@ function MultiplyApp({ onBack, completedTopics = [], goldMastery = [], markTopic
     setQIndex(qIndex + 1)
     nextQuestion(nextPlan, qIndex + 1)
   }
+
+  useEffect(() => { l3TimeoutRef.current = handleLevel3Timeout })
 
   const exitLevel3 = () => {
     stopLevel3Countdown()
@@ -62208,7 +62217,8 @@ const generateRound = (n) => {
     setFeedback('')
     setIsCorrect(null)
     setRevealed(false)
-    timer.start(sessionGoal, handleTimeout, getSpeedRunLimit(difficulty ?? 'easy', isAdaptive ?? false))
+    // TwinHuntApp has no difficulty/isAdaptive state, so use the 'easy', non-adaptive limit.
+    timer.start(sessionGoal, handleTimeout, getSpeedRunLimit('easy', false))
   }
 
   /**
